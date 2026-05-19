@@ -1,0 +1,425 @@
+.deals-hero {
+            background: linear-gradient(135deg, var(--apex-dark) 0%, #0e1f60 55%, var(--apex-blue-lt) 100%);
+            padding: 70px 0 60px;
+            position: relative;
+            overflow: hidden;
+        }
+        .deals-hero::before {
+            content: 'DEALS';
+            position: absolute;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 18vw;
+            font-weight: 900;
+            color: rgba(255,255,255,.03);
+            right: -2vw;
+            bottom: -4vw;
+            line-height: 1;
+            pointer-events: none;
+            user-select: none;
+        }
+        .deals-hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 80% 50%, rgba(0,194,255,.10) 0%, transparent 55%);
+        }
+        .deals-hero-content { position: relative; z-index: 2; }
+        .deals-eyebrow {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: .9rem;
+            letter-spacing: .3em;
+            text-transform: uppercase;
+            color: var(--apex-accent);
+            margin-bottom: 10px;
+        }
+        .deals-hero-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: clamp(3rem, 7vw, 5.5rem);
+            line-height: .95;
+            color: var(--apex-white);
+            text-transform: uppercase;
+        }
+        .deals-hero-title em {
+            font-style: normal;
+            color: var(--apex-accent);
+        }
+        .deals-hero-sub {
+            color: rgba(255,255,255,.65);
+            font-size: 1rem;
+            max-width: 440px;
+            margin: 18px 0 28px;
+            line-height: 1.65;
+        }
+
+        /* ── COUNTDOWN TIMER ── */
+        .countdown-wrap {
+            display: inline-flex;
+            gap: 10px;
+            margin-top: 6px;
+        }
+        .countdown-unit {
+            text-align: center;
+            background: rgba(0,0,0,.35);
+            border: 1px solid rgba(0,194,255,.2);
+            border-radius: 8px;
+            padding: 10px 16px;
+            min-width: 60px;
+        }
+        .countdown-num {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--apex-accent);
+            line-height: 1;
+            display: block;
+        }
+        .countdown-lbl {
+            font-size: .6rem;
+            letter-spacing: .15em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.45);
+            margin-top: 3px;
+            display: block;
+        }
+
+        /* ── SECTION HEADING ── */
+        .section-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: .8rem;
+            letter-spacing: .3em;
+            text-transform: uppercase;
+            color: var(--apex-accent);
+            margin-bottom: 6px;
+        }
+        .section-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: clamp(2rem, 4vw, 3rem);
+            text-transform: uppercase;
+            color: var(--apex-text);
+            line-height: 1;
+            margin-bottom: 0;
+        }
+        .section-title span { color: var(--apex-blue-mid); }
+
+        /* ── SALE ITEMS ── */
+        .sale-section { padding: 80px 0; background: var(--apex-grey); }
+        .sale-card {
+            background: var(--apex-white);
+            border: 2px solid var(--apex-border);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: border-color .3s, box-shadow .3s, transform .3s;
+            position: relative;
+            height: 100%;
+        }
+        .sale-card:hover {
+            border-color: var(--apex-blue);
+            transform: translateY(-6px);
+            box-shadow: 0 20px 50px rgba(11,47,168,.15);
+        }
+        .sale-discount-badge {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: #ff3b5c;
+            color: #fff;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: .85rem;
+            padding: 4px 10px;
+            border-radius: 4px;
+            z-index: 2;
+        }
+        .sale-img-wrap {
+            background: var(--apex-grey);
+            padding: 28px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+        }
+        .sale-body { padding: 16px 18px 20px; }
+        .sale-brand {
+            font-size: .7rem;
+            font-weight: 700;
+            letter-spacing: .15em;
+            text-transform: uppercase;
+            color: var(--apex-blue-mid);
+            margin-bottom: 4px;
+        }
+        .sale-name {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 800;
+            font-size: 1rem;
+            text-transform: uppercase;
+            color: var(--apex-text);
+            letter-spacing: .02em;
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+        .sale-rating { color: #f5c400; font-size: .72rem; margin-bottom: 8px; }
+        .sale-rating span { color: var(--apex-muted); font-size: .7rem; margin-left: 4px; }
+        .sale-price {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--apex-blue);
+            margin-bottom: 2px;
+        }
+        .sale-old {
+            font-size: .8rem;
+            color: var(--apex-muted);
+            text-decoration: line-through;
+            margin-bottom: 12px;
+        }
+        .btn-sale {
+            display: block;
+            background: var(--apex-blue);
+            color: #fff;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 800;
+            font-size: .88rem;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            border: none;
+            padding: 9px;
+            border-radius: 6px;
+            text-align: center;
+            text-decoration: none;
+            transition: background .2s, box-shadow .2s;
+        }
+        .btn-sale:hover {
+            background: var(--apex-blue-mid);
+            color: #fff;
+            box-shadow: 0 6px 20px rgba(11,47,168,.3);
+        }
+
+        /* ── BUNDLE SECTION ── */
+        .bundle-section { padding: 80px 0; background: var(--apex-white); }
+        .bundle-card {
+            border: 2px solid var(--apex-border);
+            border-radius: 16px;
+            padding: 30px 28px;
+            transition: border-color .3s, box-shadow .3s, transform .3s;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        .bundle-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--apex-blue), var(--apex-accent));
+        }
+        .bundle-card:hover {
+            border-color: var(--apex-blue-lt);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(11,47,168,.12);
+        }
+        .bundle-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--apex-blue), var(--apex-blue-lt));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: #fff;
+            margin-bottom: 18px;
+            box-shadow: 0 8px 20px rgba(11,47,168,.3);
+        }
+        .bundle-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            color: var(--apex-text);
+            margin-bottom: 12px;
+        }
+        .bundle-items { list-style: none; padding: 0; margin-bottom: 18px; }
+        .bundle-items li {
+            font-size: .84rem;
+            color: var(--apex-muted);
+            padding: 4px 0;
+            border-bottom: 1px solid var(--apex-border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .bundle-items li:last-child { border-bottom: none; }
+        .bundle-items li i { color: var(--apex-accent); font-size: .75rem; }
+        .bundle-savings {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .75rem;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: #ff3b5c;
+            margin-bottom: 4px;
+        }
+        .bundle-price {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--apex-blue);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .bundle-old {
+            font-size: .84rem;
+            color: var(--apex-muted);
+            text-decoration: line-through;
+            margin-bottom: 18px;
+        }
+        .btn-bundle {
+            display: block;
+            background: linear-gradient(90deg, var(--apex-blue), var(--apex-blue-lt));
+            color: #fff;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 800;
+            font-size: .92rem;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            border: none;
+            padding: 11px;
+            border-radius: 6px;
+            text-align: center;
+            text-decoration: none;
+            transition: box-shadow .2s, transform .15s;
+        }
+        .btn-bundle:hover {
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(11,47,168,.3);
+        }
+
+        /* ── PROMO BANNER ── */
+        .promo-banner {
+            background: linear-gradient(135deg, var(--apex-blue) 0%, var(--apex-dark) 100%);
+            padding: 60px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .promo-banner::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 60% 120% at 90% 50%, rgba(0,194,255,.12) 0%, transparent 60%);
+        }
+        .promo-banner-content { position: relative; z-index: 2; }
+        .promo-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #fff;
+            line-height: 1.05;
+            margin-bottom: 10px;
+        }
+        .promo-title span { color: var(--apex-accent); }
+        .promo-sub {
+            color: rgba(255,255,255,.6);
+            font-size: .95rem;
+            margin-bottom: 24px;
+            line-height: 1.7;
+        }
+        .promo-code-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 0;
+            border: 2px dashed rgba(0,194,255,.5);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .promo-code {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 1.5rem;
+            letter-spacing: .2em;
+            color: var(--apex-accent);
+            padding: 10px 22px;
+            background: rgba(0,194,255,.08);
+        }
+        .promo-copy-btn {
+            background: var(--apex-accent);
+            color: var(--apex-dark);
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 800;
+            font-size: .8rem;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            border: none;
+            padding: 0 16px;
+            cursor: pointer;
+            height: 100%;
+            min-height: 52px;
+            transition: opacity .2s;
+        }
+        .promo-copy-btn:hover { opacity: .85; }
+
+        /* ── NEWSLETTER ── */
+        .deals-newsletter {
+            background: var(--apex-grey);
+            padding: 60px 0;
+        }
+        .newsletter-inner {
+            background: var(--apex-white);
+            border: 2px solid var(--apex-border);
+            border-radius: 16px;
+            padding: 40px 36px;
+            position: relative;
+            overflow: hidden;
+        }
+        .newsletter-inner::after {
+            content: '%';
+            position: absolute;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 14rem;
+            font-weight: 900;
+            color: rgba(11,47,168,.04);
+            right: -2rem;
+            bottom: -4rem;
+            line-height: 1;
+            pointer-events: none;
+        }
+        .newsletter-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 2rem;
+            text-transform: uppercase;
+            color: var(--apex-text);
+            margin-bottom: 8px;
+        }
+        .newsletter-title span { color: var(--apex-blue-mid); }
+        .newsletter-sub {
+            color: var(--apex-muted);
+            font-size: .9rem;
+            margin-bottom: 22px;
+            line-height: 1.65;
+        }
+        .newsletter-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .newsletter-input {
+            flex: 1;
+            min-width: 200px;
+            background: var(--apex-grey);
+            border: 2px solid var(--apex-border);
+            border-radius: 6px;
+            color: var(--apex-text);
+            font-size: .9rem;
+            padding: 11px 16px;
+            outline: none;
+            transition: border-color .2s;
+        }
+        .newsletter-input:focus { border-color: var(--apex-blue); }
+        .newsletter-input::placeholder { color: var(--apex-muted); }
