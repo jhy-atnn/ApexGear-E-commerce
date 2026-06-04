@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                 <a href="mailto:support@apexgear.com">support@apexgear.com</a>
             </div>
             <div class="d-flex align-items-center gap-3">
-                <span>Free shipping on orders over ₱2,000</span>
+                <span>Free shipping on orders over ₱5,000</span>
             </div>
         </div>
     </div>

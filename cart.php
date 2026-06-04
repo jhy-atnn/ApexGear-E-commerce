@@ -54,7 +54,7 @@ $grand_total = $subtotal + $tax;
                 <a href="mailto:support@apexgear.com">support@apexgear.com</a>
             </div>
             <div class="d-flex align-items-center gap-3">
-                <span>Free shipping on orders over ₱2,000</span>
+                <span>Free shipping on orders over ₱5,000</span>
                 <div class="search-wrap d-none d-md-block">
                     <input type="text" placeholder="Search products…" />
                     <button><i class="fas fa-search"></i></button>

@@ -4,21 +4,34 @@ unset($_SESSION['inventory']);
 
 if (!isset($_SESSION['inventory'])) {
     $_SESSION['inventory'] = [
-        1 => ['id' => 1, 'category' => 'laptop', 'brand' => 'Lenovo', 'name' => 'Legion 5 Pro — RTX 4070, 16" QHD 165Hz', 'price' => 119995.00, 'old_price' => 127999.00, 'rating' => 124, 'badge' => 'New', 'badge_type' => 'new', 'image' => 'assets/images/products/legion5pro.png', 'stock' => 10],
-        2 => ['id' => 2, 'category' => 'laptop', 'brand' => 'ASUS', 'name' => 'ROG Zephyrus G14 — Ryzen 9, RTX 4060', 'price' => 109995.00, 'old_price' => 119995.00, 'rating' => 89, 'badge' => 'SALE', 'badge_type' => 'ribbon', 'image' => 'assets/images/products/zephyrusg14.png', 'stock' => 5],
-        3 => ['id' => 3, 'category' => 'peripheral', 'brand' => 'Razer', 'name' => 'BlackWidow V4 Pro — Mechanical, RGB, Wireless', 'price' => 13495.00, 'old_price' => 15995.00, 'rating' => 4210, 'badge' => 'Popular', 'badge_type' => 'normal', 'image' => 'assets/images/products/blackwidow.png', 'stock' => 20],
-        4 => ['id' => 4, 'category' => 'peripheral', 'brand' => 'Logitech', 'name' => 'G Pro X Superlight 2 — Wireless Gaming Mouse', 'price' => 7795.00, 'old_price' => 8995.00, 'rating' => 4340, 'badge' => null, 'badge_type' => null, 'image' => 'assets/images/products/superlight.png', 'stock' => 15],
-        5 => ['id' => 5, 'category' => 'audio', 'brand' => 'Sony', 'name' => 'WH-1000XM5 — Noise Cancelling, 30hr Battery', 'price' => 15499.00, 'old_price' => 20999.00, 'rating' => 512, 'badge' => 'New', 'badge_type' => 'new', 'image' => 'assets/images/products/sonywh.png', 'stock' => 12],
-        6 => ['id' => 6, 'category' => 'phone', 'brand' => 'Samsung', 'name' => 'Galaxy S24 Ultra — 200MP, 5000mAh, Titanium', 'price' => 84990.00, 'old_price' => 94990.00, 'rating' => 445, 'badge' => 'SALE', 'badge_type' => 'ribbon', 'image' => 'assets/images/products/s24ultra.png', 'stock' => 8],
-        7 => ['id' => 7, 'category' => 'desktop', 'brand' => 'Dell', 'name' => 'XPS Tower — Intel i9-14900K, RTX 4080, 64GB', 'price' => 185000.00, 'old_price' => 200000.00, 'rating' => 78, 'badge' => null, 'badge_type' => null, 'image' => 'assets/images/products/xpstower.png', 'stock' => 3],
-        8 => ['id' => 8, 'category' => 'peripheral', 'brand' => 'LG', 'name' => 'UltraGear 27" — 4K, 144Hz, 1ms, IPS, G-Sync', 'price' => 39995.00, 'old_price' => 45995.00, 'rating' => 193, 'badge' => 'On Sale', 'badge_type' => 'sale', 'image' => 'assets/images/products/ultragear.png', 'stock' => 7],
-        9 => ['id' => 9, 'category' => 'phone', 'brand' => 'Apple', 'name' => 'iPhone 17 Pro — Cosmic Orange - Aluminum', 'price' => 109990.00, 'old_price' => 119990.00, 'rating' => 445, 'badge' => 'On Sale', 'badge_type' => 'sale', 'image' => 'assets/images/products/iphone17pro.png', 'stock' => 15],
-        10 => ['id' => 10, 'category' => 'laptop', 'brand' => 'HP', 'name' => 'Spectre x360 14" — OLED, Intel Evo', 'price' => 79995.00, 'old_price' => 95000.00, 'rating' => 156, 'badge' => '–15%', 'badge_type' => 'sale', 'image' => 'assets/images/products/hpspectre.png', 'stock' => 10],
-        11 => ['id' => 11, 'category' => 'phone', 'brand' => 'Apple', 'name' => 'iPhone 15 Pro — 256GB, Natural Titanium', 'price' => 69990.00, 'old_price' => 76990.00, 'rating' => 892, 'badge' => '–10%', 'badge_type' => 'sale', 'image' => 'assets/images/products/iph15pro.png', 'stock' => 25],
-        12 => ['id' => 12, 'category' => 'peripheral', 'brand' => 'Corsair', 'name' => 'K100 Air — Ultra-Thin, Wireless, RGB', 'price' => 11995.00, 'old_price' => 16500.00, 'rating' => 340, 'badge' => '–25%', 'badge_type' => 'sale', 'image' => 'assets/images/products/corsairk100air.png', 'stock' => 15],
-        13 => ['id' => 13, 'category' => 'gpu', 'brand' => 'NVIDIA', 'name' => 'GeForce RTX 4070 Super — 12GB GDDR6X', 'price' => 36500.00, 'old_price' => 42000.00, 'rating' => 215, 'badge' => '–13%', 'badge_type' => 'sale', 'image' => 'assets/images/products/nvidiartx4070.png', 'stock' => 5]
+        1 => ['id' => 1, 'category' => 'laptop', 'brand' => 'Lenovo', 'name' => 'Legion 5 Pro — RTX 4070, 16" QHD 165Hz', 'price' => 119995.00, 'old_price' => 127999.00, 'rating' => 124, 'sales' => 186, 'badge' => 'New', 'badge_type' => 'new', 'image' => 'assets/images/products/legion5pro.png', 'stock' => 10],
+        2 => ['id' => 2, 'category' => 'laptop', 'brand' => 'ASUS', 'name' => 'ROG Zephyrus G14 — Ryzen 9, RTX 4060', 'price' => 109995.00, 'old_price' => 119995.00, 'rating' => 89, 'sales' => 140, 'badge' => 'SALE', 'badge_type' => 'ribbon', 'image' => 'assets/images/products/zephyrusg14.png', 'stock' => 5],
+        3 => ['id' => 3, 'category' => 'peripheral', 'brand' => 'Razer', 'name' => 'BlackWidow V4 Pro — Mechanical, RGB, Wireless', 'price' => 13495.00, 'old_price' => 15995.00, 'rating' => 4210, 'sales' => 3820, 'badge' => 'Popular', 'badge_type' => 'normal', 'image' => 'assets/images/products/blackwidow.png', 'stock' => 20],
+        4 => ['id' => 4, 'category' => 'peripheral', 'brand' => 'Logitech', 'name' => 'G Pro X Superlight 2 — Wireless Gaming Mouse', 'price' => 7795.00, 'old_price' => 8995.00, 'rating' => 4340, 'sales' => 4260, 'badge' => null, 'badge_type' => null, 'image' => 'assets/images/products/superlight.png', 'stock' => 15],
+        5 => ['id' => 5, 'category' => 'audio', 'brand' => 'Sony', 'name' => 'WH-1000XM5 — Noise Cancelling, 30hr Battery', 'price' => 15499.00, 'old_price' => 20999.00, 'rating' => 512, 'sales' => 980, 'badge' => 'New', 'badge_type' => 'new', 'image' => 'assets/images/products/sonywh.png', 'stock' => 12],
+        6 => ['id' => 6, 'category' => 'phone', 'brand' => 'Samsung', 'name' => 'Galaxy S24 Ultra — 200MP, 5000mAh, Titanium', 'price' => 84990.00, 'old_price' => 94990.00, 'rating' => 445, 'sales' => 760, 'badge' => 'SALE', 'badge_type' => 'ribbon', 'image' => 'assets/images/products/s24ultra.png', 'stock' => 8],
+        7 => ['id' => 7, 'category' => 'desktop', 'brand' => 'Dell', 'name' => 'XPS Tower — Intel i9-14900K, RTX 4080, 64GB', 'price' => 185000.00, 'old_price' => 200000.00, 'rating' => 78, 'sales' => 95, 'badge' => null, 'badge_type' => null, 'image' => 'assets/images/products/xpstower.png', 'stock' => 3],
+        8 => ['id' => 8, 'category' => 'peripheral', 'brand' => 'LG', 'name' => 'UltraGear 27" — 4K, 144Hz, 1ms, IPS, G-Sync', 'price' => 39995.00, 'old_price' => 45995.00, 'rating' => 193, 'sales' => 410, 'badge' => 'On Sale', 'badge_type' => 'sale', 'image' => 'assets/images/products/ultragear.png', 'stock' => 7],
+        9 => ['id' => 9, 'category' => 'phone', 'brand' => 'Apple', 'name' => 'iPhone 17 Pro — Cosmic Orange - Aluminum', 'price' => 109990.00, 'old_price' => 119990.00, 'rating' => 445, 'sales' => 690, 'badge' => 'On Sale', 'badge_type' => 'sale', 'image' => 'assets/images/products/iphone17pro.png', 'stock' => 15],
+        10 => ['id' => 10, 'category' => 'laptop', 'brand' => 'HP', 'name' => 'Spectre x360 14" — OLED, Intel Evo', 'price' => 79995.00, 'old_price' => 95000.00, 'rating' => 156, 'sales' => 260, 'badge' => '–15%', 'badge_type' => 'sale', 'image' => 'assets/images/products/hpspectre.png', 'stock' => 10],
+        11 => ['id' => 11, 'category' => 'phone', 'brand' => 'Apple', 'name' => 'iPhone 15 Pro — 256GB, Natural Titanium', 'price' => 69990.00, 'old_price' => 76990.00, 'rating' => 892, 'sales' => 1280, 'badge' => '–10%', 'badge_type' => 'sale', 'image' => 'assets/images/products/iph15pro.png', 'stock' => 25],
+        12 => ['id' => 12, 'category' => 'peripheral', 'brand' => 'Corsair', 'name' => 'K100 Air — Ultra-Thin, Wireless, RGB', 'price' => 11995.00, 'old_price' => 16500.00, 'rating' => 340, 'sales' => 870, 'badge' => '–25%', 'badge_type' => 'sale', 'image' => 'assets/images/products/corsairk100air.png', 'stock' => 15],
+        13 => ['id' => 13, 'category' => 'gpu', 'brand' => 'NVIDIA', 'name' => 'GeForce RTX 4070 Super — 12GB GDDR6X', 'price' => 36500.00, 'old_price' => 42000.00, 'rating' => 215, 'sales' => 330, 'badge' => '–13%', 'badge_type' => 'sale', 'image' => 'assets/images/products/nvidiartx4070.png', 'stock' => 5]
     ];
 }
+
+$featuredProducts = array_values($_SESSION['inventory']);
+usort($featuredProducts, function ($a, $b) {
+    $scoreA = (int)($a['rating'] ?? 0) + (int)($a['sales'] ?? 0);
+    $scoreB = (int)($b['rating'] ?? 0) + (int)($b['sales'] ?? 0);
+
+    if ($scoreA === $scoreB) {
+        return (int)($b['sales'] ?? 0) <=> (int)($a['sales'] ?? 0);
+    }
+
+    return $scoreB <=> $scoreA;
+});
+$featuredProducts = array_slice($featuredProducts, 0, 10);
 ?>
 
 <!DOCTYPE html>
@@ -80,13 +93,13 @@ if (!isset($_SESSION['inventory'])) {
                     <div class="container">
                         <div class="row align-items-center">
                             <div class="col-lg-6 hero-content">
-                                <div class="hero-eyebrow">Gaming Peripherals</div>
+                                <div class="hero-eyebrow">Gaming Equipments</div>
                                 <h1 class="hero-title">
                                     Keyboards<br>&amp; Mouse<br><em>Built to Win</em>
                                 </h1>
                                 <p class="hero-sub">Precision, speed, and feel — every keystroke counts. Dominate with ApeX Gear.</p>
                                 <div class="d-flex gap-3 flex-wrap">
-                                    <a href="#featured" class="btn-apex">Shop Peripherals</a>
+                                    <a href="#featured" class="btn-apex">Shop Equipments</a>
                                     <a href="#" class="btn-apex-outline">See Brands</a>
                                 </div>
                             </div>
@@ -129,29 +142,6 @@ if (!isset($_SESSION['inventory'])) {
         </button>
     </div>
 
-    <div class="stats-strip">
-        <div class="container">
-            <div class="row g-0">
-                <div class="col-6 col-md-3 stat-item">
-                    <div class="stat-num">12K+</div>
-                    <div class="stat-lbl">Products</div>
-                </div>
-                <div class="col-6 col-md-3 stat-item">
-                    <div class="stat-num">48K</div>
-                    <div class="stat-lbl">Happy Customers</div>
-                </div>
-                <div class="col-6 col-md-3 stat-item">
-                    <div class="stat-num">10+</div>
-                    <div class="stat-lbl">Top Brands</div>
-                </div>
-                <div class="col-6 col-md-3 stat-item">
-                    <div class="stat-num">24/7</div>
-                    <div class="stat-lbl">Support</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <section class="brands-section overflow-hidden">
         <div class="container">
             <div class="text-center mb-1 fade-up">
@@ -174,6 +164,18 @@ if (!isset($_SESSION['inventory'])) {
                 <div class="brand-logo-wrap"><img src="assets/images/nvidia.png" alt="NVIDIA" class="brand-img"></div>
                 <div class="brand-logo-wrap"><img src="assets/images/corsair.png" alt="Corsair" class="brand-img"></div>
                 <div class="brand-logo-wrap"><img src="assets/images/intel.png" alt="Intel" class="brand-img"></div>
+                <div class="brand-logo-wrap" aria-hidden="true"><img src="assets/images/lenovo.png" alt="" class="brand-img"></div>
+                <div class="brand-logo-wrap" aria-hidden="true"><img src="assets/images/asus.png" alt="" class="brand-img"></div>
+                <div class="brand-logo-wrap" aria-hidden="true"><img src="assets/images/dell.png" alt="" class="brand-img"></div>
+                <div class="brand-logo-wrap" aria-hidden="true"><img src="assets/images/hp.png" alt="" class="brand-img"></div>
+                <div class="brand-logo-wrap" aria-hidden="true"><img src="assets/images/apple.png" alt="" class="brand-img"></div>
+                <div class="brand-logo-wrap" aria-hidden="true"><img src="assets/images/samsung.png" alt="" class="brand-img"></div>
+                <div class="brand-logo-wrap" aria-hidden="true"><img src="assets/images/razer.png" alt="" class="brand-img"></div>
+                <div class="brand-logo-wrap" aria-hidden="true"><img src="assets/images/logitech.png" alt="" class="brand-img"></div>
+                <div class="brand-logo-wrap" aria-hidden="true"><img src="assets/images/sony.png" alt="" class="brand-img"></div>
+                <div class="brand-logo-wrap" aria-hidden="true"><img src="assets/images/nvidia.png" alt="" class="brand-img"></div>
+                <div class="brand-logo-wrap" aria-hidden="true"><img src="assets/images/corsair.png" alt="" class="brand-img"></div>
+                <div class="brand-logo-wrap" aria-hidden="true"><img src="assets/images/intel.png" alt="" class="brand-img"></div>
             </div>
         </div>
     </section>
@@ -184,63 +186,87 @@ if (!isset($_SESSION['inventory'])) {
                 <h2 class="sec-title">Browse by <span>Category</span></h2>
             </div>
             <div class="sec-divider mx-auto fade-up"></div>
-            <div class="row g-3 fade-up">
-                <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                    <a href="store.php" class="cat-card">
-                        <div class="cat-icon-wrap"><i class="fas fa-laptop"></i></div>
-                        <div class="cat-name">Laptops</div>
-                        <span class="btn-shop">Shop Now</span>
-                    </a>
+            <div class="category-carousel fade-up">
+                <button class="cat-arrow cat-arrow-left" type="button" aria-label="Previous categories">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="category-slider" aria-label="Browse categories">
+                    <div class="cat-slide">
+                        <a href="store.php" class="cat-card">
+                            <img src="assets/images/products/legion5pro.png" alt="Gaming laptop" class="cat-img">
+                            <div class="cat-card-info">
+                                <div class="cat-name">Laptops</div>
+                                <span class="btn-shop">Shop Now</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="cat-slide">
+                        <a href="store.php" class="cat-card">
+                            <img src="assets/images/products/xpstower.png" alt="Desktop computer" class="cat-img">
+                            <div class="cat-card-info">
+                                <div class="cat-name">Desktops</div>
+                                <span class="btn-shop">Shop Now</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="cat-slide">
+                        <a href="store.php" class="cat-card">
+                            <img src="assets/images/products/iphone17pro.png" alt="Cellphone" class="cat-img">
+                            <div class="cat-card-info">
+                                <div class="cat-name">Cellphones</div>
+                                <span class="btn-shop">Shop Now</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="cat-slide">
+                        <a href="store.php" class="cat-card">
+                            <img src="assets/images/products/sonywh.png" alt="Headphones" class="cat-img">
+                            <div class="cat-card-info">
+                                <div class="cat-name">Headphones</div>
+                                <span class="btn-shop">Shop Now</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="cat-slide">
+                        <a href="store.php" class="cat-card">
+                            <img src="assets/images/products/s24ultra.png" alt="Tablet device" class="cat-img">
+                            <div class="cat-card-info">
+                                <div class="cat-name">Tablet</div>
+                                <span class="btn-shop">Shop Now</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="cat-slide">
+                        <a href="store.php" class="cat-card">
+                            <img src="assets/images/intel.png" alt="CPU" class="cat-img cat-img-contain">
+                            <div class="cat-card-info">
+                                <div class="cat-name">CPU</div>
+                                <span class="btn-shop">Shop Now</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="cat-slide">
+                        <a href="store.php" class="cat-card">
+                            <img src="assets/images/products/nvidiartx4070.png" alt="Graphics card" class="cat-img">
+                            <div class="cat-card-info">
+                                <div class="cat-name">GPU</div>
+                                <span class="btn-shop">Shop Now</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="cat-slide">
+                        <a href="store.php" class="cat-card">
+                            <img src="assets/images/products/blackwidow.png" alt="Gaming accessories" class="cat-img">
+                            <div class="cat-card-info">
+                                <div class="cat-name">Accessories</div>
+                                <span class="btn-shop">Shop Now</span>
+                            </div>
+                        </a>
+                    </div>
                 </div>
-                <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                    <a href="store.php" class="cat-card">
-                        <div class="cat-icon-wrap"><i class="fas fa-desktop"></i></div>
-                        <div class="cat-name">Desktops</div>
-                        <span class="btn-shop">Shop Now</span>
-                    </a>
-                </div>
-                <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                    <a href="store.php" class="cat-card">
-                        <div class="cat-icon-wrap"><i class="fas fa-mobile-alt"></i></div>
-                        <div class="cat-name">Cellphones</div>
-                        <span class="btn-shop">Shop Now</span>
-                    </a>
-                </div>
-                <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                    <a href="store.php" class="cat-card">
-                        <div class="cat-icon-wrap"><i class="fas fa-headphones-alt"></i></div>
-                        <div class="cat-name">Headphones</div>
-                        <span class="btn-shop">Shop Now</span>
-                    </a>
-                </div>
-                <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                    <a href="store.php" class="cat-card">
-                        <div class="cat-icon-wrap"><i class="fas fa-tablet"></i></div>
-                        <div class="cat-name">Tablet</div>
-                        <span class="btn-shop">Shop Now</span>
-                    </a>
-                </div>
-                <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                    <a href="store.php" class="cat-card">
-                        <div class="cat-icon-wrap"><i class="fas fa-microchip"></i></div>
-                        <div class="cat-name">CPU</div>
-                        <span class="btn-shop">Shop Now</span>
-                    </a>
-                </div>
-                <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                    <a href="store.php" class="cat-card">
-                        <div class="cat-icon-wrap"><i class="fas fa-tv"></i></div>
-                        <div class="cat-name">GPU</div>
-                        <span class="btn-shop">Shop Now</span>
-                    </a>
-                </div>
-                <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                    <a href="store.php" class="cat-card">
-                        <div class="cat-icon-wrap"><i class="fas fa-keyboard"></i></div>
-                        <div class="cat-name">Accessories</div>
-                        <span class="btn-shop">Shop Now</span>
-                    </a>
-                </div>
+                <button class="cat-arrow cat-arrow-right" type="button" aria-label="Next categories">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
             </div>
         </div>
     </section>
@@ -252,28 +278,21 @@ if (!isset($_SESSION['inventory'])) {
             </div>
             <div class="sec-divider mx-auto fade-up"></div>
 
-            <div class="filter-tabs text-center fade-up">
-                <button class="filter-tab active" onclick="filterProducts(this,'all')">All</button>
-                <button class="filter-tab" onclick="filterProducts(this,'laptop')">Laptops</button>
-                <button class="filter-tab" onclick="filterProducts(this,'desktop')">Desktops</button>
-                <button class="filter-tab" onclick="filterProducts(this,'phone')">CellPhones</button>
-                <button class="filter-tab" onclick="filterProducts(this,'audio')">Headphones</button>
-                <button class="filter-tab" onclick="filterProducts(this,'tablet')">Tablets</button>
-                <button class="filter-tab" onclick="filterProducts(this,'cpu')">CPU</button>
-                <button class="filter-tab" onclick="filterProducts(this,'gpu')">GPU</button>
-                <button class="filter-tab" onclick="filterProducts(this,'peripheral')">Accessories</button>
-            </div>
-
-            <div class="row g-4" id="productGrid">
-                <?php foreach ($_SESSION['inventory'] as $product) {
+            <div class="featured-carousel fade-up">
+                <button class="product-arrow product-arrow-left" type="button" aria-label="Previous featured products">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="featured-product-slider" id="productGrid" aria-label="Top featured products">
+                    <?php foreach ($featuredProducts as $product) {
                     $cat       = isset($product['category']) ? $product['category'] : 'laptop';
                     $badgeType = isset($product['badge_type']) ? $product['badge_type'] : null;
                     $badge     = isset($product['badge']) ? $product['badge'] : null;
                     $brand     = isset($product['brand']) ? $product['brand'] : 'ApeX';
                     $rating    = isset($product['rating']) ? $product['rating'] : '12';
+                    $sales     = isset($product['sales']) ? (int)$product['sales'] : 0;
                     $oldPrice  = isset($product['old_price']) ? $product['old_price'] : null;
                 ?>
-                    <div class="col-sm-6 col-md-4 col-lg-3 fade-up product-item" data-cat="<?php echo htmlspecialchars($cat); ?>">
+                    <div class="featured-product-slide product-item" data-cat="<?php echo htmlspecialchars($cat); ?>">
                         <div class="product-card h-100 position-relative">
 
                             <?php if ($badgeType === 'new'): ?>
@@ -311,6 +330,7 @@ if (!isset($_SESSION['inventory'])) {
                                 <div class="product-rating">
                                     <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
                                     <span>(<?php echo htmlspecialchars($rating); ?>)</span>
+                                    <span class="product-sales"><i class="fas fa-bag-shopping"></i> <?php echo number_format($sales); ?> sold</span>
                                 </div>
                                 <?php $stock = isset($product['stock']) ? (int)$product['stock'] : 0; ?>
                                 <div class="product-price">
@@ -345,7 +365,11 @@ if (!isset($_SESSION['inventory'])) {
                             </div>
                         </div>
                     </div>
-                <?php } ?>
+                    <?php } ?>
+                </div>
+                <button class="product-arrow product-arrow-right" type="button" aria-label="Next featured products">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
             </div>
 
             <div class="text-center mt-5 fade-up">
@@ -510,41 +534,6 @@ if (!isset($_SESSION['inventory'])) {
         </div>
     </section>
 
-    <div class="trust-strip">
-        <div class="container">
-            <div class="row g-4">
-                <div class="col-6 col-md-3">
-                    <div class="trust-item">
-                        <div class="trust-icon-wrap"><i class="fas fa-truck"></i></div>
-                        <div class="trust-label">Free Shipping</div>
-                        <div class="trust-sub">On orders over ₱2,000</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="trust-item">
-                        <div class="trust-icon-wrap"><i class="fas fa-thumbs-up"></i></div>
-                        <div class="trust-label">Satisfaction</div>
-                        <div class="trust-sub">100% Guaranteed</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="trust-item">
-                        <div class="trust-icon-wrap"><i class="fas fa-redo-alt"></i></div>
-                        <div class="trust-label">30-Day Returns</div>
-                        <div class="trust-sub">Hassle-free returns</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="trust-item">
-                        <div class="trust-icon-wrap"><i class="fas fa-lock"></i></div>
-                        <div class="trust-label">Secure Checkout</div>
-                        <div class="trust-sub">256-bit SSL encryption</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <section class="newsletter-section">
         <div class="container" style="position:relative; z-index:1;">
             <div class="row align-items-center g-4">
@@ -578,6 +567,93 @@ if (!isset($_SESSION['inventory'])) {
                 }
             });
         }
+
+        document.querySelectorAll('.category-carousel').forEach(carousel => {
+            const slider = carousel.querySelector('.category-slider');
+            const prev = carousel.querySelector('.cat-arrow-left');
+            const next = carousel.querySelector('.cat-arrow-right');
+
+            function slideCategories(direction) {
+                const firstCard = slider.querySelector('.cat-slide');
+                const gap = parseFloat(getComputedStyle(slider).columnGap) || 0;
+                const distance = firstCard ? firstCard.offsetWidth + gap : slider.clientWidth * .75;
+
+                slider.scrollBy({
+                    left: direction * distance,
+                    behavior: 'smooth'
+                });
+            }
+
+            prev.addEventListener('click', () => slideCategories(-1));
+            next.addEventListener('click', () => slideCategories(1));
+        });
+
+        document.querySelectorAll('.featured-carousel').forEach(carousel => {
+            const slider = carousel.querySelector('.featured-product-slider');
+            const prev = carousel.querySelector('.product-arrow-left');
+            const next = carousel.querySelector('.product-arrow-right');
+
+            function slideFeatured(direction) {
+                const firstCard = slider.querySelector('.featured-product-slide');
+                const gap = parseFloat(getComputedStyle(slider).columnGap) || 0;
+                const distance = firstCard ? firstCard.offsetWidth + gap : slider.clientWidth * .75;
+
+                slider.scrollBy({
+                    left: direction * distance,
+                    behavior: 'smooth'
+                });
+            }
+
+            prev.addEventListener('click', () => slideFeatured(-1));
+            next.addEventListener('click', () => slideFeatured(1));
+        });
+
+        document.querySelectorAll('.nav-search-wrap').forEach(searchWrap => {
+            const toggle = searchWrap.querySelector('.nav-search-toggle');
+            const input = searchWrap.querySelector('.nav-product-search');
+            const results = Array.from(searchWrap.querySelectorAll('.nav-search-result'));
+            const empty = searchWrap.querySelector('.nav-search-empty');
+
+            function closeSearch() {
+                searchWrap.classList.remove('open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+
+            function openSearch() {
+                searchWrap.classList.add('open');
+                toggle.setAttribute('aria-expanded', 'true');
+                setTimeout(() => input?.focus(), 80);
+            }
+
+            function filterSearch() {
+                const query = (input?.value || '').trim().toLowerCase();
+                let visibleCount = 0;
+
+                results.forEach(result => {
+                    const isMatch = result.dataset.searchText.includes(query);
+                    result.classList.toggle('is-hidden', !isMatch);
+                    if (isMatch) visibleCount++;
+                });
+
+                empty?.classList.toggle('show', visibleCount === 0);
+            }
+
+            toggle.addEventListener('click', event => {
+                event.stopPropagation();
+                searchWrap.classList.contains('open') ? closeSearch() : openSearch();
+            });
+
+            searchWrap.addEventListener('click', event => {
+                event.stopPropagation();
+            });
+
+            input?.addEventListener('input', filterSearch);
+
+            document.addEventListener('click', closeSearch);
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape') closeSearch();
+            });
+        });
     </script>
 </body>
 

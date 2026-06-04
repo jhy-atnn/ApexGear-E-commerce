@@ -14,11 +14,7 @@ $currentPage = $currentPage ?? '';
             <a href="mailto:support@apexgear.com">support@apexgear.com</a>
         </div>
         <div class="d-flex align-items-center gap-3">
-            <span>Free shipping on orders over ₱2,000 </span>
-            <div class="search-wrap d-none d-md-block">
-                <input type="text" placeholder="Search products…" />
-                <button><i class="fas fa-search"></i></button>
-            </div>
+            <span>Free shipping on orders over ₱5,000 </span>
         </div>
     </div>
 </div>
@@ -43,7 +39,32 @@ $currentPage = $currentPage ?? '';
                 <li class="nav-item"><a class="nav-link <?= $currentPage === 'about' ? 'active' : '' ?>" href="about.php">About Us</a></li>
             </ul>
             <div class="nav-icons d-flex align-items-center">
-                <a href="#"><i class="fas fa-search"></i></a>
+                <div class="nav-search-wrap">
+                    <div class="nav-search-field">
+                        <button class="nav-search-toggle" type="button" aria-label="Search products" aria-expanded="false">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <input type="search" class="nav-product-search" placeholder="Search products..." autocomplete="off">
+                    </div>
+                    <div class="nav-search-panel" aria-label="Search products">
+                        <div class="nav-search-results">
+                            <?php if (!empty($_SESSION['inventory'])): ?>
+                                <?php foreach ($_SESSION['inventory'] as $searchProduct): ?>
+                                    <a href="product.php?id=<?php echo (int)$searchProduct['id']; ?>" class="nav-search-result" data-search-text="<?php echo htmlspecialchars(strtolower(($searchProduct['brand'] ?? '') . ' ' . ($searchProduct['name'] ?? '') . ' ' . ($searchProduct['category'] ?? ''))); ?>">
+                                        <img src="<?php echo htmlspecialchars($searchProduct['image'] ?? ''); ?>" alt="<?php echo htmlspecialchars($searchProduct['name'] ?? 'Product'); ?>">
+                                        <span>
+                                            <strong><?php echo htmlspecialchars($searchProduct['name'] ?? 'Product'); ?></strong>
+                                            <small><?php echo htmlspecialchars($searchProduct['brand'] ?? 'ApeX'); ?> · ₱<?php echo number_format((float)($searchProduct['price'] ?? 0), 2); ?></small>
+                                        </span>
+                                    </a>
+                                <?php endforeach; ?>
+                                <div class="nav-search-empty">No products found.</div>
+                            <?php else: ?>
+                                <div class="nav-search-empty show">No products available.</div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
                 <a href="#favoritesOffcanvas" data-bs-toggle="offcanvas" role="button" aria-controls="favoritesOffcanvas" style="position:relative; cursor:pointer; color: rgba(255, 255, 255, .75);">
                     <i class="fas fa-heart"></i>
                     <span class="cart-badge" style="background: #ff3b5c; color: white;"><?php echo isset($_SESSION['favorites']) ? count($_SESSION['favorites']) : 0; ?></span>
