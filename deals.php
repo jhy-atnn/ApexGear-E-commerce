@@ -64,7 +64,7 @@ $flash_deal_ids = [10, 11, 12, 13];
 </head>
 
 <body>
-    <?php include_once __DIR__ . '/cookie_notif.php'; ?>
+    <?php include_once __DIR__ . '/includes\cookie_notif.php'; ?>
 
     <!-- INJECT NAVBAR -->
     <?php

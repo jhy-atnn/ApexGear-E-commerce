@@ -32,7 +32,7 @@ class AboutTeam extends AboutBrand
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
 </head>
 <body>
-    <?php include_once __DIR__ . '/cookie_notif.php'; ?>
+    <?php include_once __DIR__ . '/includes\cookie_notif.php'; ?>
 
     <!-- INJECT NAVBAR -->
     <?php 

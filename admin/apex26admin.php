@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $inventoryManager->addProduct($name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $final_image, $desc);
 
-        header("Location: apex26admin.php?success=added");
+        header("Location: admin\apex26admin.php?success=added");
         exit();
     }
 
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $idToDelete = (int)$_POST['product_id'];
         $inventoryManager->deleteProduct($idToDelete);
 
-        header("Location: apex26admin.php?success=deleted");
+        header("Location: admin\apex26admin.php?success=deleted");
         exit();
     }
 
@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $inventoryManager->editProduct($id, $name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $final_image, $desc);
 
-        header("Location: apex26admin.php?success=edited");
+        header("Location: admin\apex26admin.php?success=edited");
         exit();
     }
 }
@@ -168,7 +168,7 @@ $products = $inventoryManager->getAllProducts();
                     <div class="apex-card">
                         <h5 class="fw-bold mb-4 text-uppercase" style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem;">Add New Gadget</h5>
 
-                        <form method="POST" action="apex26admin.php" enctype="multipart/form-data">
+                        <form method="POST" action="admin\apex26admin.php" enctype="multipart/form-data">
                             <input type="hidden" name="action" value="add">
 
                             <div class="mb-3">
@@ -360,7 +360,7 @@ $products = $inventoryManager->getAllProducts();
                                                         <i class="fas fa-edit"></i> Edit
                                                     </button>
 
-                                                    <form method="POST" action="apex26admin.php" style="display:inline;">
+                                                    <form method="POST" action="admin\apex26admin.php" style="display:inline;">
                                                         <input type="hidden" name="action" value="delete">
                                                         <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
                                                         <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this gadget permanently?');"><i class="fas fa-trash"></i> Delete</button>
@@ -392,7 +392,7 @@ $products = $inventoryManager->getAllProducts();
                     <h5 class="modal-title fw-bold text-uppercase" style="font-family: 'Barlow Condensed', sans-serif;">Edit Gadget</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form method="POST" action="apex26admin.php" enctype="multipart/form-data">
+                <form method="POST" action="admin\apex26admin.php" enctype="multipart/form-data">
                     <div class="modal-body p-4">
                         <input type="hidden" name="action" value="edit">
                         <input type="hidden" name="product_id" id="edit_product_id">

@@ -23,7 +23,7 @@ $products = $inventoryManager->getAllProducts();
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
 </head>
 <body>
-    <?php include_once __DIR__ . '/cookie_notif.php'; ?>
+    <?php include_once __DIR__ . '/includes\cookie_notif.php'; ?>
 
     <!-- INJECT NAVBAR -->
     <?php 
@@ -53,7 +53,7 @@ $products = $inventoryManager->getAllProducts();
                 <?php if (empty($products)): ?>
                     <div class="col-12 text-center py-5">
                         <h3 class="text-muted">Inventory is currently empty.</h3>
-                        <p>Head over to the <a href="apex26admin.php" class="text-apex-accent">Admin Panel</a> to add some gadgets.</p>
+                        <p>Head over to the <a href="admin\apex26admin.php" class="text-apex-accent">Admin Panel</a> to add some gadgets.</p>
                     </div>
                 <?php else: ?>
                     <?php foreach ($products as $product): ?>
@@ -103,7 +103,7 @@ $products = $inventoryManager->getAllProducts();
                                     </div>
                                     <div class="product-actions">
                                         <a href="product.php?id=<?php echo $product['id']; ?>" class="btn-shop stretched-link">View Details</a>
-                                        <form method="POST" action="favorites_action.php" class="m-0 position-relative" style="display: inline-block; z-index: 2;">
+                                        <form method="POST" action="includes\favorites_action.php" class="m-0 position-relative" style="display: inline-block; z-index: 2;">
                                             <input type="hidden" name="action" value="add">
                                             <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
                                             <input type="hidden" name="return_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">

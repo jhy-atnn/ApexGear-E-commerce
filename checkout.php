@@ -151,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 </head>
 
 <body>
-<?php include_once __DIR__ . '/cookie_notif.php'; ?>
+<?php include_once __DIR__ . '/includes\cookie_notif.php'; ?>
 
     <nav class="main-nav navbar navbar-expand-lg">
         <div class="container d-flex justify-content-between align-items-center">
