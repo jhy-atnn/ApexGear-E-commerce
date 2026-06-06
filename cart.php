@@ -56,8 +56,10 @@ $grand_total = $subtotal + $tax;
             <div class="d-flex align-items-center gap-3">
                 <span>Free shipping on orders over ₱5,000</span>
                 <div class="search-wrap d-none d-md-block">
-                    <input type="text" placeholder="Search products…" />
-                    <button><i class="fas fa-search"></i></button>
+                    <form method="GET" action="store.php" class="d-flex align-items-center">
+                        <input type="search" name="q" value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" placeholder="Search products…" aria-label="Search products" />
+                        <button type="submit" aria-label="Search"><i class="fas fa-search"></i></button>
+                    </form>
                 </div>
             </div>
         </div>

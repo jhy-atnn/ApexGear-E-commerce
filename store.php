@@ -8,6 +8,26 @@ $inventoryManager = new Inventory();
 
 // Fetch ALL products (not just featured ones)
 $products = $inventoryManager->getAllProducts();
+
+$searchQuery = trim($_GET['q'] ?? '');
+if ($searchQuery !== '') {
+    $filteredProducts = [];
+    $query = mb_strtolower($searchQuery, 'UTF-8');
+
+    foreach ($products as $product) {
+        $haystack = mb_strtolower(implode(' ', [
+            $product['name'] ?? '',
+            $product['brand'] ?? '',
+            $product['category'] ?? '',
+        ]), 'UTF-8');
+
+        if (mb_strpos($haystack, $query, 0, 'UTF-8') !== false) {
+            $filteredProducts[] = $product;
+        }
+    }
+
+    $products = $filteredProducts;
+}
 ?>
 
 <!DOCTYPE html>
@@ -41,7 +61,14 @@ $products = $inventoryManager->getAllProducts();
     <section class="inner-page">
         <div class="container">
             <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
-                <span class="text-muted fw-bold"><?php echo count($products); ?> Products Available</span>
+                <?php if ($searchQuery !== ''): ?>
+                    <div>
+                        <span class="text-muted fw-bold">Search results for "<?php echo htmlspecialchars($searchQuery); ?>"</span>
+                        <div class="small text-muted"><?php echo count($products); ?> product<?php echo count($products) === 1 ? '' : 's'; ?> found</div>
+                    </div>
+                <?php else: ?>
+                    <span class="text-muted fw-bold"><?php echo count($products); ?> Products Available</span>
+                <?php endif; ?>
                 <select class="form-select w-auto bg-white border-1 fw-bold text-muted shadow-sm">
                     <option>Sort by: Featured</option>
                     <option>Price: Low to High</option>
@@ -52,8 +79,13 @@ $products = $inventoryManager->getAllProducts();
             <div class="row g-4">
                 <?php if (empty($products)): ?>
                     <div class="col-12 text-center py-5">
-                        <h3 class="text-muted">Inventory is currently empty.</h3>
-                        <p>Head over to the <a href="admin\apex26admin.php" class="text-apex-accent">Admin Panel</a> to add some gadgets.</p>
+                        <?php if ($searchQuery !== ''): ?>
+                            <h3 class="text-muted">No products matched your search.</h3>
+                            <p>Try searching by another name or category.</p>
+                        <?php else: ?>
+                            <h3 class="text-muted">Inventory is currently empty.</h3>
+                            <p>Head over to the <a href="admin\apex26admin.php" class="text-apex-accent">Admin Panel</a> to add some gadgets.</p>
+                        <?php endif; ?>
                     </div>
                 <?php else: ?>
                     <?php foreach ($products as $product): ?>
