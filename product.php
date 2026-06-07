@@ -245,7 +245,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                     </form>
                 </div>
 
-                <div class="d-flex gap-4 mt-4 text-muted small fw-bold">
+                <div class="d-flex gap-4 mt-4 text-muted small fw-bold product-meta-row">
                     <span>
                         <?php if ($stock > 0): ?>
                             <i class="fas fa-check text-success me-1"></i> <?php echo $stock; ?> In Stock
