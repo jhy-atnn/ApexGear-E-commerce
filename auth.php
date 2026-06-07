@@ -313,17 +313,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                         <span class="btn-spinner d-none"><i class="fas fa-circle-notch fa-spin"></i></span>
                     </button>
 
-                    <div class="auth-divider"><span>or continue with</span></div>
-
-                    <div class="auth-social">
-                        <button class="social-btn facebook" onclick="doSocial('facebook')">
-                            <i class="fab fa-facebook-f"></i> Facebook
-                        </button>
-                        <button class="social-btn google" onclick="doSocial('google')">
-                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="G" width="18" /> Google
-                        </button>
-                    </div>
-
                     <p class="auth-switch">No account yet? <a href="#" onclick="showTab('register'); return false;">Register</a></p>
                 </div>
 

@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $unique_file_name = time() . "_" . $clean_file_name;
             $target_file      = $target_dir . $unique_file_name;
             if (move_uploaded_file($_FILES["image_upload"]["tmp_name"], $target_file)) {
-                $image = "../assets/images/products/" . $unique_file_name;
+                $image = "assets/images/products/" . $unique_file_name;
             }
         } elseif ($image_source === 'url' && !empty($_POST['image'])) {
             $image = $_POST['image'];
@@ -371,6 +371,7 @@ $lowStock      = count(array_filter($products, fn($p) => isset($p['stock']) && $
                                         $s = isset($product['stock']) ? (int)$product['stock'] : 0;
                                         $stockClass = $s === 0 ? 'zero' : ($s < 5 ? 'low' : 'ok');
                                         $stockLabel = $s === 0 ? 'Out' : $s;
+                                        $productImage = Inventory::getProductImageSrc($product['image'] ?? '', '../');
                                         ?>
                                         <tr>
                                             <td class="text-muted fw-bold" style="padding-left:20px; font-size:.8rem;">#<?php echo $product['id']; ?></td>
@@ -380,7 +381,7 @@ $lowStock      = count(array_filter($products, fn($p) => isset($p['stock']) && $
                                                         <?php if (strpos($product['image'], '<svg') !== false): ?>
                                                             <?php echo $product['image']; ?>
                                                         <?php else: ?>
-                                                            <img src="<?php echo htmlspecialchars($product['image']); ?>" alt="">
+                                                            <img src="<?php echo htmlspecialchars($productImage); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
                                                         <?php endif; ?>
                                                     </div>
                                                     <div>

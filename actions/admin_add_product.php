@@ -17,11 +17,11 @@ $badge = !empty($_POST['badge']) ? trim($_POST['badge']) : NULL;
 $badge_type = !empty($_POST['badge_type']) ? trim($_POST['badge_type']) : NULL;
 $desc = trim($_POST['desc'] ?? '');
 
-$db_image_path = "assets/images/placeholder.png";
+$db_image_path = "https://placehold.co/400x300/eeeeee/1D1D1F?text=No+Image";
 
 // Handle Image Upload
 if (isset($_FILES["product_image"]) && $_FILES["product_image"]["error"] == 0) {
-    $target_dir = "../assets/images/uploads/";
+    $target_dir = "../assets/images/products/";
 
     // Create directory if it doesn't exist
     if (!is_dir($target_dir)) {
@@ -33,7 +33,7 @@ if (isset($_FILES["product_image"]) && $_FILES["product_image"]["error"] == 0) {
     $target_file = $target_dir . $unique_file_name;
 
     if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $target_file)) {
-        $db_image_path = "assets/images/uploads/" . $unique_file_name;
+        $db_image_path = "assets/images/products/" . $unique_file_name;
     }
 }
 

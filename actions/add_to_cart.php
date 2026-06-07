@@ -16,7 +16,7 @@ $badge = !empty($_POST['badge']) ? trim($_POST['badge']) : NULL;
 $badge_type = !empty($_POST['badge_type']) ? trim($_POST['badge_type']) : NULL;
 $desc = trim($_POST['desc'] ?? ''); // <--- Grab the description
 
-$db_image_path = "assets/images/placeholder.png";
+$db_image_path = "https://placehold.co/400x300/eeeeee/1D1D1F?text=No+Image";
 
 // Handle Image Upload
 if (isset($_FILES["product_image"]) && $_FILES["product_image"]["error"] == 0) {

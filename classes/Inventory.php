@@ -38,6 +38,38 @@ class Inventory
         $this->currentProduct = $product;
     }
 
+    public static function normalizeProductImagePath($image)
+    {
+        $image = trim((string)$image);
+
+        if ($image === '') {
+            return 'https://placehold.co/400x300/eeeeee/1D1D1F?text=No+Image';
+        }
+
+        if (stripos($image, '<svg') !== false || preg_match('#^(https?:|data:)#i', $image)) {
+            return $image;
+        }
+
+        $image = str_replace('\\', '/', $image);
+
+        while (strpos($image, '../') === 0) {
+            $image = substr($image, 3);
+        }
+
+        return ltrim($image, '/');
+    }
+
+    public static function getProductImageSrc($image, $basePath = '')
+    {
+        $image = self::normalizeProductImagePath($image);
+
+        if (stripos($image, '<svg') !== false || preg_match('#^(https?:|data:)#i', $image)) {
+            return $image;
+        }
+
+        return $basePath . $image;
+    }
+
     public function getAllProducts()
     {
         $products = [];
@@ -135,7 +167,7 @@ class Inventory
         $rating = empty($rating) ? 0 : (int)$rating;
         $badge = empty($badge) ? null : $badge;
         $badge_type = empty($badge_type) ? null : $badge_type;
-        $image = empty($image) ? 'https://placehold.co/400x300/eeeeee/1D1D1F?text=No+Image' : $image;
+        $image = self::normalizeProductImagePath($image);
         
         $sql = "INSERT INTO products_tbl (name, brand_id, category_id, price, old_price, stock, rating, badge, badge_type, image) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -159,7 +191,7 @@ class Inventory
         $rating = empty($rating) ? 0 : (int)$rating;
         $badge = empty($badge) ? null : $badge;
         $badge_type = empty($badge_type) ? null : $badge_type;
-        $image = empty($image) ? 'https://placehold.co/400x300/eeeeee/1D1D1F?text=No+Image' : $image;
+        $image = self::normalizeProductImagePath($image);
 
         $sql = "UPDATE products_tbl 
                 SET name = ?, brand_id = ?, category_id = ?, price = ?, old_price = ?, stock = ?, rating = ?, badge = ?, badge_type = ?, image = ? 

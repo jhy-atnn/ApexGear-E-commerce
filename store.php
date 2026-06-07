@@ -28,6 +28,8 @@ if ($searchQuery !== '') {
 
     $products = $filteredProducts;
 }
+
+$productCount = count($products);
 ?>
 
 <!DOCTYPE html>
@@ -53,29 +55,39 @@ if ($searchQuery !== '') {
     include 'includes\navbar.php';
     ?>
 
-    <header class="inner-header">
+    <header class="inner-header store-hero">
         <div class="container">
-            <h1>Complete Catalog</h1>
-            <p>Equip your setup with industry-leading hardware.</p>
+            <div class="store-hero-copy">
+                <span class="store-kicker">ApeX Gear Store</span>
+                <h1>Complete Catalog</h1>
+                <p>Equip your setup with industry-leading hardware.</p>
+            </div>
+            <div class="store-hero-stat">
+                <span><?php echo $productCount; ?></span>
+                <small>Products Available</small>
+            </div>
         </div>
     </header>
 
     <section class="inner-page" style="padding-bottom: 4rem;">
         <div class="container">
-            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
-                <?php if ($searchQuery !== ''): ?>
-                    <div>
-                        <span class="text-muted fw-bold">Search results for "<?php echo htmlspecialchars($searchQuery); ?>"</span>
-                        <div class="small text-muted"><?php echo count($products); ?> product<?php echo count($products) === 1 ? '' : 's'; ?> found</div>
-                    </div>
-                <?php else: ?>
-                    <span class="text-muted fw-bold"><?php echo count($products); ?> Products Available</span>
-                <?php endif; ?>
-                <select class="form-select w-auto bg-white border-1 fw-bold text-muted shadow-sm">
-                    <option>Sort by: Featured</option>
-                    <option>Price: Low to High</option>
-                    <option>Price: High to Low</option>
-                </select>
+            <div class="catalog-toolbar">
+                <div class="catalog-summary">
+                    <span class="catalog-count"><?php echo $productCount; ?> Product<?php echo $productCount === 1 ? '' : 's'; ?></span>
+                    <?php if ($searchQuery !== ''): ?>
+                        <span class="catalog-context">Results for "<?php echo htmlspecialchars($searchQuery); ?>"</span>
+                    <?php else: ?>
+                        <span class="catalog-context">All current inventory</span>
+                    <?php endif; ?>
+                </div>
+                <label class="catalog-sort">
+                    <span>Sort</span>
+                    <select>
+                        <option>Featured</option>
+                        <option>Price: Low to High</option>
+                        <option>Price: High to Low</option>
+                    </select>
+                </label>
             </div>
 
             <div class="row g-4">
@@ -102,11 +114,13 @@ if ($searchQuery !== '') {
 
                                 <div class="product-img bg-white">
                                     <?php
+                                    $rawImage = $product['image'] ?? '';
                                     // Handle both image URLs and SVG snippets gracefully
-                                    if (strpos($product['image'], '<svg') !== false) {
-                                        echo $product['image'];
+                                    if (strpos($rawImage, '<svg') !== false) {
+                                        echo $rawImage;
                                     } else {
-                                        echo '<img src="' . htmlspecialchars($product['image']) . '" alt="img">';
+                                        $productImage = Inventory::getProductImageSrc($rawImage);
+                                        echo '<img src="' . htmlspecialchars($productImage) . '" alt="' . htmlspecialchars($product['name']) . '">';
                                     }
                                     ?>
                                 </div>
