@@ -175,9 +175,7 @@ body {
 }
 
 .nav-search-wrap {
-    position: absolute;
-    right: 92px; /* moved leftward so the search icon sits left of the heart (favorites) icon */
-    top: 6px;
+    position: relative;
     width: clamp(42px, 16vw, 220px);
     transition: width .25s ease, transform .2s ease;
     z-index: 1200;

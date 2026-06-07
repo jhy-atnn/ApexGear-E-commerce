@@ -39,7 +39,6 @@ $currentPage = $currentPage ?? '';
                 <li class="nav-item"><a class="nav-link <?= $currentPage === 'about' ? 'active' : '' ?>" href="about.php">About Us</a></li>
             </ul>
             <div class="nav-icons d-flex align-items-center">
-                    <!-- search is placed after favorites for slide-open UX -->
                        <div class="nav-search-wrap">
                     <div class="nav-search-field">
                         <button class="nav-search-toggle" type="button" aria-label="Search products" aria-expanded="false">
