@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 07, 2026 at 05:40 AM
+-- Generation Time: Jun 07, 2026 at 07:40 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -68,6 +68,24 @@ CREATE TABLE `brands_tbl` (
   `brand_name` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `brands_tbl`
+--
+
+INSERT INTO `brands_tbl` (`brand_id`, `brand_name`) VALUES
+(1, 'Lenovo'),
+(2, 'ASUS'),
+(3, 'Razer'),
+(4, 'Logitech'),
+(5, 'Sony'),
+(6, 'Samsung'),
+(7, 'Dell'),
+(8, 'LG'),
+(9, 'Apple'),
+(10, 'HP'),
+(11, 'Corsair'),
+(12, 'NVIDIA');
+
 -- --------------------------------------------------------
 
 --
@@ -93,6 +111,18 @@ CREATE TABLE `categories_tbl` (
   `category_id` int(11) NOT NULL,
   `category_name` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `categories_tbl`
+--
+
+INSERT INTO `categories_tbl` (`category_id`, `category_name`) VALUES
+(1, 'Laptops'),
+(2, 'Peripherals'),
+(3, 'Audio'),
+(4, 'Phones'),
+(5, 'Desktops'),
+(6, 'GPUs');
 
 -- --------------------------------------------------------
 
@@ -152,9 +182,33 @@ CREATE TABLE `products_tbl` (
   `brand_id` int(11) DEFAULT NULL,
   `category_id` int(11) DEFAULT NULL,
   `price` decimal(10,2) NOT NULL,
+  `old_price` decimal(10,2) DEFAULT NULL,
   `stock` int(11) DEFAULT 0,
+  `rating` int(11) DEFAULT 0,
+  `badge` varchar(50) DEFAULT NULL,
+  `badge_type` varchar(50) DEFAULT NULL,
+  `image` text DEFAULT NULL,
   `is_archived` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `products_tbl`
+--
+
+INSERT INTO `products_tbl` (`product_id`, `name`, `brand_id`, `category_id`, `price`, `old_price`, `stock`, `rating`, `badge`, `badge_type`, `image`, `is_archived`) VALUES
+(1, 'Legion 5 Pro — RTX 4070, 16\" QHD 165Hz', 1, 1, 119995.00, 127999.00, 10, 124, 'New', 'new', 'assets/images/products/legion5pro.png', 0),
+(2, 'ROG Zephyrus G14 — Ryzen 9, RTX 4060', 2, 1, 109995.00, 119995.00, 5, 89, 'SALE', 'ribbon', 'assets/images/products/zephyrusg14.png', 0),
+(3, 'BlackWidow V4 Pro — Mechanical, RGB, Wireless', 3, 2, 13495.00, 15995.00, 20, 4210, 'Popular', 'normal', 'assets/images/products/blackwidow.png', 0),
+(4, 'G Pro X Superlight 2 — Wireless Gaming Mouse', 4, 2, 7795.00, 8995.00, 15, 4340, NULL, NULL, 'assets/images/products/superlight.png', 0),
+(5, 'WH-1000XM5 — Noise Cancelling, 30hr Battery', 5, 3, 15499.00, 20999.00, 12, 512, 'New', 'new', 'assets/images/products/sonywh.png', 0),
+(6, 'Galaxy S24 Ultra — 200MP, 5000mAh, Titanium', 6, 4, 84990.00, 94990.00, 8, 445, 'SALE', 'ribbon', 'assets/images/products/s24ultra.png', 0),
+(7, 'XPS Tower — Intel i9-14900K, RTX 4080, 64GB', 7, 5, 185000.00, 200000.00, 3, 78, NULL, NULL, 'assets/images/products/xpstower.png', 0),
+(8, 'UltraGear 27\" — 4K, 144Hz, 1ms, IPS, G-Sync', 8, 2, 39995.00, 45995.00, 7, 193, 'On Sale', 'sale', 'assets/images/products/ultragear.png', 0),
+(9, 'iPhone 17 Pro — Cosmic Orange - Aluminum', 9, 4, 109990.00, 119990.00, 15, 445, 'On Sale', 'sale', 'assets/images/products/iphone17pro.png', 0),
+(10, 'Spectre x360 14\" — OLED, Intel Evo', 10, 1, 79995.00, 95000.00, 10, 156, '–15%', 'sale', 'assets/images/products/hpspectre.png', 0),
+(11, 'iPhone 15 Pro — 256GB, Natural Titanium', 9, 4, 69990.00, 76990.00, 25, 892, '–10%', 'sale', 'assets/images/products/iph15pro.png', 0),
+(12, 'K100 Air — Ultra-Thin, Wireless, RGB', 11, 2, 11995.00, 16500.00, 15, 340, '–25%', 'sale', 'assets/images/products/corsairk100air.png', 0),
+(13, 'GeForce RTX 4070 Super — 12GB GDDR6X', 12, 6, 36500.00, 42000.00, 5, 215, '–13%', 'sale', 'assets/images/products/nvidiartx4070.png', 0);
 
 -- --------------------------------------------------------
 
@@ -254,7 +308,7 @@ ALTER TABLE `users_tbl`
 -- AUTO_INCREMENT for table `brands_tbl`
 --
 ALTER TABLE `brands_tbl`
-  MODIFY `brand_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `brand_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `cart_items_tbl`
@@ -266,7 +320,7 @@ ALTER TABLE `cart_items_tbl`
 -- AUTO_INCREMENT for table `categories_tbl`
 --
 ALTER TABLE `categories_tbl`
-  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `favorites_tbl`
@@ -290,7 +344,7 @@ ALTER TABLE `order_items_tbl`
 -- AUTO_INCREMENT for table `products_tbl`
 --
 ALTER TABLE `products_tbl`
-  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `users_tbl`
