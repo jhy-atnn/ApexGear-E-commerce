@@ -48,10 +48,12 @@ INSERT INTO `products_tbl` (`product_id`, `name`, `brand_id`, `category_id`, `pr
 ('14', 'Omniverse', '12', '7', '6586.00', NULL, '21', '2344', 'New', 'new', 'assets/images/products/1780862851_HP_Logo_Background_PNG_Image.png', NULL, '0'),
 ('15', 'Ariana Grande', '2', '7', '6969.00', NULL, '70', '6500', 'Popular', 'normal', 'assets/images/products/1780864421_apple_logo_png_index_content_uploads_10.png', NULL, '0'),
 ('16', 'Justine Luige Malaiba', '2', '4', '122838.00', '139990.00', '11', '123', 'Popular', 'new', 'assets/images/products/1780864853_Malaiba.png', NULL, '0'),
-('17', 'Semi-Final 2', '3', '5', '36623.00', NULL, '363', '111', 'New', 'normal', 'assets/images/products/1780865818_original_samsung_logo_10.png', NULL, '0')
+('17', 'Semi-Final 2', '3', '5', '36623.00', NULL, '363', '111', 'New', 'normal', 'assets/images/products/1780865818_original_samsung_logo_10.png', NULL, '0'),
+('18', 'Legion 5 Pro — RTX 4070, 16\" QHD 165Hz', '2', '1', '10000.00', NULL, '11', '0', NULL, 'normal', 'assets/images/products/1780866608_PIC_removebg_preview.png', NULL, '0'),
+('19', 'WH-1000XM5 — Noise Cancelling, 30hr Battery', '10', '5', '10000.00', NULL, '11', '0', NULL, 'normal', 'assets/images/products/1780866667_hand.jpg', NULL, '0')
 ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `brand_id` = VALUES(`brand_id`), `category_id` = VALUES(`category_id`), `price` = VALUES(`price`), `old_price` = VALUES(`old_price`), `stock` = VALUES(`stock`), `rating` = VALUES(`rating`), `badge` = VALUES(`badge`), `badge_type` = VALUES(`badge_type`), `image` = VALUES(`image`), `desc` = VALUES(`desc`), `is_archived` = VALUES(`is_archived`);
 
-ALTER TABLE `products_tbl` AUTO_INCREMENT = 18;
+ALTER TABLE `products_tbl` AUTO_INCREMENT = 20;
 
 INSERT INTO `users_tbl` (`user_id`, `username`, `first_name`, `last_name`, `profile_picture`, `bio`, `gender`, `birthday`, `phone`, `email`, `password_hash`, `role`) VALUES
 ('1', 'Juday', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'atinon.jhody@gmail.com', '$2y$10$o/rJRTsc1AdhVnm/VOhI0eSPCOx9WAK8GDXgYtAANwYCBkYjullWi', 'customer')
