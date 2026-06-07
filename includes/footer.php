@@ -199,18 +199,20 @@
         </div>
         <div class="profile-modal-body">
             <div id="profileAlert" class="alert d-none"></div>
-            <div class="profile-avatar-section">
-                <div class="profile-avatar-large">
-                    <?php
-                        $avatarUrl = isset($_SESSION['user']['profile_picture']) && !empty($_SESSION['user']['profile_picture']) 
-                                     ? $_SESSION['user']['profile_picture'] 
-                                     : 'https://via.placeholder.com/400';
-                    ?>
-                    <img src="<?php echo htmlspecialchars($avatarUrl); ?>" alt="User Avatar" id="userModalAvatar">
-                    <!-- Note: Real avatar upload would require a backend handler, for now we let users update a URL or omit it -->
+            <form id="userProfileForm" enctype="multipart/form-data">
+                <div class="profile-avatar-section">
+                    <div class="profile-avatar-large position-relative">
+                        <?php
+                            $avatarUrl = isset($_SESSION['user']['profile_picture']) && !empty($_SESSION['user']['profile_picture']) 
+                                         ? $_SESSION['user']['profile_picture'] 
+                                         : 'https://via.placeholder.com/400';
+                        ?>
+                        <img src="<?php echo htmlspecialchars($avatarUrl); ?>" alt="User Avatar" id="userModalAvatar">
+                        <label for="userProfilePicture" class="btn btn-sm btn-primary position-absolute" style="bottom: 12px; right: 12px; z-index: 2;">Change</label>
+                        <input type="file" id="userProfilePicture" name="profile_picture" class="d-none" accept="image/*">
+                    </div>
+                    <div class="mt-3 text-center text-muted small">Upload a JPG, PNG, or WEBP profile picture.</div>
                 </div>
-            </div>
-            <form id="userProfileForm">
                 <div class="row">
                     <div class="col-md-6 form-group">
                         <label for="userFirstName">First Name</label>
@@ -352,6 +354,18 @@
         profileModal.addEventListener('click', (e) => {
             if (e.target === profileModal) {
                 profileModal.classList.remove('open');
+            }
+        });
+
+        document.getElementById('userProfilePicture').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const avatar = document.getElementById('userModalAvatar');
+            if (file && avatar) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    avatar.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
             }
         });
 
