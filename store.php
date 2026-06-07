@@ -32,6 +32,7 @@ if ($searchQuery !== '') {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -42,13 +43,14 @@ if ($searchQuery !== '') {
     <link href="assets/css/style.css" rel="stylesheet" />
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
 </head>
+
 <body>
     <?php include_once __DIR__ . '/includes\cookie_notif.php'; ?>
 
     <!-- INJECT NAVBAR -->
-    <?php 
+    <?php
     $currentPage = 'store';
-    include 'includes\navbar.php'; 
+    include 'includes\navbar.php';
     ?>
 
     <header class="inner-header">
@@ -161,4 +163,5 @@ if ($searchQuery !== '') {
     <?php include 'includes\footer.php'; ?>
 
 </body>
+
 </html>

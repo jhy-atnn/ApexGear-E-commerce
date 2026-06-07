@@ -69,7 +69,8 @@ $grand_total = $subtotal + $tax;
         <div class="container">
             <a href="index.php" class="brand me-4">
                 <img src="assets/images/ApeX Logo.png" alt="ApeX Gear Logo" class="brand-logo-img">
-                <div class="brand-text" style="color: white; margin-left:-10px">ApeX</div><div class="brand-text" style="color: #00c2ff; margin-left:-10px">Gear</div>
+                <div class="brand-text" style="color: white; margin-left:-10px">ApeX</div>
+                <div class="brand-text" style="color: #00c2ff; margin-left:-10px">Gear</div>
             </a>
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainMenu"
                 style="color:#fff; font-size:1.3rem;">

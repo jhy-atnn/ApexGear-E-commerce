@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
 </head>
 
 <body>
-<?php include_once __DIR__ . '/includes\cookie_notif.php'; ?>
+    <?php include_once __DIR__ . '/includes\cookie_notif.php'; ?>
 
     <div class="topbar">
         <div class="container d-flex justify-content-between align-items-center">
@@ -87,8 +87,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         <div class="container">
             <a href="index.php" class="brand me-4">
                 <img src="assets/images/ApeX Logo.png" alt="ApeX Gear Logo" class="brand-logo-img">
-             <div class="brand-text" style="color: white; margin-left:-10px">ApeX</div><div class="brand-text" style="color: #00c2ff; margin-left:-10px">Gear</div>
-            
+                <div class="brand-text" style="color: white; margin-left:-10px">ApeX</div>
+                <div class="brand-text" style="color: #00c2ff; margin-left:-10px">Gear</div>
+
             </a>
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainMenu"
                 style="color:#fff; font-size:1.3rem;">
@@ -99,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                     <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
                     <li class="nav-item"><a class="nav-link active" href="store.php">Products</a></li>
                     <li class="nav-item"><a class="nav-link" href="deals.php">Deals</a></li>
-                 
+
                     <li class="nav-item"><a class="nav-link" href="about">About Us</a></li>
                 </ul>
                 <div class="nav-icons d-flex align-items-center">
@@ -436,12 +437,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         </div>
     </div>
     <script>
-    <?php if (isset($_SESSION['user'])): ?>
-    (function() {
-        const panel = document.createElement('div');
-        panel.id = 'profilePanel';
-        panel.className = 'profile-panel';
-        panel.innerHTML = `
+        <?php if (isset($_SESSION['user'])): ?>
+                (function() {
+                    const panel = document.createElement('div');
+                    panel.id = 'profilePanel';
+                    panel.className = 'profile-panel';
+                    panel.innerHTML = `
             <div class="pp-header">
                 <div class="pp-avatar"><?php echo htmlspecialchars($_SESSION['user']['avatar']); ?></div>
                 <div>
@@ -458,30 +459,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
             <div class="pp-divider"></div>
             <a href="logout.php" class="pp-link pp-logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
         `;
-        document.body.appendChild(panel);
-    })();
-    function toggleProfilePanel(e) {
-        e.stopPropagation();
-        const panel = document.getElementById('profilePanel');
-        const btn   = document.getElementById('profileToggle');
-        const rect  = btn.getBoundingClientRect();
-        const isOpen = panel.classList.contains('open');
-        if (isOpen) { panel.classList.remove('open'); return; }
-        panel.style.top   = (rect.bottom + window.scrollY + 12) + 'px';
-        panel.style.left  = 'auto';
-        panel.style.right = (document.documentElement.clientWidth - rect.right) + 'px';
-        panel.classList.add('open');
-    }
-    document.addEventListener('click', function(e) {
-        const panel = document.getElementById('profilePanel');
-        const btn   = document.getElementById('profileToggle');
-        if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) panel.classList.remove('open');
-    });
-    window.addEventListener('scroll', function() {
-        const panel = document.getElementById('profilePanel');
-        if (panel) panel.classList.remove('open');
-    });
-    <?php endif; ?>
+                    document.body.appendChild(panel);
+                })();
+
+            function toggleProfilePanel(e) {
+                e.stopPropagation();
+                const panel = document.getElementById('profilePanel');
+                const btn = document.getElementById('profileToggle');
+                const rect = btn.getBoundingClientRect();
+                const isOpen = panel.classList.contains('open');
+                if (isOpen) {
+                    panel.classList.remove('open');
+                    return;
+                }
+                panel.style.top = (rect.bottom + window.scrollY + 12) + 'px';
+                panel.style.left = 'auto';
+                panel.style.right = (document.documentElement.clientWidth - rect.right) + 'px';
+                panel.classList.add('open');
+            }
+            document.addEventListener('click', function(e) {
+                const panel = document.getElementById('profilePanel');
+                const btn = document.getElementById('profileToggle');
+                if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) panel.classList.remove('open');
+            });
+            window.addEventListener('scroll', function() {
+                const panel = document.getElementById('profilePanel');
+                if (panel) panel.classList.remove('open');
+            });
+        <?php endif; ?>
     </script>
 </body>
 

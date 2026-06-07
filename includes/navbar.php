@@ -39,7 +39,7 @@ $currentPage = $currentPage ?? '';
                 <li class="nav-item"><a class="nav-link <?= $currentPage === 'about' ? 'active' : '' ?>" href="about.php">About Us</a></li>
             </ul>
             <div class="nav-icons d-flex align-items-center">
-                       <div class="nav-search-wrap">
+                <div class="nav-search-wrap">
                     <div class="nav-search-field">
                         <button class="nav-search-toggle" type="button" aria-label="Search products" aria-expanded="false">
                             <i class="fas fa-search"></i>
@@ -70,11 +70,11 @@ $currentPage = $currentPage ?? '';
                     <span class="cart-badge" style="background: #ff3b5c; color: white;"><?php echo isset($_SESSION['favorites']) ? count($_SESSION['favorites']) : 0; ?></span>
                 </a>
                 <!-- Move search here so it sits next to the favorites icon and can slide open to the right -->
-              
+
                 <a href="#cartOffcanvas" data-bs-toggle="offcanvas" role="button" aria-controls="cartOffcanvas" style="position:relative; cursor:pointer;">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-badge">
-                        <?php echo isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'qty')) : 0; 
+                        <?php echo isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'qty')) : 0;
                         ?></span>
                 </a>
                 <?php if (isset($_SESSION['user'])): ?>

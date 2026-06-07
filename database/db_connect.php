@@ -1,22 +1,13 @@
 <?php
-class db_connect
-{
-    private $host = "localhost";
-    private $username = "root";
-    private $password = "";
-    private $database = "db_apexgear";
 
-    public $conn;
-    public function getConnection()
-    {
-        $this->conn = null;
+$host = "localhost";
+$username = "root";
+$password = "";
+$database = "db_apexgear";
 
-        $this->conn = new mysqli($this->host, $this->username, $this->password, $this->database);
+$conn = new mysqli($host, $username, $password, $database);
 
-        if ($this->conn->connect_error) {
-            die("Database Connection Failed: " . $this->conn->connect_error);
-        }
-
-        return $this->conn;
-    }
+if ($conn->connect_error) {
+    die("Database Connection Failed: " . $conn->connect_error);
 }
+$conn->set_charset("utf8mb4");

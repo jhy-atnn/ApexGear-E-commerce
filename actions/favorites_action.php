@@ -1,48 +1,44 @@
 <?php
 session_start();
-require_once 'classes/Inventory.php';
+require_once __DIR__ . '/../db_connect.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_POST['product_id'])) {
-    $product_id = $_POST['product_id'];
-    $action = $_POST['action'];
-
-    // Make sure the favorites session array exists
-    if (!isset($_SESSION['favorites'])) {
-        $_SESSION['favorites'] = [];
-    }
-
-    if ($action === 'remove') {
-        // Remove item from favorites
-        if (isset($_SESSION['favorites'][$product_id])) {
-            unset($_SESSION['favorites'][$product_id]);
-        }
-    } elseif ($action === 'add') {
-        // Fetch product details to save in the session
-        $inventoryManager = new Inventory();
-        $products = $inventoryManager->getAllProducts();
-
-        if (isset($products[$product_id])) {
-            $product = $products[$product_id];
-            
-            // Add to favorites (we don't need quantity for favorites, just the item details)
-            $_SESSION['favorites'][$product_id] = [
-                'name' => $product['name'],
-                'price' => $product['price'],
-                'image' => $product['image']
-            ];
-        }
-    }
-
-    // Redirect back to the page the user was on
-    $return_url = isset($_POST['return_url']) && !empty($_POST['return_url']) 
-        ? $_POST['return_url'] 
-        : (isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'store.php');
-        
-    header("Location: " . $return_url);
-    exit();
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['status' => 'error', 'message' => 'Please log in to save favorites.']);
+    exit;
 }
 
-// Fallback if accessed directly without POST data
-header("Location: store.php");
-exit();
-?>
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_id'])) {
+    global $conn;
+    $user_id = $_SESSION['user_id'];
+    $product_id = intval($_POST['product_id']);
+
+    $check_sql = "SELECT fav_id FROM favorites_tbl WHERE user_id = ? AND product_id = ?";
+    $stmt = $conn->prepare($check_sql);
+    $stmt->bind_param("ii", $user_id, $product_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $delete_sql = "DELETE FROM favorites_tbl WHERE user_id = ? AND product_id = ?";
+        $del_stmt = $conn->prepare($delete_sql);
+        $del_stmt->bind_param("ii", $user_id, $product_id);
+
+        if ($del_stmt->execute()) {
+            echo json_encode(['status' => 'removed', 'message' => 'Removed from favorites.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to remove.']);
+        }
+    } else {
+        $insert_sql = "INSERT INTO favorites_tbl (user_id, product_id) VALUES (?, ?)";
+        $ins_stmt = $conn->prepare($insert_sql);
+        $ins_stmt->bind_param("ii", $user_id, $product_id);
+
+        if ($ins_stmt->execute()) {
+            echo json_encode(['status' => 'added', 'message' => 'Added to favorites!']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to add.']);
+        }
+    }
+} else {
+    echo json_encode(['status' => 'error', 'message' => 'Invalid request.']);
+}

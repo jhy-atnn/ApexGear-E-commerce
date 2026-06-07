@@ -19,7 +19,7 @@ $receipt_data = array();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     $receipt_number = 'APX-' . strtoupper(uniqid());
-    
+
     // Store receipt data
     $receipt_data = array(
         'firstName' => isset($_POST['first_name']) ? htmlspecialchars($_POST['first_name']) : '',
@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         'orderDate' => date('F d, Y \a\t h:i A'),
         'items' => $cart_items
     );
-    
+
     // Store payment-specific details based on method
     $paymentMethod = isset($_POST['payment_method']) ? htmlspecialchars($_POST['payment_method']) : '';
     if ($paymentMethod === 'card') {
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         $receipt_data['mayaName'] = isset($_POST['maya_name']) ? htmlspecialchars($_POST['maya_name']) : '';
         $receipt_data['mayaMobile'] = isset($_POST['maya_mobile']) ? htmlspecialchars($_POST['maya_mobile']) : '';
     }
-    
+
     // Calculate item count and totals BEFORE storing in receipt
     $subtotal = 0;
     $item_count = 0;
@@ -58,17 +58,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     }
     $tax = $subtotal * 0.08;
     $grand_total = $subtotal + $tax;
-    
+
     // Store item count and totals
     $receipt_data['itemCount'] = $item_count;
     $receipt_data['subtotal'] = $subtotal;
     $receipt_data['tax'] = $tax;
     $receipt_data['grandTotal'] = $grand_total;
     $receipt_data['receiptNumber'] = $receipt_number;
-    
+
     // Store in session for potential future use
     $_SESSION['last_receipt'] = $receipt_data;
-    
+
     unset($_SESSION['cart']);
     $order_successful = true;
 } else {
@@ -101,49 +101,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             border-color: #dc3545 !important;
             background-image: none;
         }
+
         .form-control.is-invalid:focus {
             border-color: #dc3545 !important;
             box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
         }
-        
+
         @media print {
             body {
                 background: white;
             }
-            nav, footer, .d-none, .offcanvas {
+
+            nav,
+            footer,
+            .d-none,
+            .offcanvas {
                 display: none !important;
             }
+
             .inner-page {
                 padding: 0;
             }
+
             .container {
                 max-width: 100%;
                 padding: 20px;
             }
+
             .apex-card {
                 box-shadow: none;
                 border: 1px solid #ddd;
                 page-break-inside: avoid;
             }
+
             .bg-light {
                 background-color: white !important;
                 border: 1px solid #ddd !important;
             }
+
             .alert {
                 border: 1px solid #ddd !important;
                 background: white !important;
                 color: #333 !important;
             }
+
             table {
                 page-break-inside: avoid;
             }
-            #downloadPdfBtn, [onclick*="print"] {
+
+            #downloadPdfBtn,
+            [onclick*="print"] {
                 display: none !important;
             }
-            .btn-apex, .btn {
+
+            .btn-apex,
+            .btn {
                 display: none !important;
             }
-            h1, h2, h3, h4, h5, h6, p, span, td, th {
+
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6,
+            p,
+            span,
+            td,
+            th {
                 page-break-inside: avoid;
             }
         }
@@ -151,13 +176,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 </head>
 
 <body>
-<?php include_once __DIR__ . '/includes\cookie_notif.php'; ?>
+    <?php include_once __DIR__ . '/includes\cookie_notif.php'; ?>
 
     <nav class="main-nav navbar navbar-expand-lg">
         <div class="container d-flex justify-content-between align-items-center">
             <a href="index.php" class="brand me-4">
                 <img src="assets/images/ApeX Logo.png" alt="ApeX Gear Logo" class="brand-logo-img">
-                <div class="brand-text" style="color: white; margin-left:-10px">ApeX</div><div class="brand-text" style="color: #00c2ff; margin-left:-10px">Gear</div>
+                <div class="brand-text" style="color: white; margin-left:-10px">ApeX</div>
+                <div class="brand-text" style="color: #00c2ff; margin-left:-10px">Gear</div>
             </a>
 
             <div class="text-white small fw-bold">
@@ -211,15 +237,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                     </h6>
                                     <div class="ms-4">
                                         <p class="mb-0 text-dark fw-bold text-capitalize">
-                                            <?php 
-                                                $methods = array(
-                                                    'card' => 'Credit/Debit Card',
-                                                    'cod' => 'Cash on Delivery',
-                                                    'gcash' => 'GCash',
-                                                    'paypal' => 'PayPal',
-                                                    'maya' => 'Maya'
-                                                );
-                                                echo isset($methods[$receipt_data['paymentMethod']]) ? $methods[$receipt_data['paymentMethod']] : ucfirst($receipt_data['paymentMethod']);
+                                            <?php
+                                            $methods = array(
+                                                'card' => 'Credit/Debit Card',
+                                                'cod' => 'Cash on Delivery',
+                                                'gcash' => 'GCash',
+                                                'paypal' => 'PayPal',
+                                                'maya' => 'Maya'
+                                            );
+                                            echo isset($methods[$receipt_data['paymentMethod']]) ? $methods[$receipt_data['paymentMethod']] : ucfirst($receipt_data['paymentMethod']);
                                             ?>
                                         </p>
                                         <?php if ($receipt_data['paymentMethod'] === 'card' && isset($receipt_data['cardLast4'])): ?>
@@ -433,7 +459,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                     <label class="form-label small fw-bold text-muted text-uppercase">PayPal Email</label>
                                     <input type="email" class="form-control bg-light payment-required" name="paypal_email" placeholder="your@paypal.com">
                                 </div>
-                                  <div class="col-6">
+                                <div class="col-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">PayPal Number</label>
                                     <input type="email" class="form-control bg-light payment-required" name="paypal_Number" placeholder="your@paypal.com">
                                 </div>
@@ -532,23 +558,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                 downloadBtn.addEventListener('click', function() {
                     // Find the receipt container
                     const receiptElement = document.querySelector('.bg-light.rounded-4.p-5');
-                    
+
                     if (receiptElement) {
                         // Clone the receipt for PDF export
                         const element = receiptElement.cloneNode(true);
-                        
+
                         // Remove buttons div from clone
                         const buttonsToRemove = element.querySelectorAll('.d-flex.gap-3.justify-content-center');
                         buttonsToRemove.forEach(btn => btn.remove());
-                        
+
                         const opt = {
                             margin: 10,
                             filename: 'APX_Gear_Receipt_<?php echo isset($receipt_number) ? htmlspecialchars($receipt_number) : 'receipt'; ?>.pdf',
-                            image: { type: 'jpeg', quality: 0.98 },
-                            html2canvas: { scale: 2, useCORS: true },
-                            jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+                            image: {
+                                type: 'jpeg',
+                                quality: 0.98
+                            },
+                            html2canvas: {
+                                scale: 2,
+                                useCORS: true
+                            },
+                            jsPDF: {
+                                orientation: 'portrait',
+                                unit: 'mm',
+                                format: 'a4'
+                            }
                         };
-                        
+
                         html2pdf().set(opt).from(element).save();
                     } else {
                         alert('Receipt not found. Please try again.');
@@ -572,7 +608,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             paymentMethods.forEach(method => {
                 method.addEventListener('click', function() {
                     const selectedMethod = this.getAttribute('data-method');
-                    
+
                     // Update the hidden input
                     selectedMethodInput.value = selectedMethod;
 
@@ -602,7 +638,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                         fieldsToShow.style.display = '';
                         // Trigger animation
                         setTimeout(() => {
-                            fieldsToShow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            fieldsToShow.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'nearest'
+                            });
                         }, 100);
                     }
                 });
