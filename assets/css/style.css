@@ -193,7 +193,8 @@ body {
 
 .nav-search-toggle {
     position: absolute;
-    right: 0; /* icon sits at right edge of the search wrap */
+    right: 0;
+    /* icon sits at right edge of the search wrap */
     top: 0;
     z-index: 2;
     width: 38px;
@@ -225,7 +226,8 @@ body {
     border: 1px solid rgba(255, 255, 255, .18);
     border-radius: 999px;
     outline: 0;
-    padding: 0 46px 0 12px; /* leave space on the right for the toggle */
+    padding: 0 46px 0 12px;
+    /* leave space on the right for the toggle */
     color: var(--apex-white);
     background: rgba(255, 255, 255, .1);
     font-size: .84rem;
@@ -384,7 +386,7 @@ body {
 .cat-bar .cat-link:hover,
 .cat-bar .cat-link.active {
     background: var(--apex-blue-mid);
-    color: var(--apex-accent);    
+    color: var(--apex-accent);
 }
 
 /* ── Navbar Icons Red Hover & Pop Effect ── */
@@ -1581,61 +1583,6 @@ footer ul li a:hover {
     color: rgba(255, 255, 255, .5);
 }
 
-/* ── INNER PAGES UTILITIES (NEW) ── */
-.inner-page {
-    background: var(--apex-grey);
-    padding: 60px 0 80px;
-    flex-grow: 1;
-}
-
-.inner-header {
-    background: linear-gradient(135deg, var(--apex-dark) 0%, var(--apex-blue) 100%);
-    padding: 70px 0 50px;
-    color: var(--apex-white);
-    text-align: center;
-    border-bottom: 4px solid var(--apex-accent);
-}
-
-.inner-header h1 {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 900;
-    font-size: 3.5rem;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-    letter-spacing: .02em;
-}
-
-.inner-header p {
-    color: rgba(255, 255, 255, .7);
-    font-size: 1.1rem;
-}
-
-.apex-card {
-    background: var(--apex-white);
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(11, 47, 168, .08);
-    border: 1px solid var(--apex-border);
-    padding: 30px;
-}
-
-.text-apex-accent {
-    color: var(--apex-accent) !important;
-}
-
-.text-apex-blue {
-    color: var(--apex-blue) !important;
-}
-
-.bg-apex-dark {
-    background-color: var(--apex-dark) !important;
-    color: white;
-}
-
-.form-control:focus,
-.form-select:focus {
-    border-color: var(--apex-blue);
-    box-shadow: 0 0 0 0.25rem rgba(11, 47, 168, 0.25);
-}
 
 /* ── RESPONSIVE ── */
 @media (max-width: 991px) {
@@ -1780,7 +1727,8 @@ footer ul li a:hover {
     .nav-search-wrap {
         width: 100%;
         order: -1;
-        position: static; /* disable absolute positioning on small screens */
+        position: static;
+        /* disable absolute positioning on small screens */
         right: auto;
         top: auto;
         z-index: auto;

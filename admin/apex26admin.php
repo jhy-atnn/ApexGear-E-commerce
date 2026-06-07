@@ -109,35 +109,21 @@ $products = $inventoryManager->getAllProducts();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
-    <link href="assets/css/style.css" rel="stylesheet">
+    <link href="../assets/css/admin-style.css" rel="stylesheet">
+    <link href="../assets/css/style.css" rel="stylesheet">
 </head>
 
 <body>
-    <?php
-    $userRole = $_SESSION['user']['role'] ?? 'guest';
-
-    switch ($userRole) {
-        case 'admin':
-            echo "Welcome, Admin. Accessing Inventory Management.";
-            break;
-        case 'editor':
-            echo "Welcome, Editor. Accessing Blog Content.";
-            break;
-        default:
-            echo "Welcome, Customer. Browse our latest tech!";
-            break;
-    }
-    ?>
     <nav class="main-nav navbar navbar-expand-lg bg-apex-dark" style="background: var(--apex-dark) !important; top: 0 !important; width: 100% !important; border-radius: 0 !important; position: static;">
         <div class="container d-flex justify-content-between align-items-center">
-            <a href="index.php" class="brand m-0">
-                <img src="assets/images/ApeX Logo.png" alt="ApeX Gear Logo" class="brand-logo-img">
+            <a href="../index.php" class="brand m-0">
+                <img src="../assets\images\ApeX Logo.png" alt="ApeX Gear Logo" class="brand-logo-img">
                 <div class="brand-text" style="color: white; margin-left:-10px">ApeX</div>
                 <div class="brand-text" style="color: #00c2ff; margin-left:-10px">Gear</div>
 
             </a>
 
-            <a href="index.php" class="btn-apex-outline" style="padding: 6px 16px; font-size: .8rem;">View Live Store</a>
+            <a href="../index.php" class="btn-apex-outline" style="padding: 6px 16px; font-size: .8rem;">View Live Store</a>
         </div>
     </nav>
 
@@ -171,7 +157,7 @@ $products = $inventoryManager->getAllProducts();
                     <div class="apex-card">
                         <h5 class="fw-bold mb-4 text-uppercase" style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem;">Add New Gadget</h5>
 
-                        <form method="POST" action="admin\apex26admin.php" enctype="multipart/form-data">
+                        <form method="POST" action="apex26admin.php" enctype="multipart/form-data">
                             <input type="hidden" name="action" value="add">
 
                             <div class="mb-3">
@@ -363,7 +349,7 @@ $products = $inventoryManager->getAllProducts();
                                                         <i class="fas fa-edit"></i> Edit
                                                     </button>
 
-                                                    <form method="POST" action="admin\apex26admin.php" style="display:inline;">
+                                                    <form method="POST" action="apex26admin.php" style="display:inline;">
                                                         <input type="hidden" name="action" value="delete">
                                                         <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
                                                         <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this gadget permanently?');"><i class="fas fa-trash"></i> Delete</button>
@@ -521,8 +507,8 @@ $products = $inventoryManager->getAllProducts();
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/navbar.js"></script>
-    <script src="assets/js/main.js"></script>
+    <script src="../assets/js/navbar.js"></script>
+    <script src="../assets/js/main.js"></script>
 
     <script>
         function populateEditForm(button) {
