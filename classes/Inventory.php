@@ -1,127 +1,98 @@
 <?php
-
-require_once __DIR__ . '/../db_connect.php';
-
 class Inventory
 {
-    private $conn;
+    private $inventory = [];
+    private $currentProduct = [];
 
     public function __construct()
     {
-        global $conn;
-
-        if (!$conn) {
-            die("Database connection is missing in Inventory class.");
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
         }
 
-        $this->conn = $conn;
+        if (!isset($_SESSION['inventory'])) {
+            $_SESSION['inventory'] = [];
+        }
+
+        $this->inventory = &$_SESSION['inventory'];
     }
 
-    /**
-     * Fetch ALL active products 
-     * (Used in store.php to populate the main catalog)
-     */
+    public function getInventory()
+    {
+        return $this->inventory;
+    }
+
+    public function setInventory(array $items)
+    {
+        $_SESSION['inventory'] = $items;
+        $this->inventory = &$_SESSION['inventory'];
+    }
+
+    public function getCurrentProduct()
+    {
+        return $this->currentProduct;
+    }
+
+    public function setCurrentProduct(array $product)
+    {
+        $this->currentProduct = $product;
+    }
+
     public function getAllProducts()
     {
-        $products = [];
-
-        // JOINs are used to fetch the actual text names for brand and category
-        $sql = "SELECT p.*, b.brand_name as brand, c.category_name as category 
-                FROM products_tbl p 
-                LEFT JOIN brands_tbl b ON p.brand_id = b.brand_id 
-                LEFT JOIN categories_tbl c ON p.category_id = c.category_id
-                WHERE p.is_archived = 0";
-
-        $result = $this->conn->query($sql);
-
-        if ($result && $result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                // Key the array by product_id so it perfectly matches your old session logic
-                $products[$row['product_id']] = $row;
-            }
-        }
-
-        return $products;
+        return $_SESSION['inventory'];
     }
 
-    /**
-     * Fetch a SINGLE product by its ID 
-     * (Used in product.php when viewing a specific item)
-     */
-    public function getProductById($id)
+    // Add a new product
+    public function addProduct($name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc)
     {
-        $sql = "SELECT p.*, b.brand_name as brand, c.category_name as category 
-                FROM products_tbl p 
-                LEFT JOIN brands_tbl b ON p.brand_id = b.brand_id 
-                LEFT JOIN categories_tbl c ON p.category_id = c.category_id
-                WHERE p.product_id = ? AND p.is_archived = 0";
+        // Find the next available ID
+        $newId = empty($_SESSION['inventory']) ? 1 : max(array_keys($_SESSION['inventory'])) + 1;
 
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result && $result->num_rows > 0) {
-            return $result->fetch_assoc(); // Returns just the single associative array
-        }
-
-        return null;
+        $_SESSION['inventory'][$newId] = [
+            'id' => $newId,
+            'name' => $name,
+            'brand' => $brand,
+            'category' => $category,
+            'price' => (float)$price,
+            'old_price' => empty($old_price) ? null : (float)$old_price,
+            'stock' => (int)$stock,
+            'rating' => empty($rating) ? 0 : (int)$rating,
+            'badge' => empty($badge) ? null : $badge,
+            'badge_type' => empty($badge_type) ? null : $badge_type,
+            'image' => empty($image) ? 'https://placehold.co/400x300/eeeeee/1D1D1F?text=No+Image' : $image,
+            'desc' => $desc,
+            'featured' => false // Default to false
+        ];
     }
 
-    /**
-     * Fetch FEATURED products 
-     * (Used on index.php to show top items, grabs anything with a badge)
-     */
-    public function getFeaturedProducts($limit = 4)
+    // Edit an existing product
+    public function editProduct($id, $name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc)
     {
-        $products = [];
+        $id = (int)$id; // Force ID to be an integer
 
-        $sql = "SELECT p.*, b.brand_name as brand, c.category_name as category 
-                FROM products_tbl p 
-                LEFT JOIN brands_tbl b ON p.brand_id = b.brand_id 
-                LEFT JOIN categories_tbl c ON p.category_id = c.category_id
-                WHERE p.is_archived = 0 AND p.badge IS NOT NULL
-                LIMIT ?";
-
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $limit);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result && $result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $products[$row['product_id']] = $row;
-            }
+        if (isset($_SESSION['inventory'][$id])) {
+            $_SESSION['inventory'][$id]['name'] = $name;
+            $_SESSION['inventory'][$id]['brand'] = $brand;
+            $_SESSION['inventory'][$id]['category'] = $category;
+            $_SESSION['inventory'][$id]['price'] = (float)$price;
+            $_SESSION['inventory'][$id]['old_price'] = empty($old_price) ? null : (float)$old_price;
+            $_SESSION['inventory'][$id]['stock'] = (int)$stock;
+            $_SESSION['inventory'][$id]['rating'] = empty($rating) ? 0 : (int)$rating;
+            $_SESSION['inventory'][$id]['badge'] = empty($badge) ? null : $badge;
+            $_SESSION['inventory'][$id]['badge_type'] = empty($badge_type) ? null : $badge_type;
+            $_SESSION['inventory'][$id]['image'] = empty($image) ? 'https://placehold.co/400x300/eeeeee/1D1D1F?text=No+Image' : $image;
+            $_SESSION['inventory'][$id]['desc'] = $desc;
         }
-
-        return $products;
     }
 
-
-    public function searchProducts($keyword)
+    // Delete a product
+    public function deleteProduct($id)
     {
-        $products = [];
+        $id = (int)$id; // Ensure ID is an integer
 
-        $searchTerm = "%" . $keyword . "%";
-
-        $sql = "SELECT p.*, b.brand_name as brand, c.category_name as category 
-                FROM products_tbl p 
-                LEFT JOIN brands_tbl b ON p.brand_id = b.brand_id 
-                LEFT JOIN categories_tbl c ON p.category_id = c.category_id
-                WHERE p.is_archived = 0 
-                AND (p.name LIKE ? OR b.brand_name LIKE ? OR c.category_name LIKE ?)";
-
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("sss", $searchTerm, $searchTerm, $searchTerm);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result && $result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $products[$row['product_id']] = $row;
-            }
+        if (isset($_SESSION['inventory'][$id])) {
+            unset($_SESSION['inventory'][$id]);
         }
-
-        return $products;
     }
 }
