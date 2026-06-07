@@ -601,3 +601,209 @@
 .pp-logout { color: rgba(255,100,100,.7); }
 .pp-logout:hover { background: rgba(255,59,92,.08); color: #ff6b6b; }
 .pp-logout:hover i { color: #ff6b6b; }
+
+/* User Profile Modal */
+.profile-modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.profile-modal-container.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.profile-modal-content {
+    width: 400px;
+    height: 100%;
+    background: linear-gradient(180deg, #060f2e 0%, #07122b 60%, #060f2e 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    border-left: 1px solid rgba(45,107,228,.35);
+}
+
+
+.profile-modal-container.open .profile-modal-content {
+    transform: translateX(0);
+}
+
+.profile-modal-header {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-close-modal {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+    margin-right: 1rem;
+}
+
+.profile-modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.profile-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+.profile-avatar-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.profile-avatar-large {
+    position: relative;
+    width: 120px;
+    height: 120px;
+}
+
+.profile-avatar-large img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-upload-overlay {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.profile-modal-content .form-control {
+    width: 100%;
+    padding: 0.75rem;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 10px;
+    color: #fff;
+    transition: border-color .2s, background .2s, box-shadow .2s;
+}
+
+.profile-modal-content .form-control:focus {
+    outline: none;
+    background: rgba(0,194,255,.04);
+    border-color: rgba(0,194,255,.55);
+    box-shadow: 0 0 0 3px rgba(0,194,255,.14);
+}
+
+.profile-modal-content .form-control::placeholder {
+    color: rgba(255,255,255,.28);
+}
+
+
+.profile-modal-footer {
+    padding: 1rem;
+    border-top: 1px solid rgba(45,107,228,.25);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.profile-modal-footer .btn-secondary {
+    background: rgba(255,255,255,.06) !important;
+    border: 1px solid rgba(255,255,255,.14) !important;
+    color: rgba(255,255,255,.85) !important;
+    border-radius: 12px;
+    padding: 0.6rem 1rem;
+}
+
+.profile-modal-footer .btn-secondary:hover {
+    background: rgba(255,255,255,.12) !important;
+}
+
+.profile-modal-footer .btn-primary {
+    background: linear-gradient(135deg, var(--apex-blue, #0b2fa8), #1549d4) !important;
+    border: 1px solid rgba(0,194,255,.35) !important;
+    color: #fff !important;
+    border-radius: 12px;
+    padding: 0.6rem 1rem;
+    box-shadow: 0 10px 26px rgba(11,47,168,.35);
+}
+
+.profile-modal-footer .btn-primary:hover {
+    filter: brightness(1.06);
+}
+
+
+.input-group {
+    display: flex;
+}
+
+.input-group-text {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.75rem;
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+}
+
+.datepicker-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    opacity: 0;
+}
+
+.datepicker-input {
+    position: relative;
+}
+
+.profile-modal-content .input-group-text {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.14);
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    color: rgba(255,255,255,.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+}
+
+.profile-modal-content .input-group-text i {
+    color: var(--apex-accent, #00c2ff);
+}

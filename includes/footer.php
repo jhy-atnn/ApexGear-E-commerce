@@ -190,6 +190,76 @@
     </div>
 </div>
 
+<!-- ── User Profile Modal ── -->
+<div id="userProfileModal" class="profile-modal-container">
+    <div class="profile-modal-content">
+        <div class="profile-modal-header">
+            <button type="button" class="btn-close-modal"><i class="fas fa-arrow-left"></i></button>
+            <h5 class="profile-modal-title">Edit Profile</h5>
+        </div>
+        <div class="profile-modal-body">
+            <div class="profile-avatar-section">
+                <div class="profile-avatar-large">
+                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80" alt="User Avatar" id="userModalAvatar">
+                    <label for="avatarUpload" class="avatar-upload-overlay">
+                        <i class="fas fa-camera"></i>
+                    </label>
+                    <input type="file" id="avatarUpload" hidden accept="image/*">
+                </div>
+            </div>
+            <form id="userProfileForm">
+                <div class="form-group">
+                    <label for="userName">Name</label>
+                    <input type="text" id="userName" class="form-control" value="Justine Luige Malaiba">
+                </div>
+                <div class="form-group">
+                    <label for="userBio">Bio</label>
+                    <textarea id="userBio" class="form-control" rows="3">UI/UX Designer & Front-End Dev</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">Email</label>
+                    <input type="email" id="userEmail" class="form-control" value="justine.malaiba@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="userContact">Contact Number</label>
+                    <input
+                        type="text"
+                        id="userContact"
+                        class="form-control"
+                        inputmode="numeric"
+                        maxlength="11"
+                        placeholder="11-digit number"
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);">
+                </div>
+                <div class="form-group">
+                    <label for="userGender">Gender</label>
+                    <select id="userGender" class="form-control">
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Others</option>
+                        <option>Prefer not to say</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="userBirthdate">Birthdate</label>
+                    <div class="input-group">
+                        <input type="date" id="userBirthdate" class="form-control datepicker-input" />
+                        <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="userAddress">Address</label>
+                    <textarea id="userAddress" class="form-control" rows="3"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="profile-modal-footer">
+            <button type="button" class="btn btn-secondary">Cancel</button>
+            <button type="button" class="btn btn-primary">Save Changes</button>
+        </div>
+    </div>
+</div>
+
 <!-- Profile Dropdown Logic -->
 <script>
     <?php if (isset($_SESSION['user'])): ?>
@@ -246,6 +316,27 @@
         window.addEventListener('scroll', function() {
             const panel = document.getElementById('profilePanel');
             if (panel) panel.classList.remove('open');
+        });
+
+        // User Profile Modal Logic
+        const profileModal = document.getElementById('userProfileModal');
+        const myProfileLink = document.querySelector('.pp-link[href="javascript:void(0)"]'); // Simplified selector
+        const closeModalBtn = document.querySelector('.btn-close-modal');
+
+        myProfileLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            profileModal.classList.add('open');
+            document.getElementById('profilePanel').classList.remove('open');
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            profileModal.classList.remove('open');
+        });
+
+        profileModal.addEventListener('click', (e) => {
+            if (e.target === profileModal) {
+                profileModal.classList.remove('open');
+            }
         });
     <?php endif; ?>
 </script>
