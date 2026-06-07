@@ -349,7 +349,7 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
                                         <a href="#" class="btn-shop stretched-link" style="background: var(--apex-muted); pointer-events: none; border-color: transparent; color: white;">Sold Out</a>
                                     <?php endif; ?>
 
-                                    <form method="POST" action="includes\favorites_action.php" class="m-0 position-relative" style="display: inline-block; z-index: 2;">
+                                    <form method="POST" action="actions/favorites_action.php" class="m-0 position-relative" style="display: inline-block; z-index: 2;">
                                         <input type="hidden" name="action" value="add">
                                         <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
                                         <input type="hidden" name="return_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">

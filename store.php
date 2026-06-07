@@ -135,7 +135,7 @@ if ($searchQuery !== '') {
                                     </div>
                                     <div class="product-actions">
                                         <a href="product.php?id=<?php echo $product['id']; ?>" class="btn-shop stretched-link">View Details</a>
-                                        <form method="POST" action="includes\favorites_action.php" class="m-0 position-relative" style="display: inline-block; z-index: 2;">
+                                        <form method="POST" action="actions/favorites_action.php" class="m-0 position-relative" style="display: inline-block; z-index: 2;">
                                             <input type="hidden" name="action" value="add">
                                             <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
                                             <input type="hidden" name="return_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">

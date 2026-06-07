@@ -175,7 +175,7 @@
                                 ₱<?php echo number_format($item['price'], 2); ?>
                             </div>
                         </div>
-                        <form method="POST" action="includes\favorites_action.php" class="ms-auto m-0">
+                        <form method="POST" action="actions/favorites_action.php" class="ms-auto m-0">
                             <input type="hidden" name="action" value="remove">
                             <input type="hidden" name="product_id" value="<?php echo $id; ?>">
                             <input type="hidden" name="return_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
