@@ -1,19 +1,34 @@
 <?php
 session_start();
-require_once 'classes/Inventory.php';
+require_once 'database/db_connect.php'; // Ensure this path is correct for your setup
 
-$inventoryManager = new Inventory();
-$products = $inventoryManager->getAllProducts();
+// 1. Get the ID from the URL securely
+$product_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-// 1. Check if an ID was passed in the URL
-if (isset($_GET['id']) && array_key_exists($_GET['id'], $products)) {
-    $product_id = $_GET['id'];
-    $product = $products[$product_id];
-} else {
-    // If no valid ID is found, send them back to the store
+if ($product_id <= 0) {
     header("Location: store.php");
     exit();
 }
+
+// 2. Fetch the specific product from products_tbl, joining brands and categories
+$sql = "SELECT p.*, b.brand_name as brand, c.category_name as category 
+        FROM products_tbl p
+        LEFT JOIN brands_tbl b ON p.brand_id = b.brand_id
+        LEFT JOIN categories_tbl c ON p.category_id = c.category_id
+        WHERE p.product_id = ?";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $product_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+// 3. If product doesn't exist, kick them back to the store
+if ($result->num_rows === 0) {
+    header("Location: store.php");
+    exit();
+}
+
+$product = $result->fetch_assoc();
 
 // 2. Handle "Add to Cart" Submission
 $cartSuccess = false;
@@ -47,9 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         $cartError = "Cannot add to cart. Only $stock left in stock.";
     }
 }
+
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="en">

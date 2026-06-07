@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once __DIR__ . '/../db_connect.php';
+require_once __DIR__ . '/../database/db_connect.php';
 
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['status' => 'error', 'message' => 'Please log in to save favorites.']);

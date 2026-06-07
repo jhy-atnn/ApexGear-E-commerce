@@ -1,98 +1,67 @@
 <?php
 session_start();
-require_once '../classes/Inventory.php';
+require_once __DIR__ .'/../database/db_connect.php';
+require_once __DIR__ .'/../classes/Inventory.php';
 
 $inventoryManager = new Inventory();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Handle POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    $action = $_POST['action'];
 
-    // --- ADD NEW PRODUCT ---
-    if (isset($_POST['action']) && $_POST['action'] === 'add') {
-        $name = $_POST['name'];
-        $brand = $_POST['brand'];
-        $category = $_POST['category'];
-        $price = $_POST['price'];
-        $old_price = $_POST['old_price'];
-        $stock = $_POST['stock'];
-        $rating = $_POST['rating'];
-        $badge = $_POST['badge'];
-        $badge_type = $_POST['badge_type'];
-        $image = $_POST['image'];
-        $desc = $_POST['desc'];
+    if ($action === 'add' || $action === 'edit') {
+        $name = $_POST['name'] ?? '';
+        $brand = $_POST['brand'] ?? '';
+        $category = $_POST['category'] ?? '';
+        $price = $_POST['price'] ?? 0;
+        $old_price = $_POST['old_price'] ?? '';
+        $stock = $_POST['stock'] ?? 0;
+        $rating = $_POST['rating'] ?? '';
+        $badge = $_POST['badge'] ?? '';
+        $badge_type = $_POST['badge_type'] ?? '';
+        $desc = $_POST['desc'] ?? '';
+        
+        $image_source = $_POST['image_source'] ?? 'upload';
+        $image = '';
 
-        $image_path = '';
-        if (isset($_FILES['image_upload']) && $_FILES['image_upload']['error'] === UPLOAD_ERR_OK) {
-            $upload_dir = '../assets/images/uploads/';
-            if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
+        if ($image_source === 'upload' && isset($_FILES['image_upload']) && $_FILES['image_upload']['error'] === 0) {
+            $target_dir = __DIR__ . "/../assets/images/products/";
+            if (!is_dir($target_dir)) {
+                mkdir($target_dir, 0777, true);
             }
-            $file_name = uniqid() . '_' . basename($_FILES['image_upload']['name']);
-            $target_file = $upload_dir . $file_name;
+            $clean_file_name = preg_replace("/[^a-zA-Z0-9.]/", "_", basename($_FILES["image_upload"]["name"]));
+            $unique_file_name = time() . "_" . $clean_file_name;
+            $target_file = $target_dir . $unique_file_name;
 
-            $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            if (in_array($_FILES['image_upload']['type'], $allowed_types)) {
-                if (move_uploaded_file($_FILES['image_upload']['tmp_name'], $target_file)) {
-                    $image_path = 'assets/images/uploads/' . $file_name;
-                }
+            if (move_uploaded_file($_FILES["image_upload"]["tmp_name"], $target_file)) {
+                $image = "../assets/images/products/" . $unique_file_name;
             }
+        } else if ($image_source === 'url' && !empty($_POST['image'])) {
+            $image = $_POST['image'];
         }
 
-        $final_image = !empty($image_path) ? $image_path : $image;
-
-        $inventoryManager->addProduct($name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $final_image, $desc);
-
-        header("Location: apex26admin.php?success=added");
-        exit();
-    }
-
-    // --- DELETE PRODUCT ---
-    if (isset($_POST['action']) && $_POST['action'] === 'delete') {
-        $idToDelete = (int)$_POST['product_id'];
-        $inventoryManager->deleteProduct($idToDelete);
-
+        if ($action === 'add') {
+            $inventoryManager->addProduct($name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc);
+            header("Location: apex26admin.php?success=added");
+            exit;
+        } else if ($action === 'edit') {
+            $product_id = $_POST['product_id'] ?? 0;
+            // Fetch old image if not updated
+            if (empty($image)) {
+                $products_temp = $inventoryManager->getAllProducts();
+                if (isset($products_temp[$product_id])) {
+                    $image = $products_temp[$product_id]['image'];
+                }
+            }
+            $inventoryManager->editProduct($product_id, $name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc);
+            header("Location: apex26admin.php?success=edited");
+            exit;
+        }
+    } else if ($action === 'delete') {
+        $product_id = $_POST['product_id'] ?? 0;
+        $inventoryManager->deleteProduct($product_id);
         header("Location: apex26admin.php?success=deleted");
-        exit();
-    }
-
-
-    // --- EDIT PRODUCT ---
-    if (isset($_POST['action']) && $_POST['action'] === 'edit') {
-        $id = (int)$_POST['product_id'];
-        $name = $_POST['name'];
-        $brand = $_POST['brand'];
-        $category = $_POST['category'];
-        $price = $_POST['price'];
-        $old_price = $_POST['old_price'];
-        $stock = $_POST['stock'];
-        $rating = $_POST['rating'];
-        $badge = $_POST['badge'];
-        $badge_type = $_POST['badge_type'];
-        $image = $_POST['image'];
-        $desc = $_POST['desc'];
-
-        // Handle image upload
-        $image_path = '';
-        if (isset($_FILES['image_upload']) && $_FILES['image_upload']['error'] === UPLOAD_ERR_OK) {
-            $upload_dir = 'assets/images/uploads/';
-            $file_name = uniqid() . '_' . basename($_FILES['image_upload']['name']);
-            $target_file = $upload_dir . $file_name;
-
-            // Validate file type
-            $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            if (in_array($_FILES['image_upload']['type'], $allowed_types)) {
-                if (move_uploaded_file($_FILES['image_upload']['tmp_name'], $target_file)) {
-                    $image_path = $target_file;
-                }
-            }
-        }
-
-        // Use uploaded image if available, otherwise use URL
-        $final_image = !empty($image_path) ? $image_path : $image;
-
-        $inventoryManager->editProduct($id, $name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $final_image, $desc);
-
-        header("Location: admin\apex26admin.php?success=edited");
-        exit();
+        exit;
     }
 }
 
@@ -381,7 +350,7 @@ $products = $inventoryManager->getAllProducts();
                     <h5 class="modal-title fw-bold text-uppercase" style="font-family: 'Barlow Condensed', sans-serif;">Edit Gadget</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form method="POST" action="admin\apex26admin.php" enctype="multipart/form-data">
+                <form method="POST" action="apex26admin.php" enctype="multipart/form-data">
                     <div class="modal-body p-4">
                         <input type="hidden" name="action" value="edit">
                         <input type="hidden" name="product_id" id="edit_product_id">

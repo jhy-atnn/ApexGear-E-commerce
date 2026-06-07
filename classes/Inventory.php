@@ -10,10 +10,10 @@ class Inventory
             session_start();
         }
 
+        global $conn;
         $dbConnectPath = __DIR__ . '/../database/db_connect.php';
         if (file_exists($dbConnectPath)) {
             require_once $dbConnectPath;
-            global $conn;
             $this->conn = $conn;
         }
     }
