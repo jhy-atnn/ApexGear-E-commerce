@@ -198,64 +198,73 @@
             <h5 class="profile-modal-title">Edit Profile</h5>
         </div>
         <div class="profile-modal-body">
+            <div id="profileAlert" class="alert d-none"></div>
             <div class="profile-avatar-section">
                 <div class="profile-avatar-large">
-                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80" alt="User Avatar" id="userModalAvatar">
-                    <label for="avatarUpload" class="avatar-upload-overlay">
-                        <i class="fas fa-camera"></i>
-                    </label>
-                    <input type="file" id="avatarUpload" hidden accept="image/*">
+                    <?php
+                        $avatarUrl = isset($_SESSION['user']['profile_picture']) && !empty($_SESSION['user']['profile_picture']) 
+                                     ? $_SESSION['user']['profile_picture'] 
+                                     : 'https://via.placeholder.com/400';
+                    ?>
+                    <img src="<?php echo htmlspecialchars($avatarUrl); ?>" alt="User Avatar" id="userModalAvatar">
+                    <!-- Note: Real avatar upload would require a backend handler, for now we let users update a URL or omit it -->
                 </div>
             </div>
             <form id="userProfileForm">
-                <div class="form-group">
-                    <label for="userName">Name</label>
-                    <input type="text" id="userName" class="form-control" value="Justine Luige Malaiba">
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label for="userFirstName">First Name</label>
+                        <input type="text" id="userFirstName" name="first_name" class="form-control" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['first_name'] ?? '') : ''; ?>">
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label for="userLastName">Last Name</label>
+                        <input type="text" id="userLastName" name="last_name" class="form-control" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['last_name'] ?? '') : ''; ?>">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="userBio">Bio</label>
-                    <textarea id="userBio" class="form-control" rows="3">UI/UX Designer & Front-End Dev</textarea>
+                    <textarea id="userBio" name="bio" class="form-control" rows="3"><?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['bio'] ?? '') : ''; ?></textarea>
                 </div>
                 <div class="form-group">
                     <label for="userEmail">Email</label>
-                    <input type="email" id="userEmail" class="form-control" value="justine.malaiba@example.com">
+                    <input type="email" id="userEmail" name="email" class="form-control" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['email'] ?? '') : ''; ?>" readonly>
                 </div>
                 <div class="form-group">
                     <label for="userContact">Contact Number</label>
                     <input
                         type="text"
                         id="userContact"
+                        name="phone"
                         class="form-control"
                         inputmode="numeric"
                         maxlength="11"
                         placeholder="11-digit number"
+                        value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['phone'] ?? '') : ''; ?>"
                         oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);">
                 </div>
                 <div class="form-group">
                     <label for="userGender">Gender</label>
-                    <select id="userGender" class="form-control">
-                        <option>Male</option>
-                        <option>Female</option>
-                        <option>Others</option>
-                        <option>Prefer not to say</option>
+                    <?php $uGender = isset($_SESSION['user']) ? $_SESSION['user']['gender'] : ''; ?>
+                    <select id="userGender" name="gender" class="form-control">
+                        <option value="" <?php echo $uGender == '' ? 'selected' : ''; ?>>Select Gender</option>
+                        <option value="Male" <?php echo $uGender == 'Male' ? 'selected' : ''; ?>>Male</option>
+                        <option value="Female" <?php echo $uGender == 'Female' ? 'selected' : ''; ?>>Female</option>
+                        <option value="Other" <?php echo $uGender == 'Other' ? 'selected' : ''; ?>>Other</option>
+                        <option value="Prefer not to say" <?php echo $uGender == 'Prefer not to say' ? 'selected' : ''; ?>>Prefer not to say</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="userBirthdate">Birthdate</label>
                     <div class="input-group">
-                        <input type="date" id="userBirthdate" class="form-control datepicker-input" />
+                        <input type="date" id="userBirthdate" name="birthday" class="form-control datepicker-input" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['birthday'] ?? '') : ''; ?>" />
                         <span class="input-group-text"><i class="fas fa-calendar"></i></span>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="userAddress">Address</label>
-                    <textarea id="userAddress" class="form-control" rows="3"></textarea>
                 </div>
             </form>
         </div>
         <div class="profile-modal-footer">
-            <button type="button" class="btn btn-secondary">Cancel</button>
-            <button type="button" class="btn btn-primary">Save Changes</button>
+            <button type="button" class="btn btn-secondary btn-close-modal-alt">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
         </div>
     </div>
 </div>
@@ -269,7 +278,7 @@
             panel.className = 'profile-panel';
             panel.innerHTML = `
                 <div class="pp-header">
-                    <div class="pp-avatar"><?php echo htmlspecialchars($_SESSION['user']['avatar']); ?></div>
+                    <div class="pp-avatar"><?php echo !empty($_SESSION['user']['profile_picture']) ? '<img src="' . htmlspecialchars($_SESSION['user']['profile_picture']) . '" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">' : htmlspecialchars($_SESSION['user']['avatar']); ?></div>
                     <div>
                         <div class="pp-username"><?php echo htmlspecialchars($_SESSION['user']['username']); ?></div>
                         <div class="pp-email"><?php echo htmlspecialchars($_SESSION['user']['email']); ?></div>
@@ -322,6 +331,7 @@
         const profileModal = document.getElementById('userProfileModal');
         const myProfileLink = document.querySelector('.pp-link[href="javascript:void(0)"]'); // Simplified selector
         const closeModalBtn = document.querySelector('.btn-close-modal');
+        const closeModalAltBtn = document.querySelector('.btn-close-modal-alt');
 
         myProfileLink.addEventListener('click', (e) => {
             e.preventDefault();
@@ -333,10 +343,47 @@
             profileModal.classList.remove('open');
         });
 
+        if (closeModalAltBtn) {
+            closeModalAltBtn.addEventListener('click', () => {
+                profileModal.classList.remove('open');
+            });
+        }
+
         profileModal.addEventListener('click', (e) => {
             if (e.target === profileModal) {
                 profileModal.classList.remove('open');
             }
         });
+
+        async function saveProfile() {
+            const form = document.getElementById('userProfileForm');
+            const formData = new FormData(form);
+            const alertBox = document.getElementById('profileAlert');
+
+            try {
+                const response = await fetch('actions/profile_action.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    alertBox.className = 'alert alert-success';
+                    alertBox.textContent = result.message;
+                    alertBox.classList.remove('d-none');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    alertBox.className = 'alert alert-danger';
+                    alertBox.textContent = result.message;
+                    alertBox.classList.remove('d-none');
+                }
+            } catch (err) {
+                alertBox.className = 'alert alert-danger';
+                alertBox.textContent = 'An error occurred while saving.';
+                alertBox.classList.remove('d-none');
+            }
+        }
     <?php endif; ?>
 </script>

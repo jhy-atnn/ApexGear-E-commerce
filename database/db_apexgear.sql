@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 07, 2026 at 02:50 PM
+-- Generation Time: Jun 07, 2026 at 04:38 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -33,10 +33,14 @@ DROP TABLE IF EXISTS `archived_orders_tbl`;
 CREATE TABLE `archived_orders_tbl` (
   `order_id` int(11) NOT NULL,
   `user_id` int(11) DEFAULT NULL,
+  `shipping_address` text DEFAULT NULL,
+  `shipping_city` varchar(100) DEFAULT NULL,
+  `shipping_zip` varchar(20) DEFAULT NULL,
   `reference_number` varchar(100) NOT NULL,
   `total_amount` decimal(10,2) NOT NULL,
   `order_status` varchar(50) DEFAULT NULL,
   `payment_method` varchar(50) DEFAULT NULL,
+  `payment_reference` varchar(100) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `archived_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -147,10 +151,14 @@ DROP TABLE IF EXISTS `orders_tbl`;
 CREATE TABLE `orders_tbl` (
   `order_id` int(11) NOT NULL,
   `user_id` int(11) DEFAULT NULL,
+  `shipping_address` text DEFAULT NULL,
+  `shipping_city` varchar(100) DEFAULT NULL,
+  `shipping_zip` varchar(20) DEFAULT NULL,
   `reference_number` varchar(100) NOT NULL,
   `total_amount` decimal(10,2) NOT NULL,
   `order_status` varchar(50) DEFAULT 'Pending',
   `payment_method` varchar(50) DEFAULT NULL,
+  `payment_reference` varchar(100) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -197,8 +205,8 @@ CREATE TABLE `products_tbl` (
 --
 
 INSERT INTO `products_tbl` (`product_id`, `name`, `brand_id`, `category_id`, `price`, `old_price`, `stock`, `rating`, `badge`, `badge_type`, `image`, `desc`, `is_archived`) VALUES
-(1, 'Legion 5 Pro — RTX 4070, 16\" QHD 165Hz', 1, 1, 119995.00, 127999.00, 10, 124, 'New', 'new', 'assets/images/products/legion5pro.png', 'Dominate the competition with the Legion 5 Pro. Featuring a blistering 165Hz QHD display and the raw power of the RTX 4070, it delivers desktop-level gaming performance in a sleek, portable chassis.', 0),
-(2, 'ROG Zephyrus G14 — Ryzen 9, RTX 4060', 2, 1, 109995.00, 119995.00, 5, 89, 'SALE', 'ribbon', 'assets/images/products/zephyrusg14.png', 'The ultimate blend of power and portability. The ROG Zephyrus G14 packs a Ryzen 9 processor and RTX 4060 into a stunningly thin and light 14-inch form factor, perfect for gamers and creators on the move.', 0),
+(1, 'Legion 5 Pro — RTX 4070, 16\" QHD 165Hz', 1, 1, 119995.00, 127999.00, 10, 124, 'New', 'new', '../assets/images/products/1780839229_legion5pro.png', 'Dominate the competition with the Legion 5 Pro. Featuring a blistering 165Hz QHD display and the raw power of the RTX 4070, it delivers desktop-level gaming performance in a sleek, portable chassis.', 0),
+(2, 'ROG Zephyrus G14 — Ryzen 9, RTX 4060', 2, 1, 109995.00, 119995.00, 1, 89, 'SALE', 'ribbon', 'assets/images/products/zephyrusg14.png', 'The ultimate blend of power and portability. The ROG Zephyrus G14 packs a Ryzen 9 processor and RTX 4060 into a stunningly thin and light 14-inch form factor, perfect for gamers and creators on the move.', 0),
 (3, 'BlackWidow V4 Pro — Mechanical, RGB, Wireless', 3, 2, 13495.00, 15995.00, 20, 4210, 'Popular', 'normal', 'assets/images/products/blackwidow.png', 'Elevate your setup with the Razer BlackWidow V4 Pro. Experience unmatched tactile feedback with premium mechanical switches, immersive Razer Chroma RGB lighting, and lag-free wireless connectivity.', 0),
 (4, 'G Pro X Superlight 2 — Wireless Gaming Mouse', 4, 2, 7795.00, 8995.00, 15, 4340, NULL, NULL, 'assets/images/products/superlight.png', 'Engineered for esports professionals. The Logitech G Pro X Superlight 2 offers zero-latency wireless performance and an ultra-lightweight design to ensure maximum precision and speed.', 0),
 (5, 'WH-1000XM5 — Noise Cancelling, 30hr Battery', 5, 3, 15499.00, 20999.00, 12, 512, 'New', 'new', 'assets/images/products/sonywh.png', 'Immerse yourself in pure audio. The Sony WH-1000XM5 headphones feature industry-leading active noise cancellation, crystal-clear calls, and up to 30 hours of battery life for all-day comfort.', 0),
@@ -221,6 +229,13 @@ DROP TABLE IF EXISTS `users_tbl`;
 CREATE TABLE `users_tbl` (
   `user_id` int(11) NOT NULL,
   `username` varchar(100) NOT NULL,
+  `first_name` varchar(100) DEFAULT NULL,
+  `last_name` varchar(100) DEFAULT NULL,
+  `profile_picture` text DEFAULT NULL,
+  `bio` text DEFAULT NULL,
+  `gender` enum('Male','Female','Other','Prefer not to say') DEFAULT NULL,
+  `birthday` date DEFAULT NULL,
+  `phone` varchar(20) DEFAULT NULL,
   `email` varchar(255) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
   `role` enum('customer','admin') DEFAULT 'customer'
@@ -230,8 +245,8 @@ CREATE TABLE `users_tbl` (
 -- Dumping data for table `users_tbl`
 --
 
-INSERT INTO `users_tbl` (`user_id`, `username`, `email`, `password_hash`, `role`) VALUES
-(1, 'Juday', 'atinon.jhody@gmail.com', '$2y$10$o/rJRTsc1AdhVnm/VOhI0eSPCOx9WAK8GDXgYtAANwYCBkYjullWi', 'customer');
+INSERT INTO `users_tbl` (`user_id`, `username`, `first_name`, `last_name`, `profile_picture`, `bio`, `gender`, `birthday`, `phone`, `email`, `password_hash`, `role`) VALUES
+(1, 'Juday', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'atinon.jhody@gmail.com', '$2y$10$o/rJRTsc1AdhVnm/VOhI0eSPCOx9WAK8GDXgYtAANwYCBkYjullWi', 'customer');
 
 --
 -- Indexes for dumped tables

@@ -151,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             exit;
         }
 
-        $stmt = $conn->prepare("SELECT user_id, username, email, password_hash, role FROM users_tbl WHERE LOWER(username) = LOWER(?)");
+        $stmt = $conn->prepare("SELECT user_id, username, email, password_hash, role, first_name, last_name, profile_picture, bio, gender, birthday, phone FROM users_tbl WHERE LOWER(username) = LOWER(?)");
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $res = $stmt->get_result();
@@ -174,7 +174,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             'email' => $row['email'],
             'role' => $row['role'],
             'avatar' => strtoupper(substr($row['username'], 0, 1)),
-            'joined' => date('F Y')
+            'joined' => date('F Y'),
+            'first_name' => $row['first_name'],
+            'last_name' => $row['last_name'],
+            'profile_picture' => $row['profile_picture'],
+            'bio' => $row['bio'],
+            'gender' => $row['gender'],
+            'birthday' => $row['birthday'],
+            'phone' => $row['phone']
         ];
         
         setcookie('apex_logged_in', time(), time() + 60, '/'); // cookie expires in 60 seconds
@@ -203,6 +210,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             'avatar'   => strtoupper(substr($fakeName, 0, 1)),
             'joined'   => date('F Y'),
             'provider' => $provider,
+            'first_name' => null,
+            'last_name' => null,
+            'bio' => null,
+            'gender' => null,
+            'birthday' => null,
+            'phone' => null,
+            'profile_picture' => null
         ];
         $_SESSION['user'] = $newUser;
 

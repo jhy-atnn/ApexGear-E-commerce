@@ -130,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                     <?php if (isset($_SESSION['user'])): ?>
                         <div class="profile-btn-wrap ms-3">
                             <button class="profile-btn" id="profileToggle" onclick="toggleProfilePanel(event)">
-                                <span class="profile-avatar"><?php echo htmlspecialchars($_SESSION['user']['avatar']); ?></span>
+                                <span class="profile-avatar"><?php echo !empty($_SESSION['user']['profile_picture']) ? '<img src="' . htmlspecialchars($_SESSION['user']['profile_picture']) . '" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">' : htmlspecialchars($_SESSION['user']['avatar']); ?></span>
                                 <span class="profile-name d-none d-lg-inline"><?php echo htmlspecialchars($_SESSION['user']['username']); ?></span>
                                 <i class="fas fa-chevron-down ms-1" style="font-size:.65rem; opacity:.6;"></i>
                             </button>
@@ -458,7 +458,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                     panel.className = 'profile-panel';
                     panel.innerHTML = `
             <div class="pp-header">
-                <div class="pp-avatar"><?php echo htmlspecialchars($_SESSION['user']['avatar']); ?></div>
+                <div class="pp-avatar"><?php echo !empty($_SESSION['user']['profile_picture']) ? '<img src="' . htmlspecialchars($_SESSION['user']['profile_picture']) . '" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">' : htmlspecialchars($_SESSION['user']['avatar']); ?></div>
                 <div>
                     <div class="pp-username"><?php echo htmlspecialchars($_SESSION['user']['username']); ?></div>
                     <div class="pp-email"><?php echo htmlspecialchars($_SESSION['user']['email']); ?></div>
