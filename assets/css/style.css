@@ -1751,6 +1751,115 @@ footer ul li a:hover {
     align-items: center;
 }
 
+@media print {
+    body, html {
+        background: #fff !important;
+        color: #000 !important;
+    }
+
+    nav, .main-nav, .topbar, footer, .btn, .btn-apex, .btn-close, .alert, .payment-method, .payment-fields, .sticky-top, .offcanvas, .footer-bottom,
+    .d-flex.gap-3.justify-content-center, .text-center.mt-3, .text-center.mb-4.pb-3.border-bottom + .d-flex.gap-3.justify-content-center {
+        display: none !important;
+    }
+
+    .container {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .bg-light.rounded-4.p-5,
+    .apex-card {
+        box-shadow: none !important;
+        border: 1px solid #d1d5db !important;
+        background: #fff !important;
+        padding: 1rem !important;
+        margin: 0 !important;
+    }
+
+    .bg-light.rounded-4.p-5 {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .mb-4, .mb-3, .mb-2, .pb-3, .pb-2 {
+        margin-bottom: .6rem !important;
+        padding-bottom: .4rem !important;
+    }
+
+    h1.fw-bold.mb-3,
+    h3.fw-bold.mb-2,
+    h4.fw-bold.text-apex-blue,
+    h5.fw-bold.mb-4,
+    h6.fw-bold.text-uppercase.mb-3 {
+        margin-bottom: .5rem !important;
+    }
+
+    .text-muted.small,
+    .text-muted,
+    .small {
+        font-size: .78rem !important;
+    }
+
+    .ms-4,
+    .me-4,
+    .px-4,
+    .py-4,
+    .p-5,
+    .px-5,
+    .py-5 {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding: .6rem !important;
+    }
+
+    .d-flex.justify-content-between {
+        display: flex !important;
+        justify-content: space-between !important;
+        gap: .5rem;
+    }
+
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: .85rem !important;
+    }
+
+    th, td {
+        padding: .35rem .45rem !important;
+    }
+
+    .border-bottom {
+        border-bottom: 1px solid #d1d5db !important;
+    }
+
+    .fw-bold {
+        font-weight: 700 !important;
+    }
+
+    .text-center {
+        text-align: center !important;
+    }
+
+    .text-start {
+        text-align: left !important;
+    }
+
+    .text-end {
+        text-align: right !important;
+    }
+
+    .lead {
+        font-size: 1rem !important;
+        margin-bottom: .75rem !important;
+    }
+
+    .pagebreak {
+        page-break-after: avoid;
+    }
+}
+
 .pay-icon {
     background: rgba(255, 255, 255, .08);
     border: 1px solid rgba(255, 255, 255, .12);
