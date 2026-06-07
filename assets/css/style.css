@@ -166,14 +166,21 @@ body {
     position: relative;
 }
 
+.nav-icons {
+    position: relative;
+}
+
 .nav-icons a:hover {
     color: var(--apex-accent);
 }
 
 .nav-search-wrap {
-    position: relative;
+    position: absolute;
+    right: 92px; /* moved leftward so the search icon sits left of the heart (favorites) icon */
+    top: 6px;
     width: clamp(42px, 16vw, 220px);
-    transition: width .25s ease;
+    transition: width .25s ease, transform .2s ease;
+    z-index: 1200;
 }
 
 .nav-search-wrap.open,
@@ -188,7 +195,7 @@ body {
 
 .nav-search-toggle {
     position: absolute;
-    left: 0;
+    right: 0; /* icon sits at right edge of the search wrap */
     top: 0;
     z-index: 2;
     width: 38px;
@@ -220,13 +227,13 @@ body {
     border: 1px solid rgba(255, 255, 255, .18);
     border-radius: 999px;
     outline: 0;
-    padding: 0 12px 0 46px;
+    padding: 0 46px 0 12px; /* leave space on the right for the toggle */
     color: var(--apex-white);
     background: rgba(255, 255, 255, .1);
     font-size: .84rem;
     opacity: 0;
     pointer-events: none;
-    transition: opacity .2s ease, border-color .2s ease, background .2s ease;
+    transition: opacity .2s ease, border-color .2s ease, background .2s ease, transform .2s ease;
 }
 
 .nav-search-wrap.open .nav-search-field .nav-product-search,
@@ -250,7 +257,7 @@ body {
 }
 
 .nav-search-wrap:not(.open):not(:focus-within) .nav-search-toggle {
-    right: auto;
+    transform: none;
 }
 
 .nav-search-panel {
@@ -258,12 +265,12 @@ body {
     top: calc(100% + 10px);
     right: 0;
     z-index: 1100;
-    width: min(760px, calc(100vw - 28px));
-    max-height: 520px;
-    padding: 16px;
+    width: min(360px, calc(100vw - 28px));
+    max-height: 430px;
+    padding: 14px;
     background: var(--apex-white);
     border: 1px solid var(--apex-border);
-    border-radius: 12px;
+    border-radius: 10px;
     box-shadow: 0 22px 60px rgba(6, 15, 46, .22);
     opacity: 0;
     visibility: hidden;
@@ -277,143 +284,45 @@ body {
     transform: translateY(0);
 }
 
-.nav-search-panel-grid {
-    display: grid;
-    grid-template-columns: minmax(180px, 240px) minmax(340px, 1fr);
-    gap: 18px;
-}
-
-.nav-search-suggestions {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.nav-search-panel-title {
-    font-size: .78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    color: var(--apex-muted);
-}
-
-.nav-search-suggestion-list {
-    display: grid;
-    gap: 10px;
-}
-
-.nav-search-suggestion {
-    width: 100%;
-    text-align: left;
-    border: 1px solid rgba(63, 79, 103, .12);
-    background: var(--apex-light);
-    border-radius: 10px;
-    color: var(--apex-dark);
-    padding: 12px 14px;
-    font-size: .85rem;
-    cursor: pointer;
-    transition: background .2s, border-color .2s;
-}
-
-.nav-search-suggestion:hover,
-.nav-search-suggestion:focus {
-    background: rgba(0, 194, 255, .08);
-    border-color: rgba(0, 194, 255, .3);
-}
-
-.nav-search-suggestion-empty {
-    color: var(--apex-muted);
-    font-size: .85rem;
-    padding: 10px 12px;
-}
-
-.nav-search-main {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.nav-search-main-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.nav-search-query {
-    font-weight: 700;
-    color: var(--apex-dark);
-    font-size: .95rem;
-}
-
 .nav-search-results {
-    max-height: 360px;
+    max-height: 340px;
     overflow-y: auto;
-    display: grid;
-    gap: 8px;
 }
 
 .nav-search-result {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
-    padding: 14px;
-    border-radius: 12px;
+    padding: 10px;
+    border-radius: 8px;
     color: var(--apex-text) !important;
     text-decoration: none;
-    border: 1px solid rgba(63, 79, 103, .08);
-    transition: background .2s, border-color .2s;
+    margin-left: 0 !important;
 }
 
 .nav-search-result:hover {
     background: var(--apex-grey);
-    border-color: rgba(0, 194, 255, .25);
     color: var(--apex-blue) !important;
 }
 
-.nav-search-result-image {
-    width: 56px;
-    height: 56px;
-    flex: 0 0 56px;
-    display: grid;
-    place-items: center;
-    background: var(--apex-light);
-    border-radius: 12px;
-    overflow: hidden;
-}
-
 .nav-search-result img {
-    width: 100%;
-    height: 100%;
+    width: 46px;
+    height: 46px;
     object-fit: contain;
-}
-
-.nav-search-result-content {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
+    flex: 0 0 46px;
 }
 
 .nav-search-result strong {
     display: block;
-    font-size: .92rem;
-    line-height: 1.3;
+    font-size: .82rem;
+    line-height: 1.25;
 }
 
 .nav-search-result small {
     display: block;
     color: var(--apex-muted);
-    font-size: .78rem;
-}
-
-.nav-search-result-rating {
-    color: var(--apex-muted);
-    font-size: .75rem;
-}
-
-.nav-search-result.is-hidden,
-.nav-search-suggestion.is-hidden {
-    display: none !important;
+    font-size: .72rem;
+    margin-top: 3px;
 }
 
 .nav-search-result.is-hidden {
@@ -1873,6 +1782,10 @@ footer ul li a:hover {
     .nav-search-wrap {
         width: 100%;
         order: -1;
+        position: static; /* disable absolute positioning on small screens */
+        right: auto;
+        top: auto;
+        z-index: auto;
     }
 
     .nav-search-wrap.open,

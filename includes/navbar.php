@@ -39,37 +39,8 @@ $currentPage = $currentPage ?? '';
                 <li class="nav-item"><a class="nav-link <?= $currentPage === 'about' ? 'active' : '' ?>" href="about.php">About Us</a></li>
             </ul>
             <div class="nav-icons d-flex align-items-center">
-                <?php
-                $navSearchSuggestions = [];
-                if (!empty($_SESSION['inventory'])) {
-                    $suggestionCategories = [];
-                    foreach ($_SESSION['inventory'] as $searchProduct) {
-                        $category = trim($searchProduct['category'] ?? '');
-                        if ($category !== '' && !in_array($category, $suggestionCategories, true)) {
-                            $suggestionCategories[] = $category;
-                        }
-                    }
-                    sort($suggestionCategories, SORT_STRING);
-                    foreach ($suggestionCategories as $category) {
-                        $navSearchSuggestions[] = 'in ' . ucfirst($category);
-                    }
-
-                    $productNames = [];
-                    foreach ($_SESSION['inventory'] as $searchProduct) {
-                        $name = trim($searchProduct['name'] ?? '');
-                        if ($name !== '' && !in_array($name, $productNames, true)) {
-                            $productNames[] = $name;
-                        }
-                    }
-                    $productNames = array_slice($productNames, 0, 4);
-                    foreach ($productNames as $name) {
-                        $navSearchSuggestions[] = $name;
-                    }
-
-                    $navSearchSuggestions = array_slice($navSearchSuggestions, 0, 8);
-                }
-                ?>
-                <div class="nav-search-wrap">
+                    <!-- search is placed after favorites for slide-open UX -->
+                       <div class="nav-search-wrap">
                     <div class="nav-search-field">
                         <button class="nav-search-toggle" type="button" aria-label="Search products" aria-expanded="false">
                             <i class="fas fa-search"></i>
@@ -77,53 +48,21 @@ $currentPage = $currentPage ?? '';
                         <input type="search" class="nav-product-search" name="q" value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" placeholder="Search products..." autocomplete="off">
                     </div>
                     <div class="nav-search-panel" aria-label="Search products">
-                        <div class="nav-search-panel-grid">
-                            <aside class="nav-search-suggestions">
-                                <div class="nav-search-panel-title">Search suggestions</div>
-                                <div class="nav-search-suggestion-list">
-                                    <?php if (!empty($navSearchSuggestions)): ?>
-                                        <?php foreach ($navSearchSuggestions as $suggestion): ?>
-                                            <button type="button" class="nav-search-suggestion" data-suggestion="<?php echo htmlspecialchars(strtolower($suggestion)); ?>">
-                                                <?php echo htmlspecialchars($suggestion); ?>
-                                            </button>
-                                        <?php endforeach; ?>
-                                    <?php else: ?>
-                                        <div class="nav-search-suggestion-empty">No suggestions available.</div>
-                                    <?php endif; ?>
-                                </div>
-                            </aside>
-                            <section class="nav-search-main">
-                                <div class="nav-search-main-header">
-                                    <div class="nav-search-query">
-                                        <?php if (!empty($_GET['q'])): ?>
-                                            Products for “<?php echo htmlspecialchars($_GET['q']); ?>"
-                                        <?php else: ?>
-                                            Search results
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                                <div class="nav-search-results">
-                                    <?php if (!empty($_SESSION['inventory'])): ?>
-                                        <?php foreach ($_SESSION['inventory'] as $searchProduct): ?>
-                                            <a href="product.php?id=<?php echo (int)$searchProduct['id']; ?>" class="nav-search-result" data-search-text="<?php echo htmlspecialchars(strtolower(($searchProduct['brand'] ?? '') . ' ' . ($searchProduct['name'] ?? '') . ' ' . ($searchProduct['category'] ?? ''))); ?>">
-                                                <div class="nav-search-result-image">
-                                                    <img src="<?php echo htmlspecialchars($searchProduct['image'] ?? ''); ?>" alt="<?php echo htmlspecialchars($searchProduct['name'] ?? 'Product'); ?>">
-                                                </div>
-                                                <div class="nav-search-result-content">
-                                                    <strong><?php echo htmlspecialchars($searchProduct['name'] ?? 'Product'); ?></strong>
-                                                    <small><?php echo htmlspecialchars($searchProduct['brand'] ?? 'ApeX'); ?> · ₱<?php echo number_format((float)($searchProduct['price'] ?? 0), 2); ?></small>
-                                                    <span class="nav-search-result-rating">
-                                                        <?php echo isset($searchProduct['rating']) ? str_repeat('<i class="fas fa-star"></i>', min(5, (int)$searchProduct['rating'])) : '<i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>'; ?>
-                                                    </span>
-                                                </div>
-                                            </a>
-                                        <?php endforeach; ?>
-                                        <div class="nav-search-empty">No products found.</div>
-                                    <?php else: ?>
-                                        <div class="nav-search-empty show">No products available.</div>
-                                    <?php endif; ?>
-                                </div>
-                            </section>
+                        <div class="nav-search-results">
+                            <?php if (!empty($_SESSION['inventory'])): ?>
+                                <?php foreach ($_SESSION['inventory'] as $searchProduct): ?>
+                                    <a href="product.php?id=<?php echo (int)$searchProduct['id']; ?>" class="nav-search-result" data-search-text="<?php echo htmlspecialchars(strtolower(($searchProduct['brand'] ?? '') . ' ' . ($searchProduct['name'] ?? '') . ' ' . ($searchProduct['category'] ?? ''))); ?>">
+                                        <img src="<?php echo htmlspecialchars($searchProduct['image'] ?? ''); ?>" alt="<?php echo htmlspecialchars($searchProduct['name'] ?? 'Product'); ?>">
+                                        <span>
+                                            <strong><?php echo htmlspecialchars($searchProduct['name'] ?? 'Product'); ?></strong>
+                                            <small><?php echo htmlspecialchars($searchProduct['brand'] ?? 'ApeX'); ?> · ₱<?php echo number_format((float)($searchProduct['price'] ?? 0), 2); ?></small>
+                                        </span>
+                                    </a>
+                                <?php endforeach; ?>
+                                <div class="nav-search-empty">No products found.</div>
+                            <?php else: ?>
+                                <div class="nav-search-empty show">No products available.</div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -131,6 +70,8 @@ $currentPage = $currentPage ?? '';
                     <i class="fas fa-heart"></i>
                     <span class="cart-badge" style="background: #ff3b5c; color: white;"><?php echo isset($_SESSION['favorites']) ? count($_SESSION['favorites']) : 0; ?></span>
                 </a>
+                <!-- Move search here so it sits next to the favorites icon and can slide open to the right -->
+              
                 <a href="#cartOffcanvas" data-bs-toggle="offcanvas" role="button" aria-controls="cartOffcanvas" style="position:relative; cursor:pointer;">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-badge">

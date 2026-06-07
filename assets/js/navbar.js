@@ -28,17 +28,13 @@
 const navSearchWrap = document.querySelector('.nav-search-wrap');
 const navSearchToggle = document.querySelector('.nav-search-toggle');
 const navSearchInput = document.querySelector('.nav-product-search');
-const navSearchResults = Array.from(document.querySelectorAll('.nav-search-result'));
-const navSearchSuggestions = Array.from(document.querySelectorAll('.nav-search-suggestion'));
+const navSearchResults = document.querySelectorAll('.nav-search-result');
 const navSearchEmpty = document.querySelector('.nav-search-empty');
-const navSearchSuggestionEmpty = document.querySelector('.nav-search-suggestion-empty');
-const navSearchQueryLabel = document.querySelector('.nav-search-query');
 
 if (navSearchWrap && navSearchToggle && navSearchInput) {
     const updateSearchResults = (value) => {
         const query = (value || '').trim().toLowerCase();
         let found = false;
-        let suggestionsVisible = false;
 
         navSearchResults.forEach(result => {
             const text = result.dataset.searchText || '';
@@ -50,32 +46,10 @@ if (navSearchWrap && navSearchToggle && navSearchInput) {
             }
         });
 
-        navSearchSuggestions.forEach(suggestion => {
-            const text = suggestion.dataset.suggestion || '';
-            if (query === '' || text.includes(query)) {
-                suggestion.classList.remove('is-hidden');
-                suggestionsVisible = true;
-            } else {
-                suggestion.classList.add('is-hidden');
-            }
-        });
-
-        if (navSearchSuggestionEmpty) {
-            if (!suggestionsVisible) {
-                navSearchSuggestionEmpty.classList.add('show');
-            } else {
-                navSearchSuggestionEmpty.classList.remove('show');
-            }
-        }
-
         if (!found) {
             navSearchEmpty.classList.add('show');
         } else {
             navSearchEmpty.classList.remove('show');
-        }
-
-        if (navSearchQueryLabel) {
-            navSearchQueryLabel.textContent = query === '' ? 'Search results' : `Products for “${value.trim()}”`;
         }
     };
 
@@ -100,15 +74,6 @@ if (navSearchWrap && navSearchToggle && navSearchInput) {
 
     navSearchInput.addEventListener('input', (event) => {
         updateSearchResults(event.target.value);
-    });
-
-    navSearchSuggestions.forEach(button => {
-        button.addEventListener('click', () => {
-            const query = button.dataset.suggestion || '';
-            navSearchInput.value = query;
-            updateSearchResults(query);
-            navSearchInput.focus();
-        });
     });
 
     navSearchInput.addEventListener('focus', () => {
