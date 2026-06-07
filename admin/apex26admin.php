@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'classes/Inventory.php';
+require_once '../classes/Inventory.php';
 
 $inventoryManager = new Inventory();
 
@@ -22,14 +22,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $image_path = '';
         if (isset($_FILES['image_upload']) && $_FILES['image_upload']['error'] === UPLOAD_ERR_OK) {
-            $upload_dir = 'assets/images/uploads/';
+            $upload_dir = '../assets/images/uploads/';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
             $file_name = uniqid() . '_' . basename($_FILES['image_upload']['name']);
             $target_file = $upload_dir . $file_name;
 
             $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
             if (in_array($_FILES['image_upload']['type'], $allowed_types)) {
                 if (move_uploaded_file($_FILES['image_upload']['tmp_name'], $target_file)) {
-                    $image_path = $target_file;
+                    $image_path = 'assets/images/uploads/' . $file_name;
                 }
             }
         }
@@ -38,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $inventoryManager->addProduct($name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $final_image, $desc);
 
-        header("Location: admin\apex26admin.php?success=added");
+        header("Location: apex26admin.php?success=added");
         exit();
     }
 
@@ -47,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $idToDelete = (int)$_POST['product_id'];
         $inventoryManager->deleteProduct($idToDelete);
 
-        header("Location: admin\apex26admin.php?success=deleted");
+        header("Location: apex26admin.php?success=deleted");
         exit();
     }
 

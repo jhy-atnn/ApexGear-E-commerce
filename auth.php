@@ -1,6 +1,9 @@
 <?php
 session_start();
 
+require_once 'database/db_connect.php';
+global $conn;
+
 class AuthD
 {
     private $label = 'auth-d';
@@ -57,14 +60,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             exit;
         }
 
-        // Check existing users
-        if (!isset($_SESSION['users'])) $_SESSION['users'] = [];
-        foreach ($_SESSION['users'] as $u) {
-            if (strtolower($u['username']) === strtolower($username)) {
+        // Check existing users in DB
+        $stmt = $conn->prepare("SELECT user_id, username, email FROM users_tbl WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?)");
+        $stmt->bind_param("ss", $username, $email);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        while ($row = $res->fetch_assoc()) {
+            if (strtolower($row['username']) === strtolower($username)) {
                 echo json_encode(['success' => false, 'message' => 'Username already taken.']);
                 exit;
             }
-            if (strtolower($u['email']) === strtolower($email)) {
+            if (strtolower($row['email']) === strtolower($email)) {
                 echo json_encode(['success' => false, 'message' => 'Email already registered.']);
                 exit;
             }
@@ -110,17 +116,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             exit;
         }
 
-        // Create account
-        if (!isset($_SESSION['users'])) $_SESSION['users'] = [];
+        // Create account in DB
+        $stmt = $conn->prepare("INSERT INTO users_tbl (username, email, password_hash, role) VALUES (?, ?, ?, 'customer')");
+        $stmt->bind_param("sss", $pending['username'], $pending['email'], $pending['password']);
+        $stmt->execute();
+        $user_id = $stmt->insert_id;
+
         $newUser = [
-            'id'       => uniqid(),
+            'id'       => $user_id,
             'username' => $pending['username'],
             'email'    => $pending['email'],
-            'password' => $pending['password'],
+            'role'     => 'customer',
             'avatar'   => strtoupper(substr($pending['username'], 0, 1)),
             'joined'   => date('F Y'),
         ];
-        $_SESSION['users'][] = $newUser;
+        
         unset($_SESSION['pending_register']);
 
         // Log them in immediately
@@ -141,30 +151,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             exit;
         }
 
-        if (!isset($_SESSION['users']) || empty($_SESSION['users'])) {
-            echo json_encode(['success' => false, 'message' => 'No account found. Please register first.']);
-            exit;
-        }
+        $stmt = $conn->prepare("SELECT user_id, username, email, password_hash, role FROM users_tbl WHERE LOWER(username) = LOWER(?)");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $res = $stmt->get_result();
 
-        $found = null;
-        foreach ($_SESSION['users'] as $u) {
-            if (strtolower($u['username']) === strtolower($username)) {
-                $found = $u;
-                break;
-            }
-        }
-        if (!$found) {
+        if ($res->num_rows === 0) {
             echo json_encode(['success' => false, 'message' => 'Username not found.']);
             exit;
         }
-        if (!password_verify($password, $found['password'])) {
+
+        $row = $res->fetch_assoc();
+
+        if (!password_verify($password, $row['password_hash'])) {
             echo json_encode(['success' => false, 'message' => 'Incorrect password.']);
             exit;
         }
 
-        $_SESSION['user'] = $found;
+        $_SESSION['user'] = [
+            'id' => $row['user_id'],
+            'username' => $row['username'],
+            'email' => $row['email'],
+            'role' => $row['role'],
+            'avatar' => strtoupper(substr($row['username'], 0, 1)),
+            'joined' => date('F Y')
+        ];
+        
         setcookie('apex_logged_in', time(), time() + 60, '/'); // cookie expires in 60 seconds
-        echo json_encode(['success' => true, 'message' => 'Welcome back, ' . htmlspecialchars($found['username']) . '!']);
+        echo json_encode(['success' => true, 'message' => 'Welcome back, ' . htmlspecialchars($row['username']) . '!']);
         exit;
     }
 
@@ -174,18 +188,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         $fakeName = $provider === 'facebook' ? 'FBUser_' . rand(100, 999) : 'GUser_' . rand(100, 999);
         $fakeEmail = strtolower($fakeName) . '@' . strtolower($provider) . '.com';
 
-        if (!isset($_SESSION['users'])) $_SESSION['users'] = [];
+        // Insert into DB if simulating real creation
+        $password_hash = password_hash(bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
+        $stmt = $conn->prepare("INSERT INTO users_tbl (username, email, password_hash, role) VALUES (?, ?, ?, 'customer')");
+        $stmt->bind_param("sss", $fakeName, $fakeEmail, $password_hash);
+        $stmt->execute();
+        $user_id = $stmt->insert_id;
+
         $newUser = [
-            'id'       => uniqid(),
+            'id'       => $user_id,
             'username' => $fakeName,
             'email'    => $fakeEmail,
-            'password' => '',
+            'role'     => 'customer',
             'avatar'   => strtoupper(substr($fakeName, 0, 1)),
             'joined'   => date('F Y'),
             'provider' => $provider,
         ];
-        $_SESSION['users'][] = $newUser;
-        $_SESSION['user']    = $newUser;
+        $_SESSION['user'] = $newUser;
 
         setcookie('apex_logged_in', time(), time() + 60, '/'); // cookie expires in 60 seconds
         echo json_encode(['success' => true, 'message' => 'Signed in with ' . ucfirst($provider) . '!']);

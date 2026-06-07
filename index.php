@@ -1,26 +1,11 @@
 <?php
 session_start();
-unset($_SESSION['inventory']);
 
-if (!isset($_SESSION['inventory'])) {
-    $_SESSION['inventory'] = [
-        1 => ['id' => 1, 'category' => 'laptop', 'brand' => 'Lenovo', 'name' => 'Legion 5 Pro — RTX 4070, 16" QHD 165Hz', 'price' => 119995.00, 'old_price' => 127999.00, 'rating' => 124, 'sales' => 186, 'badge' => 'New', 'badge_type' => 'new', 'image' => 'assets/images/products/legion5pro.png', 'stock' => 10],
-        2 => ['id' => 2, 'category' => 'laptop', 'brand' => 'ASUS', 'name' => 'ROG Zephyrus G14 — Ryzen 9, RTX 4060', 'price' => 109995.00, 'old_price' => 119995.00, 'rating' => 89, 'sales' => 140, 'badge' => 'SALE', 'badge_type' => 'ribbon', 'image' => 'assets/images/products/zephyrusg14.png', 'stock' => 5],
-        3 => ['id' => 3, 'category' => 'peripheral', 'brand' => 'Razer', 'name' => 'BlackWidow V4 Pro — Mechanical, RGB, Wireless', 'price' => 13495.00, 'old_price' => 15995.00, 'rating' => 4210, 'sales' => 3820, 'badge' => 'Popular', 'badge_type' => 'normal', 'image' => 'assets/images/products/blackwidow.png', 'stock' => 20],
-        4 => ['id' => 4, 'category' => 'peripheral', 'brand' => 'Logitech', 'name' => 'G Pro X Superlight 2 — Wireless Gaming Mouse', 'price' => 7795.00, 'old_price' => 8995.00, 'rating' => 4340, 'sales' => 4260, 'badge' => null, 'badge_type' => null, 'image' => 'assets/images/products/superlight.png', 'stock' => 15],
-        5 => ['id' => 5, 'category' => 'audio', 'brand' => 'Sony', 'name' => 'WH-1000XM5 — Noise Cancelling, 30hr Battery', 'price' => 15499.00, 'old_price' => 20999.00, 'rating' => 512, 'sales' => 980, 'badge' => 'New', 'badge_type' => 'new', 'image' => 'assets/images/products/sonywh.png', 'stock' => 12],
-        6 => ['id' => 6, 'category' => 'phone', 'brand' => 'Samsung', 'name' => 'Galaxy S24 Ultra — 200MP, 5000mAh, Titanium', 'price' => 84990.00, 'old_price' => 94990.00, 'rating' => 445, 'sales' => 760, 'badge' => 'SALE', 'badge_type' => 'ribbon', 'image' => 'assets/images/products/s24ultra.png', 'stock' => 8],
-        7 => ['id' => 7, 'category' => 'desktop', 'brand' => 'Dell', 'name' => 'XPS Tower — Intel i9-14900K, RTX 4080, 64GB', 'price' => 185000.00, 'old_price' => 200000.00, 'rating' => 78, 'sales' => 95, 'badge' => null, 'badge_type' => null, 'image' => 'assets/images/products/xpstower.png', 'stock' => 3],
-        8 => ['id' => 8, 'category' => 'peripheral', 'brand' => 'LG', 'name' => 'UltraGear 27" — 4K, 144Hz, 1ms, IPS, G-Sync', 'price' => 39995.00, 'old_price' => 45995.00, 'rating' => 193, 'sales' => 410, 'badge' => 'On Sale', 'badge_type' => 'sale', 'image' => 'assets/images/products/ultragear.png', 'stock' => 7],
-        9 => ['id' => 9, 'category' => 'phone', 'brand' => 'Apple', 'name' => 'iPhone 17 Pro — Cosmic Orange - Aluminum', 'price' => 109990.00, 'old_price' => 119990.00, 'rating' => 445, 'sales' => 690, 'badge' => 'On Sale', 'badge_type' => 'sale', 'image' => 'assets/images/products/iphone17pro.png', 'stock' => 15],
-        10 => ['id' => 10, 'category' => 'laptop', 'brand' => 'HP', 'name' => 'Spectre x360 14" — OLED, Intel Evo', 'price' => 79995.00, 'old_price' => 95000.00, 'rating' => 156, 'sales' => 260, 'badge' => '–15%', 'badge_type' => 'sale', 'image' => 'assets/images/products/hpspectre.png', 'stock' => 10],
-        11 => ['id' => 11, 'category' => 'phone', 'brand' => 'Apple', 'name' => 'iPhone 15 Pro — 256GB, Natural Titanium', 'price' => 69990.00, 'old_price' => 76990.00, 'rating' => 892, 'sales' => 1280, 'badge' => '–10%', 'badge_type' => 'sale', 'image' => 'assets/images/products/iph15pro.png', 'stock' => 25],
-        12 => ['id' => 12, 'category' => 'peripheral', 'brand' => 'Corsair', 'name' => 'K100 Air — Ultra-Thin, Wireless, RGB', 'price' => 11995.00, 'old_price' => 16500.00, 'rating' => 340, 'sales' => 870, 'badge' => '–25%', 'badge_type' => 'sale', 'image' => 'assets/images/products/corsairk100air.png', 'stock' => 15],
-        13 => ['id' => 13, 'category' => 'gpu', 'brand' => 'NVIDIA', 'name' => 'GeForce RTX 4070 Super — 12GB GDDR6X', 'price' => 36500.00, 'old_price' => 42000.00, 'rating' => 215, 'sales' => 330, 'badge' => '–13%', 'badge_type' => 'sale', 'image' => 'assets/images/products/nvidiartx4070.png', 'stock' => 5]
-    ];
-}
+require_once 'classes/Inventory.php';
+$inventoryManager = new Inventory();
+$products = $inventoryManager->getAllProducts();
 
-$featuredProducts = array_values($_SESSION['inventory']);
+$featuredProducts = array_values($products);
 usort($featuredProducts, function ($a, $b) {
     $scoreA = (int)($a['rating'] ?? 0) + (int)($a['sales'] ?? 0);
     $scoreB = (int)($b['rating'] ?? 0) + (int)($b['sales'] ?? 0);

@@ -48,8 +48,14 @@ $currentPage = $currentPage ?? '';
                     </div>
                     <div class="nav-search-panel" aria-label="Search products">
                         <div class="nav-search-results">
-                            <?php if (!empty($_SESSION['inventory'])): ?>
-                                <?php foreach ($_SESSION['inventory'] as $searchProduct): ?>
+                            <?php
+                            if (!isset($inventoryManager)) {
+                                require_once __DIR__ . '/../classes/Inventory.php';
+                                $inventoryManager = new Inventory();
+                            }
+                            $navProducts = $inventoryManager->getAllProducts();
+                            if (!empty($navProducts)): ?>
+                                <?php foreach ($navProducts as $searchProduct): ?>
                                     <a href="product.php?id=<?php echo (int)$searchProduct['id']; ?>" class="nav-search-result" data-search-text="<?php echo htmlspecialchars(strtolower(($searchProduct['brand'] ?? '') . ' ' . ($searchProduct['name'] ?? '') . ' ' . ($searchProduct['category'] ?? ''))); ?>">
                                         <img src="<?php echo htmlspecialchars($searchProduct['image'] ?? ''); ?>" alt="<?php echo htmlspecialchars($searchProduct['name'] ?? 'Product'); ?>">
                                         <span>
