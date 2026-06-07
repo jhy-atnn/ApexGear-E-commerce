@@ -18,6 +18,20 @@ class Inventory
         }
     }
 
+    private function refreshSharedSeed()
+    {
+        if (!$this->conn) return;
+
+        $seedExportPath = __DIR__ . '/../database/db_seed_export.php';
+        if (!file_exists($seedExportPath)) return;
+
+        require_once $seedExportPath;
+
+        if (function_exists('apexgear_export_seed_data')) {
+            apexgear_export_seed_data($this->conn, __DIR__ . '/../database/seed_data.sql');
+        }
+    }
+
     public function getInventory()
     {
         return $this->getAllProducts();
@@ -175,6 +189,7 @@ class Inventory
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("siiddiisss", $name, $brand_id, $category_id, $price, $old_price, $stock, $rating, $badge, $badge_type, $image);
         $stmt->execute();
+        $this->refreshSharedSeed();
     }
 
     public function editProduct($id, $name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc)
@@ -200,6 +215,7 @@ class Inventory
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("siiddiisssi", $name, $brand_id, $category_id, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $id);
         $stmt->execute();
+        $this->refreshSharedSeed();
     }
 
     public function deleteProduct($id)
@@ -211,5 +227,6 @@ class Inventory
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $id);
         $stmt->execute();
+        $this->refreshSharedSeed();
     }
 }

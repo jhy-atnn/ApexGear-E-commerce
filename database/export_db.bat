@@ -2,6 +2,7 @@
 setlocal
 
 set "MYSQLDUMP=%USERPROFILE%\Pictures\xampp\mysql\bin\mysqldump.exe"
+set "PHP=%USERPROFILE%\Pictures\xampp\php\php.exe"
 set "OUTPUT=%~dp0db_apexgear.sql"
 
 if not exist "%MYSQLDUMP%" (
@@ -15,6 +16,12 @@ if not exist "%MYSQLDUMP%" (
 if errorlevel 1 (
     echo Database export failed.
     exit /b 1
+)
+
+if exist "%PHP%" (
+    "%PHP%" "%~dp0export_seed.php"
+) else (
+    echo php.exe was not found, skipped seed export.
 )
 
 echo Exported current db_apexgear database to:

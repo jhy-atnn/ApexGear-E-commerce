@@ -94,6 +94,20 @@ function apexgear_run_migrations(mysqli $conn, string $migrationsDir): void
     }
 }
 
+function apexgear_sync_seed_data(mysqli $conn, string $seedPath): void
+{
+    if (!is_file($seedPath)) {
+        return;
+    }
+
+    $sql = file_get_contents($seedPath);
+    if ($sql === false) {
+        throw new RuntimeException("Unable to read seed data: {$seedPath}");
+    }
+
+    apexgear_run_sql_script($conn, $sql);
+}
+
 function apexgear_prepare_database(string $host, string $username, string $password, string $database): void
 {
     $serverConn = new mysqli($host, $username, $password);
@@ -120,6 +134,7 @@ function apexgear_prepare_database(string $host, string $username, string $passw
 
     try {
         apexgear_run_migrations($dbConn, __DIR__ . '/migrations');
+        apexgear_sync_seed_data($dbConn, __DIR__ . '/seed_data.sql');
     } catch (RuntimeException $e) {
         die("Database Migration Failed: " . $e->getMessage());
     } finally {
