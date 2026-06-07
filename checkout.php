@@ -614,17 +614,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
                     // Remove active state from all methods
                     paymentMethods.forEach(m => {
-                        m.style.background = 'var(--apex-light)';
-                        m.style.borderColor = 'var(--apex-blue)';
-                        m.style.color = 'var(--apex-blue)';
-                        m.style.boxShadow = 'none';
+                        m.classList.remove('active');
                     });
 
                     // Set active state for clicked method
-                    this.style.background = 'var(--apex-blue)';
-                    this.style.borderColor = 'var(--apex-blue)';
-                    this.style.color = 'white';
-                    this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                    this.classList.add('active');
 
                     // Hide all payment field sections
                     const allFields = document.querySelectorAll('.payment-fields');

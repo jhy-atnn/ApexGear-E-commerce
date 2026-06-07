@@ -1707,6 +1707,28 @@ footer ul li a:hover {
     color: var(--apex-accent);
 }
 
+.payment-method {
+    cursor: pointer;
+    transition: all .25s ease;
+    border-color: var(--apex-blue) !important;
+    background: #f8f9fa;
+    color: var(--apex-blue);
+}
+
+.payment-method:hover {
+    transform: translateY(-1px);
+}
+
+.payment-method.active {
+    background: var(--apex-blue) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+}
+
+.payment-method.active i {
+    color: #fff !important;
+}
+
 .product-meta-row {
     margin-bottom: 2.5rem;
 }
