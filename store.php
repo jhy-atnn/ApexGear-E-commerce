@@ -60,7 +60,7 @@ if ($searchQuery !== '') {
         </div>
     </header>
 
-    <section class="inner-page">
+    <section class="inner-page" style="padding-bottom: 4rem;">
         <div class="container">
             <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
                 <?php if ($searchQuery !== ''): ?>

@@ -200,36 +200,46 @@
         <div class="profile-modal-body">
             <div id="profileAlert" class="alert d-none"></div>
             <form id="userProfileForm" enctype="multipart/form-data">
+
+                <!-- Avatar -->
                 <div class="profile-avatar-section">
                     <div class="profile-avatar-large position-relative">
                         <?php
-                            $avatarUrl = isset($_SESSION['user']['profile_picture']) && !empty($_SESSION['user']['profile_picture']) 
-                                         ? $_SESSION['user']['profile_picture'] 
+                            $avatarUrl = isset($_SESSION['user']['profile_picture']) && !empty($_SESSION['user']['profile_picture'])
+                                         ? $_SESSION['user']['profile_picture']
                                          : 'https://via.placeholder.com/400';
                         ?>
                         <img src="<?php echo htmlspecialchars($avatarUrl); ?>" alt="User Avatar" id="userModalAvatar">
-                        <label for="userProfilePicture" class="btn btn-sm btn-primary position-absolute" style="bottom: 12px; right: 12px; z-index: 2;">Change</label>
+                        <label for="userProfilePicture" class="btn btn-sm btn-primary position-absolute" title="Change photo">
+                            <i class="fas fa-pen"></i>
+                        </label>
                         <input type="file" id="userProfilePicture" name="profile_picture" class="d-none" accept="image/*">
                     </div>
-                    <div class="mt-3 text-center text-muted small">Upload a JPG, PNG, or WEBP profile picture.</div>
+                    <div class="text-muted small">Upload a JPG, PNG, or WEBP profile picture.</div>
                 </div>
+
+                <!-- Personal Info -->
+                <div class="profile-section-label"><i class="fas fa-user" style="color:rgba(0,194,255,.5);font-size:.7rem;"></i> Personal Info</div>
                 <div class="row">
-                    <div class="col-md-6 form-group">
+                    <div class="col-6 form-group">
                         <label for="userFirstName">First Name</label>
-                        <input type="text" id="userFirstName" name="first_name" class="form-control" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['first_name'] ?? '') : ''; ?>">
+                        <input type="text" id="userFirstName" name="first_name" class="form-control" placeholder="First name" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['first_name'] ?? '') : ''; ?>">
                     </div>
-                    <div class="col-md-6 form-group">
+                    <div class="col-6 form-group">
                         <label for="userLastName">Last Name</label>
-                        <input type="text" id="userLastName" name="last_name" class="form-control" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['last_name'] ?? '') : ''; ?>">
+                        <input type="text" id="userLastName" name="last_name" class="form-control" placeholder="Last name" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['last_name'] ?? '') : ''; ?>">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="userBio">Bio</label>
-                    <textarea id="userBio" name="bio" class="form-control" rows="3"><?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['bio'] ?? '') : ''; ?></textarea>
+                    <textarea id="userBio" name="bio" class="form-control" rows="3" placeholder="Tell us a little about yourself…"><?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['bio'] ?? '') : ''; ?></textarea>
                 </div>
+
+                <!-- Contact & Details -->
+                <div class="profile-section-label"><i class="fas fa-id-card" style="color:rgba(0,194,255,.5);font-size:.7rem;"></i> Contact &amp; Details</div>
                 <div class="form-group">
                     <label for="userEmail">Email</label>
-                    <input type="email" id="userEmail" name="email" class="form-control" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['email'] ?? '') : ''; ?>" readonly>
+                    <input type="email" id="userEmail" name="email" class="form-control" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['email'] ?? '') : ''; ?>" placeholder="your@email.com">
                 </div>
                 <div class="form-group">
                     <label for="userContact">Contact Number</label>
@@ -248,7 +258,7 @@
                     <label for="userGender">Gender</label>
                     <?php $uGender = isset($_SESSION['user']) ? $_SESSION['user']['gender'] : ''; ?>
                     <select id="userGender" name="gender" class="form-control">
-                        <option value="" <?php echo $uGender == '' ? 'selected' : ''; ?>>Select Gender</option>
+                        <option value="" <?php echo $uGender == '' ? 'selected' : ''; ?>>Select</option>
                         <option value="Male" <?php echo $uGender == 'Male' ? 'selected' : ''; ?>>Male</option>
                         <option value="Female" <?php echo $uGender == 'Female' ? 'selected' : ''; ?>>Female</option>
                         <option value="Other" <?php echo $uGender == 'Other' ? 'selected' : ''; ?>>Other</option>
@@ -259,14 +269,16 @@
                     <label for="userBirthdate">Birthdate</label>
                     <div class="input-group">
                         <input type="date" id="userBirthdate" name="birthday" class="form-control datepicker-input" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['birthday'] ?? '') : ''; ?>" />
-                        <span class="input-group-text"><i class="fas fa-calendar"></i></span>
                     </div>
                 </div>
+
             </form>
         </div>
         <div class="profile-modal-footer">
             <button type="button" class="btn btn-secondary btn-close-modal-alt">Cancel</button>
-            <button type="button" class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+            <button type="button" class="btn btn-primary" onclick="saveProfile()">
+                <i class="fas fa-check" style="margin-right:6px;font-size:.75rem;"></i>Save Changes
+            </button>
         </div>
     </div>
 </div>
@@ -331,6 +343,21 @@
 
         // User Profile Modal Logic
         const profileModal = document.getElementById('userProfileModal');
+        const birthInput = document.getElementById('userBirthdate');
+        if (birthInput) {
+            birthInput.addEventListener('click', function() {
+                if (typeof birthInput.showPicker === 'function') {
+                    try {
+                        birthInput.showPicker();
+                    } catch (err) {}
+                }
+            });
+
+            birthInput.addEventListener('keydown', function(e) {
+                if (e.key !== 'Tab') e.preventDefault();
+            });
+        }
+
         const myProfileLink = document.querySelector('.pp-link[href="javascript:void(0)"]'); // Simplified selector
         const closeModalBtn = document.querySelector('.btn-close-modal');
         const closeModalAltBtn = document.querySelector('.btn-close-modal-alt');
