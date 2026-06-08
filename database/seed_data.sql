@@ -26,10 +26,11 @@ INSERT INTO `categories_tbl` (`category_id`, `category_name`) VALUES
 ('4', 'Phones'),
 ('5', 'Desktops'),
 ('6', 'GPUs'),
-('7', 'Tablet')
+('7', 'Tablet'),
+('8', 'Cpu')
 ON DUPLICATE KEY UPDATE `category_name` = VALUES(`category_name`);
 
-ALTER TABLE `categories_tbl` AUTO_INCREMENT = 8;
+ALTER TABLE `categories_tbl` AUTO_INCREMENT = 9;
 
 INSERT INTO `products_tbl` (`product_id`, `name`, `brand_id`, `category_id`, `price`, `old_price`, `stock`, `rating`, `badge`, `badge_type`, `image`, `desc`, `is_archived`) VALUES
 ('1', 'Legion 5 Pro — RTX 4070, 16\" QHD 165Hz', '1', '1', '119995.00', '127999.00', '10', '124', 'New', 'new', 'assets/images/products/1780862872_Copy_of_CAL_COMSOC_Ask.png', 'Dominate the competition with the Legion 5 Pro. Featuring a blistering 165Hz QHD display and the raw power of the RTX 4070, it delivers desktop-level gaming performance in a sleek, portable chassis.', '0'),
@@ -50,10 +51,11 @@ INSERT INTO `products_tbl` (`product_id`, `name`, `brand_id`, `category_id`, `pr
 ('16', 'Justine Luige Malaiba', '2', '4', '122838.00', '139990.00', '11', '123', 'Popular', 'new', 'assets/images/products/1780864853_Malaiba.png', NULL, '0'),
 ('17', 'Semi-Final 2', '3', '5', '36623.00', NULL, '363', '111', 'New', 'normal', 'assets/images/products/1780865818_original_samsung_logo_10.png', NULL, '0'),
 ('18', 'Legion 5 Pro — RTX 4070, 16\" QHD 165Hz', '2', '1', '10000.00', NULL, '11', '0', NULL, 'normal', 'assets/images/products/1780866608_PIC_removebg_preview.png', NULL, '0'),
-('19', 'WH-1000XM5 — Noise Cancelling, 30hr Battery', '10', '5', '10000.00', NULL, '11', '0', NULL, 'normal', 'assets/images/products/1780866667_hand.jpg', NULL, '0')
+('19', 'WH-1000XM5 — Noise Cancelling, 30hr Battery', '10', '5', '10000.00', NULL, '11', '0', NULL, 'normal', 'assets/images/products/1780866667_hand.jpg', NULL, '0'),
+('20', 'UltraGear 27\" — 4K, 144Hz, 1ms, IPS, G-Sync', '2', '8', '10000.00', NULL, '10', '0', 'On Sale', 'ribbon', 'assets/images/products/1780888929_typing.jpg', NULL, '0')
 ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `brand_id` = VALUES(`brand_id`), `category_id` = VALUES(`category_id`), `price` = VALUES(`price`), `old_price` = VALUES(`old_price`), `stock` = VALUES(`stock`), `rating` = VALUES(`rating`), `badge` = VALUES(`badge`), `badge_type` = VALUES(`badge_type`), `image` = VALUES(`image`), `desc` = VALUES(`desc`), `is_archived` = VALUES(`is_archived`);
 
-ALTER TABLE `products_tbl` AUTO_INCREMENT = 20;
+ALTER TABLE `products_tbl` AUTO_INCREMENT = 21;
 
 INSERT INTO `users_tbl` (`user_id`, `username`, `first_name`, `last_name`, `profile_picture`, `bio`, `gender`, `birthday`, `phone`, `email`, `password_hash`, `role`) VALUES
 ('1', 'Juday', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'atinon.jhody@gmail.com', '$2y$10$o/rJRTsc1AdhVnm/VOhI0eSPCOx9WAK8GDXgYtAANwYCBkYjullWi', 'customer')
