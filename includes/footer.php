@@ -283,6 +283,43 @@
     </div>
 </div>
 
+<style>
+    .pp-link-wrapper {
+        position: relative;
+    }
+
+    .order-status-card {
+        display: none;
+        position: fixed;
+        background-color: #2c2c3e;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 15px;
+        z-index: 1051; /* Higher than profile panel */
+        width: 280px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: #fff;
+    }
+
+    .pp-link-wrapper:hover .order-status-card {
+        display: block;
+    }
+
+    .order-status-item, .order-status-item-question {
+        padding: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .order-status-item:last-child, .order-status-item-question:last-child {
+        border-bottom: none;
+    }
+
+    .order-status-item-question span {
+        display: block;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+</style>
 <!-- Profile Dropdown Logic -->
 <script>
     <?php if (isset($_SESSION['user'])): ?>
@@ -301,6 +338,27 @@
                 <div class="pp-divider"></div>
                 <a href="javascript:void(0)" class="pp-link"><i class="fas fa-user"></i> My Profile</a>
                 <a href="javascript:void(0)" class="pp-link"><i class="fas fa-box"></i> My Orders</a>
+                <div class="pp-link-wrapper">
+                    <a href="javascript:void(0)" class="pp-link order-status-link"><i class="fas fa-truck"></i> Order Status</a>
+                    <div class="order-status-card">
+                        <div class="order-status-item">
+                            <span>Order Sent (Ref: #12345)</span>
+                        </div>
+                        <div class="order-status-item">
+                            <span>Order Received by Admin (Ref: #12345)</span>
+                        </div>
+                        <div class="order-status-item">
+                            <span>Order Shipped (Ref: #12345)</span>
+                        </div>
+                        <div class="order-status-item-question">
+                            <span>Have you received your order?</span>
+                            <div class="d-flex justify-content-center mt-2">
+                                <button class="btn btn-success btn-sm me-2">Yes</button>
+                                <button class="btn btn-danger btn-sm">No</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <a href="#favoritesOffcanvas" data-bs-toggle="offcanvas" class="pp-link"><i class="fas fa-heart"></i> Favorites</a>
                 <a href="#cartOffcanvas" data-bs-toggle="offcanvas" class="pp-link"><i class="fas fa-shopping-cart"></i> My Cart</a>
                 <a href="javascript:void(0)" class="pp-link"><i class="fas fa-cog"></i> Settings</a>
@@ -308,6 +366,16 @@
                 <a href="logout.php" class="pp-link pp-logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
             `;
             document.body.appendChild(panel);
+
+            const orderStatusLink = panel.querySelector('.order-status-link');
+            const orderStatusCard = panel.querySelector('.order-status-card');
+
+            orderStatusLink.addEventListener('mouseenter', () => {
+                const rect = orderStatusLink.getBoundingClientRect();
+                orderStatusCard.style.left = rect.right + 'px';
+                orderStatusCard.style.top = rect.top + 'px';
+            });
+
         })();
 
         function toggleProfilePanel(e) {
