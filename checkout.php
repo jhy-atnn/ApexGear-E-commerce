@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/database/db_connect.php';
 
 $cart_items = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? $_SESSION['cart'] : [];
 
@@ -65,6 +66,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     $receipt_data['tax'] = $tax;
     $receipt_data['grandTotal'] = $grand_total;
     $receipt_data['receiptNumber'] = $receipt_number;
+
+    // Persist the order for the logged-in user if available
+    $dbUserId = isset($_SESSION['user']['id']) ? intval($_SESSION['user']['id']) : null;
+    $paymentMethod = isset($_POST['payment_method']) ? trim($_POST['payment_method']) : '';
+    $paymentMethodMap = [
+        'card' => 'Credit / Debit Card',
+        'cod' => 'Cash on Delivery',
+        'gcash' => 'GCash',
+        'paypal' => 'PayPal',
+        'maya' => 'Maya'
+    ];
+    $paymentMethodDisplay = $paymentMethodMap[$paymentMethod] ?? ucfirst($paymentMethod);
+    $paymentReference = '';
+
+    if ($paymentMethod === 'card') {
+        $paymentReference = isset($receipt_data['cardLast4']) ? $receipt_data['cardLast4'] : '';
+    } elseif ($paymentMethod === 'gcash') {
+        $paymentReference = isset($receipt_data['gcashMobile']) ? $receipt_data['gcashMobile'] : '';
+    } elseif ($paymentMethod === 'paypal') {
+        $paymentReference = isset($receipt_data['paypalEmail']) ? $receipt_data['paypalEmail'] : '';
+    } elseif ($paymentMethod === 'maya') {
+        $paymentReference = isset($receipt_data['mayaMobile']) ? $receipt_data['mayaMobile'] : '';
+    }
+
+    $stmtOrder = $conn->prepare("INSERT INTO orders_tbl (user_id, shipping_address, shipping_city, shipping_zip, reference_number, total_amount, order_status, payment_method, payment_reference) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $orderStatusValue = 'On Process';
+    $stmtOrder->bind_param('issssdsss', $dbUserId, $receipt_data['address'], $receipt_data['city'], $receipt_data['zipcode'], $receipt_number, $grand_total, $orderStatusValue, $paymentMethodDisplay, $paymentReference);
+
+    if ($stmtOrder->execute()) {
+        $orderId = $stmtOrder->insert_id;
+        $stmtItem = $conn->prepare("INSERT INTO order_items_tbl (order_id, product_id, purchased_price, quantity) VALUES (?, ?, ?, ?)");
+
+        foreach ($_SESSION['cart'] as $productId => $item) {
+            $productId = intval($productId);
+            $price = floatval($item['price']);
+            $quantity = intval($item['qty']);
+            $stmtItem->bind_param('iidi', $orderId, $productId, $price, $quantity);
+            $stmtItem->execute();
+        }
+        $stmtItem->close();
+    }
+    $stmtOrder->close();
 
     // Store in session for potential future use
     $_SESSION['last_receipt'] = $receipt_data;

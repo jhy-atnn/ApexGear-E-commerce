@@ -1,6 +1,45 @@
 <?php
 session_start();
-// Future: order management backend goes here
+require_once __DIR__ . '/../database/db_connect.php';
+
+$status_message = '';
+$status_class = 'alert-info';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
+    $order_id = intval($_POST['order_id'] ?? 0);
+    $order_status = trim($_POST['order_status'] ?? '');
+    $allowed_statuses = ['Delivered', 'Canceled', 'On Process', 'Shipped'];
+
+    if ($order_id > 0 && in_array($order_status, $allowed_statuses, true)) {
+        $stmt = $conn->prepare("UPDATE orders_tbl SET order_status = ? WHERE order_id = ?");
+        $stmt->bind_param('si', $order_status, $order_id);
+
+        if ($stmt->execute()) {
+            $status_message = 'Order status successfully updated.';
+            $status_class = 'alert-success';
+        } else {
+            $status_message = 'Unable to update order status: ' . $conn->error;
+            $status_class = 'alert-danger';
+        }
+        $stmt->close();
+    } else {
+        $status_message = 'Invalid order data submitted.';
+        $status_class = 'alert-danger';
+    }
+}
+
+$sql = "SELECT o.*, u.username, u.email,
+               (SELECT COUNT(*) FROM order_items_tbl oi WHERE oi.order_id = o.order_id) AS items_count
+        FROM orders_tbl o
+        LEFT JOIN users_tbl u ON o.user_id = u.user_id
+        ORDER BY o.created_at DESC";
+$result = $conn->query($sql);
+$orders = [];
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $orders[] = $row;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -266,11 +305,87 @@ session_start();
             <span class="topbar-title">Orders</span>
         </header>
         <main class="page-body">
-            <div class="coming-soon">
-                <i class="fas fa-shopping-cart"></i>
-                <h2>Coming Soon</h2>
-                <p>Order tracking and fulfillment management<br>will be available here in a future update.</p>
-                <a href="apex26admin.php" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+            <div class="admin-panel">
+                <div class="order-card mb-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 mb-3">
+                        <div>
+                            <h2>Order Management</h2>
+                            <p class="text-muted mb-0">Review recent orders and update statuses in real time.</p>
+                        </div>
+                        <div>
+                            <a href="apex26admin.php" class="btn btn-outline-primary"><i class="fas fa-arrow-left me-2"></i>Back to Dashboard</a>
+                        </div>
+                    </div>
+
+                    <?php if ($status_message): ?>
+                        <div class="alert <?php echo htmlspecialchars($status_class); ?>" role="alert">
+                            <?php echo htmlspecialchars($status_message); ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (empty($orders)): ?>
+                        <div class="alert alert-warning">
+                            No orders have been placed yet.
+                        </div>
+                    <?php else: ?>
+                        <div class="order-table">
+                            <table class="table table-borderless align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Reference</th>
+                                        <th>Customer</th>
+                                        <th>Items</th>
+                                        <th>Amount</th>
+                                        <th>Payment</th>
+                                        <th>Status</th>
+                                        <th>Placed</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($orders as $order): ?>
+                                        <?php
+                                        $statusClass = 'pending';
+                                        if (strtolower($order['order_status']) === 'delivered') {
+                                            $statusClass = 'delivered';
+                                        } elseif (strtolower($order['order_status']) === 'canceled') {
+                                            $statusClass = 'canceled';
+                                        } elseif (strtolower($order['order_status']) === 'shipped') {
+                                            $statusClass = 'shipped';
+                                        } elseif (strtolower($order['order_status']) === 'on process') {
+                                            $statusClass = 'process';
+                                        }
+                                        ?>
+                                        <tr>
+                                            <td><strong><?php echo htmlspecialchars($order['reference_number']); ?></strong></td>
+                                            <td>
+                                                <?php echo htmlspecialchars($order['username'] ?: 'Guest'); ?><br>
+                                                <small class="text-muted"><?php echo htmlspecialchars($order['email'] ?: 'No email'); ?></small>
+                                            </td>
+                                            <td><?php echo intval($order['items_count']); ?></td>
+                                            <td>₱<?php echo number_format($order['total_amount'], 2); ?></td>
+                                            <td><?php echo htmlspecialchars($order['payment_method'] ?: 'N/A'); ?></td>
+                                            <td><span class="status-badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($order['order_status']); ?></span></td>
+                                            <td><?php echo date('F d, Y', strtotime($order['created_at'])); ?></td>
+                                            <td class="order-actions">
+                                                <form method="POST" class="d-flex gap-2 align-items-center">
+                                                    <input type="hidden" name="order_id" value="<?php echo intval($order['order_id']); ?>">
+                                                    <select name="order_status" class="form-select form-select-sm">
+                                                        <option value="On Process" <?php echo $order['order_status'] === 'On Process' ? 'selected' : ''; ?>>On Process</option>
+                                                        <option value="Shipped" <?php echo $order['order_status'] === 'Shipped' ? 'selected' : ''; ?>>Shipped</option>
+                                                        <option value="Delivered" <?php echo $order['order_status'] === 'Delivered' ? 'selected' : ''; ?>>Delivered</option>
+                                                        <option value="Canceled" <?php echo $order['order_status'] === 'Canceled' ? 'selected' : ''; ?>>Canceled</option>
+                                                    </select>
+                                                    <button type="submit" name="update_status" class="btn btn-sm btn-primary">Update</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </main>
     </div>

@@ -1,0 +1,477 @@
+﻿<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$orders = [];
+$order_items_map = [];
+$order_ids = [];
+
+if (isset($_SESSION['user']['id'])) {
+    require_once __DIR__ . '/../database/db_connect.php';
+    require_once __DIR__ . '/../classes/Inventory.php';
+    $userId = intval($_SESSION['user']['id']);
+
+    $stmt = $conn->prepare(
+        "SELECT o.*, u.username, u.email
+         FROM orders_tbl o
+         LEFT JOIN users_tbl u ON o.user_id = u.user_id
+         WHERE o.user_id = ?
+         ORDER BY o.created_at DESC"
+    );
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result && $result->num_rows > 0) {
+        $order_ids = [];
+        while ($row = $result->fetch_assoc()) {
+            $orders[] = $row;
+            $order_ids[] = intval($row['order_id']);
+        }
+    }
+    $stmt->close();
+
+    if (!empty($order_ids)) {
+        $id_list = implode(',', array_map('intval', $order_ids));
+        $itemQuery = 
+            "SELECT oi.*, p.name, p.image 
+             FROM order_items_tbl oi 
+             LEFT JOIN products_tbl p ON oi.product_id = p.product_id 
+             WHERE oi.order_id IN ($id_list) 
+             ORDER BY oi.item_id ASC";
+        $itemResult = $conn->query($itemQuery);
+
+        if ($itemResult) {
+            while ($item = $itemResult->fetch_assoc()) {
+                $order_items_map[intval($item['order_id'])][] = $item;
+            }
+        }
+    }
+}
+
+function formatPaymentMethod($raw)
+{
+    $payment_raw = strtolower(trim($raw ?? ''));
+    if (strpos($payment_raw, 'cod') !== false || strpos($payment_raw, 'cash on delivery') !== false) {
+        return 'Cash on Delivery';
+    }
+    if (strpos($payment_raw, 'card') !== false || strpos($payment_raw, 'credit') !== false || strpos($payment_raw, 'debit') !== false) {
+        return 'Credit / Debit Card';
+    }
+    if (strpos($payment_raw, 'gcash') !== false) {
+        return 'GCash';
+    }
+    if (strpos($payment_raw, 'paypal') !== false) {
+        return 'PayPal';
+    }
+    if (strpos($payment_raw, 'maya') !== false) {
+        return 'Maya';
+    }
+    return $raw ?: 'N/A';
+}
+
+function paymentStatusLabel($method)
+{
+    $payment_raw = strtolower(trim($method ?? ''));
+    return (strpos($payment_raw, 'cod') !== false || strpos($payment_raw, 'cash on delivery') !== false) ? 'COD' : 'Paid';
+}
+
+function statusClass($status)
+{
+    $normalized = strtolower(trim($status ?? ''));
+    if ($normalized === 'delivered') {
+        return 'delivered';
+    }
+    if ($normalized === 'canceled') {
+        return 'canceled';
+    }
+    if ($normalized === 'shipped') {
+        return 'shipped';
+    }
+    if ($normalized === 'on process' || $normalized === 'processing' || $normalized === 'pending') {
+        return 'process';
+    }
+    return 'pending';
+}
+
+function orderSummaryTitle($status)
+{
+    $normalized = strtolower(trim($status ?? ''));
+    if ($normalized === 'delivered') {
+        return 'Order Complete';
+    }
+    if ($normalized === 'canceled') {
+        return 'Order Canceled';
+    }
+    if ($normalized === 'shipped') {
+        return 'Order Shipped';
+    }
+    return 'Order In Progress';
+}
+?>
+
+<style>
+    #orderStatusModal .profile-modal-content {
+        max-width: 760px;
+        width: 100%;
+    }
+
+    #orderStatusModal .profile-modal-body {
+        max-height: 72vh;
+        overflow-y: auto;
+        padding-right: 0.5rem;
+    }
+
+    #orderStatusModal .order-card {
+        background: #17182f;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 20px;
+        padding: 1.4rem;
+        margin-bottom: 1rem;
+        color: #fff;
+    }
+
+    #orderStatusModal .order-card + .order-card {
+        margin-top: 0.75rem;
+    }
+
+    #orderStatusModal .order-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    #orderStatusModal .order-card-header h6 {
+        margin: 0;
+        font-size: 1.05rem;
+        letter-spacing: 0.02em;
+    }
+
+    #orderStatusModal .order-card-header .order-meta {
+        color: rgba(255,255,255,0.72);
+        font-size: 0.86rem;
+        line-height: 1.5;
+    }
+
+    #orderStatusModal .order-status-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.55rem 1rem;
+        border-radius: 999px;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+    }
+
+    #orderStatusModal .order-status-pill.delivered { background: rgba(40,167,69,0.15); color: #28a745; }
+    #orderStatusModal .order-status-pill.canceled { background: rgba(220,53,69,0.15); color: #dc3545; }
+    #orderStatusModal .order-status-pill.shipped { background: rgba(13,110,253,0.15); color: #0d6efd; }
+    #orderStatusModal .order-status-pill.process { background: rgba(255,193,7,0.15); color: #ffc107; }
+    #orderStatusModal .order-status-pill.pending { background: rgba(94, 94, 94, 0.16); color: #ced4da; }
+
+    #orderStatusModal .order-progress {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.6rem;
+        margin-bottom: 1rem;
+    }
+
+    #orderStatusModal .order-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.35rem;
+        text-align: center;
+        font-size: 0.75rem;
+        color: rgba(255,255,255,0.55);
+    }
+
+    #orderStatusModal .order-step .step-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.18);
+    }
+
+    #orderStatusModal .order-step.active .step-dot {
+        background: #00c2ff;
+        box-shadow: 0 0 0 5px rgba(0,194,255,0.12);
+    }
+
+    #orderStatusModal .order-step.active {
+        color: #fff;
+    }
+
+    #orderStatusModal .order-item-summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+    }
+
+    #orderStatusModal .summary-label {
+        color: rgba(255,255,255,0.72);
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.25rem;
+    }
+
+    #orderStatusModal .summary-value {
+        font-size: 0.95rem;
+        color: #fff;
+    }
+
+    #orderStatusModal .order-items-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    #orderStatusModal .order-items-list li {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.95rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        font-size: 0.93rem;
+        align-items: center;
+    }
+
+    #orderStatusModal .order-item-preview {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        max-width: 70%;
+    }
+
+    #orderStatusModal .order-item-image {
+        width: 58px;
+        height: 58px;
+        border-radius: 16px;
+        overflow: hidden;
+        flex-shrink: 0;
+        background: rgba(255,255,255,0.06);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #orderStatusModal .order-item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    #orderStatusModal .order-items-list li:last-child {
+        border-bottom: none;
+    }
+
+    #orderStatusModal .order-detail-block {
+        display: grid;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+
+    #orderStatusModal .order-detail-block span {
+        display: block;
+        font-size: 0.92rem;
+    }
+
+    #orderStatusModal .order-detail-block strong {
+        color: #fff;
+    }
+
+    #orderStatusModal .order-card-footer {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    #orderStatusModal .order-card-footer .footer-item {
+        min-width: 160px;
+    }
+
+    #orderStatusModal .empty-state {
+        text-align: center;
+        padding: 4rem 1rem;
+    }
+
+    #orderStatusModal .empty-state i {
+        font-size: 3rem;
+        color: rgba(255,255,255,0.4);
+        margin-bottom: 1rem;
+    }
+
+    #orderStatusModal .order-status-title {
+        color: #fff;
+        margin: 0 0 0.25rem;
+        font-size: 1rem;
+    }
+
+    #orderStatusModal .order-status-subtitle {
+        color: rgba(255,255,255,0.65);
+        font-size: 0.82rem;
+        margin: 0;
+    }
+</style>
+
+<div id="orderStatusModal" class="profile-modal-container">
+    <div class="profile-modal-content">
+        <div class="profile-modal-header">
+            <button type="button" class="btn-close-modal btn-close-order-status"><i class="fas fa-arrow-left"></i></button>
+            <h5 class="profile-modal-title">Order Status</h5>
+        </div>
+        <div class="profile-modal-body">
+            <?php if (!empty($orders)): ?>
+                <?php foreach ($orders as $order): ?>
+                    <?php
+                        $payment_method_display = formatPaymentMethod($order['payment_method']);
+                        $payment_status_label = paymentStatusLabel($order['payment_method']);
+                        $status_label = $order['order_status'] ?: 'On Process';
+                        $status_class = statusClass($order['order_status']);
+                        $summary_title = orderSummaryTitle($order['order_status']);
+                        $items = $order_items_map[intval($order['order_id'])] ?? [];
+                        $order_date = date('F d, Y \a\t h:i A', strtotime($order['created_at']));
+                        $shipping = trim($order['shipping_address'] . ', ' . $order['shipping_city'] . ' ' . $order['shipping_zip']);
+                    ?>
+                    <div class="order-card">
+                        <div class="order-card-header">
+                            <div>
+                                <p class="order-status-title"><?php echo htmlspecialchars($summary_title); ?></p>
+                                <p class="order-status-subtitle"><?php echo htmlspecialchars($order_date); ?></p>
+                            </div>
+                            <div class="order-status-pill <?php echo $status_class; ?>"><?php echo htmlspecialchars($status_label); ?></div>
+                        </div>
+
+                        <div class="order-progress">
+                            <?php
+                                $steps = ['Placed', 'Processing', 'Shipped', 'Delivered'];
+                                $activeCount = 1;
+                                if ($status_class === 'pending') {
+                                    $activeCount = 1;
+                                } elseif ($status_class === 'process') {
+                                    $activeCount = 2;
+                                } elseif ($status_class === 'shipped') {
+                                    $activeCount = 3;
+                                } elseif ($status_class === 'delivered') {
+                                    $activeCount = 4;
+                                } elseif ($status_class === 'canceled') {
+                                    $activeCount = 1;
+                                }
+                            ?>
+                            <?php foreach ($steps as $index => $label): ?>
+                                <div class="order-step <?php echo $index < $activeCount ? 'active' : ''; ?>">
+                                    <span class="step-dot"></span>
+                                    <span><?php echo htmlspecialchars($label); ?></span>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <div class="order-item-summary">
+                            <div>
+                                <div class="summary-label">Order #</div>
+                                <div class="summary-value"><?php echo htmlspecialchars($order['reference_number']); ?></div>
+                            </div>
+                            <div>
+                                <div class="summary-label">Payment</div>
+                                <div class="summary-value"><?php echo htmlspecialchars($payment_method_display); ?></div>
+                            </div>
+                            <div>
+                                <div class="summary-label">Total</div>
+                                <div class="summary-value">₱<?php echo number_format(floatval($order['total_amount']), 2); ?></div>
+                            </div>
+                        </div>
+
+                        <ul class="order-items-list">
+                            <?php foreach ($items as $item): ?>
+                                <?php $itemImage = Inventory::getProductImageSrc($item['image'] ?? ''); ?>
+                                <li>
+                                    <div class="order-item-preview">
+                                        <div class="order-item-image">
+                                            <img src="<?php echo htmlspecialchars($itemImage); ?>" alt="<?php echo htmlspecialchars($item['name'] ?? 'Product'); ?>">
+                                        </div>
+                                        <div>
+                                            <div><?php echo htmlspecialchars($item['name'] ?? 'Item'); ?></div>
+                                            <div class="text-muted small">Qty <?php echo intval($item['quantity']); ?></div>
+                                        </div>
+                                    </div>
+                                    <span>₱<?php echo number_format(floatval($item['purchased_price']) * intval($item['quantity']), 2); ?></span>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+
+                        <div class="order-detail-block">
+                            <span><strong>Shipping:</strong> <?php echo htmlspecialchars($shipping); ?></span>
+                            <span><strong>Payment Status:</strong> <?php echo htmlspecialchars($payment_status_label); ?></span>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="empty-state">
+                    <i class="fas fa-box-open"></i>
+                    <h6 class="fw-bold">No orders found</h6>
+                    <p class="text-muted small">Your order history will appear here once you place an order.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+        <div class="profile-modal-footer">
+            <button type="button" class="btn btn-secondary btn-close-order-status">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        function ready(fn) {
+            if (document.readyState !== 'loading') {
+                fn();
+            } else {
+                document.addEventListener('DOMContentLoaded', fn);
+            }
+        }
+
+        ready(function() {
+            const orderStatusLink = document.querySelector('.order-status-link');
+            const orderStatusModal = document.getElementById('orderStatusModal');
+            if (!orderStatusLink || !orderStatusModal) {
+                return;
+            }
+
+            const closeButtons = orderStatusModal.querySelectorAll('.btn-close-order-status');
+            orderStatusLink.addEventListener('click', function(event) {
+                event.preventDefault();
+                orderStatusModal.classList.add('open');
+
+                const profilePanel = document.getElementById('profilePanel');
+                if (profilePanel) {
+                    profilePanel.classList.remove('open');
+                }
+            });
+
+            closeButtons.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    orderStatusModal.classList.remove('open');
+                });
+            });
+
+            orderStatusModal.addEventListener('click', function(event) {
+                if (event.target === orderStatusModal) {
+                    orderStatusModal.classList.remove('open');
+                }
+            });
+        });
+    })();
+</script>
