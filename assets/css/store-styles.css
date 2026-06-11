@@ -1,0 +1,542 @@
+/* ============================================================
+   ApeX Gear — Store page overrides
+   Append this to assets/css/  and link it after style.css
+   in store.php only.
+   ============================================================ */
+
+/* ── HERO ─────────────────────────────────────────────────── */
+.store-hero {
+    position: relative;
+    padding: 0;
+    overflow: hidden;
+    border-bottom: none;
+    background: var(--apex-dark);
+    min-height: 360px;
+    display: flex;
+    align-items: stretch;
+}
+
+/* Background image layer — swap the URL to any hero image you want */
+.store-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        url('assets/images/store-hero-bg.jpg') center / cover no-repeat;
+    opacity: .18;
+    z-index: 0;
+}
+
+/* Blue gradient overlay */
+.store-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(105deg,
+            rgba(6, 15, 46, .97) 0%,
+            rgba(11, 47, 168, .82) 55%,
+            rgba(0, 194, 255, .12) 100%);
+    z-index: 1;
+}
+
+.store-hero .container {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 0;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    overflow: hidden;
+}
+
+/* Laptop image on right — large, rotated, edge-cut */
+.store-hero-img {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.store-hero-img img {
+    width: 100%;
+    max-width: 540px;
+    object-fit: contain;
+    animation: hero-float 4s ease-in-out infinite;
+    transform-origin: bottom right;
+}
+
+@keyframes hero-float {
+    0%, 100% { transform: translateY(0px) rotate(-1deg); }
+    50%       { transform: translateY(-10px) rotate(0deg); }
+}
+
+/* Breadcrumb trail above the kicker */
+.store-hero-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .38);
+}
+
+.store-hero-breadcrumb a {
+    color: rgba(255, 255, 255, .38);
+    text-decoration: none;
+    transition: color .2s;
+}
+
+.store-hero-breadcrumb a:hover { color: var(--apex-accent); }
+.store-hero-breadcrumb .sep { font-size: .6rem; }
+.store-hero-breadcrumb .current { color: rgba(255,255,255,.6); }
+
+.store-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    color: var(--apex-accent);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .76rem;
+    font-weight: 800;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+}
+
+.store-kicker::before {
+    content: '';
+    display: inline-block;
+    width: 22px;
+    height: 2px;
+    background: var(--apex-accent);
+    border-radius: 2px;
+}
+
+.store-hero h1 {
+    font-size: clamp(2.6rem, 5.5vw, 4.8rem);
+    line-height: .9;
+    letter-spacing: .03em;
+    margin-bottom: 14px;
+}
+
+/* Accent word highlight */
+.store-hero h1 em {
+    font-style: normal;
+    color: var(--apex-accent);
+}
+
+.store-hero p {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, .6);
+    max-width: 460px;
+    line-height: 1.55;
+    margin: 0;
+}
+
+
+/* Search bar embedded in hero */
+.store-hero-search {
+    display: flex;
+    gap: 0;
+    margin-top: 22px;
+    max-width: 480px;
+}
+
+.store-hero-search input {
+    flex: 1;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.16);
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    padding: 10px 16px;
+    color: #fff;
+    font-family: 'Barlow', sans-serif;
+    font-size: .92rem;
+    outline: none;
+    transition: border-color .2s, background .2s;
+}
+
+.store-hero-search input::placeholder { color: rgba(255,255,255,.38); }
+.store-hero-search input:focus {
+    background: rgba(255,255,255,.12);
+    border-color: var(--apex-accent);
+}
+
+.store-hero-search button {
+    background: var(--apex-accent);
+    color: var(--apex-dark);
+    border: none;
+    border-radius: 0 6px 6px 0;
+    padding: 10px 18px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: .82rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .2s, transform .15s;
+}
+
+.store-hero-search button:hover {
+    background: #29d4ff;
+    transform: translateX(1px);
+}
+
+/* ── CATALOG SECTION ──────────────────────────────────────── */
+.store-catalog-section {
+    background: #f5f7fd;
+    padding: 36px 0 56px;
+}
+
+/* ── TOOLBAR ──────────────────────────────────────────────── */
+.catalog-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding: 14px 20px;
+    background: #fff;
+    border: 1px solid var(--apex-border);
+    border-radius: 8px;
+    border-left: 4px solid var(--apex-blue);
+    box-shadow: 0 2px 12px rgba(11, 47, 168, .07);
+}
+
+.catalog-count {
+    font-size: 1rem;
+}
+
+.catalog-context {
+    font-size: .82rem;
+}
+
+/* Filter chips row */
+.catalog-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.catalog-filter-chip {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--apex-border);
+    background: #fff;
+    color: var(--apex-muted);
+    cursor: pointer;
+    transition: all .18s;
+    user-select: none;
+}
+
+.catalog-filter-chip:hover,
+.catalog-filter-chip.active {
+    background: var(--apex-blue);
+    color: #fff;
+    border-color: var(--apex-blue);
+}
+
+/* ── PRODUCT CARDS ────────────────────────────────────────── */
+.product-card {
+    border-radius: 12px;
+    border: 1.5px solid var(--apex-border);
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(11,47,168,.05);
+    transition: border-color .22s, box-shadow .22s, transform .22s;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card:hover {
+    border-color: var(--apex-blue-lt);
+    box-shadow: 0 12px 40px rgba(11, 47, 168, .14);
+    transform: translateY(-5px);
+}
+
+/* Image area — taller, light grey bg */
+.product-img {
+    height: 220px;
+    background: #f0f4ff;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow: hidden;
+    position: relative;
+}
+
+.product-img img {
+    max-height: 172px;
+    max-width: 100%;
+    object-fit: contain;
+    transition: transform .38s cubic-bezier(.2,.8,.3,1);
+    filter: drop-shadow(0 6px 16px rgba(11,47,168,.10));
+}
+
+.product-card:hover .product-img img {
+    transform: scale(1.08) translateY(-3px);
+}
+
+/* Subtle inner glow on image area hover */
+.product-card:hover .product-img {
+    background: #e8eeff;
+}
+
+/* Badge — moved slightly, cleaner */
+.product-badge {
+    top: 14px;
+    left: 14px;
+    font-size: .68rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: .1em;
+}
+
+/* Card body */
+.product-body {
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.product-tags {
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.filter-tag {
+    font-size: .64rem;
+    padding: 3px 8px;
+}
+
+.product-name {
+    font-size: .92rem;
+    font-weight: 700;
+    line-height: 1.35;
+    min-height: 40px;
+    margin-bottom: 6px;
+    color: var(--apex-text);
+}
+
+.product-rating {
+    margin-bottom: 8px;
+}
+
+/* Price block */
+.product-price {
+    font-size: 1.5rem;
+    margin-top: auto;
+    margin-bottom: 0;
+    padding-top: 8px;
+    border-top: 1px solid var(--apex-border);
+}
+
+/* Actions */
+.product-actions {
+    margin-top: 12px;
+    gap: 8px;
+}
+
+.product-actions .btn-shop {
+    padding: 9px 16px;
+    font-size: .82rem;
+    border-radius: 6px;
+}
+
+.btn-wish {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 8px;
+}
+
+/* ── CUSTOM SORT DROPDOWN ─────────────────────────────────── */
+.apex-sort-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.apex-sort-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: .82rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--apex-muted);
+    white-space: nowrap;
+}
+
+.apex-sort-dropdown {
+    position: relative;
+}
+
+.apex-sort-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: #fff;
+    border: 1.5px solid var(--apex-border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: .88rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--apex-text);
+    cursor: pointer;
+    transition: border-color .18s, box-shadow .18s;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(11,47,168,.06);
+}
+
+.apex-sort-btn:hover {
+    border-color: var(--apex-blue-lt);
+    box-shadow: 0 4px 16px rgba(11,47,168,.12);
+}
+
+.apex-sort-caret {
+    font-size: .7rem;
+    color: var(--apex-muted);
+    transition: transform .2s ease;
+}
+
+.apex-sort-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 200px;
+    background: #fff;
+    border: 1.5px solid var(--apex-border);
+    border-radius: 10px;
+    box-shadow: 0 12px 40px rgba(11,47,168,.14);
+    list-style: none;
+    padding: 6px;
+    margin: 0;
+    z-index: 100;
+    overflow: hidden;
+}
+
+.apex-sort-menu.open {
+    display: block;
+    animation: sort-drop .16s ease;
+}
+
+@keyframes sort-drop {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.apex-sort-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 9px 12px;
+    border-radius: 7px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: .88rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--apex-text);
+    text-decoration: none;
+    transition: background .15s, color .15s;
+}
+
+.apex-sort-item i:first-child {
+    width: 16px;
+    text-align: center;
+    color: var(--apex-muted);
+    font-size: .78rem;
+}
+
+.apex-sort-item .fa-check {
+    font-size: .72rem;
+    color: var(--apex-blue);
+}
+
+.apex-sort-item:hover {
+    background: var(--apex-grey);
+    color: var(--apex-blue);
+}
+
+.apex-sort-item:hover i:first-child {
+    color: var(--apex-blue);
+}
+
+.apex-sort-item.active {
+    background: rgba(11, 47, 168, .07);
+    color: var(--apex-blue);
+    font-weight: 800;
+}
+
+.apex-sort-item.active i:first-child {
+    color: var(--apex-blue);
+}
+
+/* ── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 991.98px) {
+    .store-hero .container {
+        grid-template-columns: 1fr;
+        padding-top: 44px;
+        padding-bottom: 32px;
+    }
+
+    .store-hero-img {
+        display: none;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .store-hero .container {
+        padding-top: 36px;
+        padding-bottom: 28px;
+    }
+
+    .store-hero h1 {
+        font-size: 2.4rem;
+    }
+
+    .store-hero-search {
+        max-width: 100%;
+    }
+
+    .catalog-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .apex-sort-wrap {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .apex-sort-menu {
+        left: 0;
+        right: auto;
+    }
+
+    .product-img {
+        height: 190px;
+    }
+}

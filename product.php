@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'database/db_connect.php'; // Ensure this path is correct for your setup
+require_once 'database/db_connect.php';
 
 // 1. Get the ID from the URL securely
 $product_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -30,31 +30,27 @@ if ($result->num_rows === 0) {
 
 $product = $result->fetch_assoc();
 
-// 2. Handle "Add to Cart" Submission
+// 4. Handle "Add to Cart" Submission
 $cartSuccess = false;
-$cartError = false; // Add an error variable
+$cartError   = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
-    $qty = (int)$_POST['quantity'];
+    $qty   = (int)$_POST['quantity'];
     $stock = isset($product['stock']) ? (int)$product['stock'] : 0;
 
-    // Calculate how many of this item are ALREADY in the cart
     $current_cart_qty = isset($_SESSION['cart'][$product_id]) ? $_SESSION['cart'][$product_id]['qty'] : 0;
 
-    // Check if adding this new quantity exceeds available stock
     if (($current_cart_qty + $qty) <= $stock) {
-        if (!isset($_SESSION['cart'])) {
-            $_SESSION['cart'] = [];
-        }
+        if (!isset($_SESSION['cart'])) $_SESSION['cart'] = [];
 
         if (isset($_SESSION['cart'][$product_id])) {
             $_SESSION['cart'][$product_id]['qty'] += $qty;
         } else {
             $_SESSION['cart'][$product_id] = [
-                'name' => $product['name'],
+                'name'  => $product['name'],
                 'price' => $product['price'],
                 'image' => $product['image'],
-                'qty' => $qty
+                'qty'   => $qty
             ];
         }
         $cartSuccess = true;
@@ -63,6 +59,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     }
 }
 
+// 5. Static fake reviews
+$reviews = [
+    [
+        'username'       => 'JohnR_Tech',
+        'avatar_letter'  => 'J',
+        'rating'         => 5,
+        'date'           => 'May 28, 2025',
+        'review_text'    => 'Absolutely worth every peso! Build quality is top-notch and performance exceeded my expectations. Highly recommend for anyone looking for a reliable upgrade.',
+    ],
+    [
+        'username'       => 'MariaC',
+        'avatar_letter'  => 'M',
+        'rating'         => 5,
+        'date'           => 'Apr 14, 2025',
+        'review_text'    => 'Fast delivery and the product was exactly as described. ApeX Gear never disappoints. Already planning my next purchase!',
+    ],
+    [
+        'username'       => 'Kevin_PH',
+        'avatar_letter'  => 'K',
+        'rating'         => 4,
+        'date'           => 'Mar 30, 2025',
+        'review_text'    => 'Great product overall. Setup was a breeze and it\'s been running flawlessly for weeks. Took one star off only because the box arrived slightly dented, but the item itself is perfect.',
+    ],
+    [
+        'username'       => 'AngelaS',
+        'avatar_letter'  => 'A',
+        'rating'         => 5,
+        'date'           => 'Mar 12, 2025',
+        'review_text'    => 'Exceeded all my expectations! Super smooth and the free shipping was a nice bonus. Will definitely buy from ApeX Gear again.',
+    ],
+    [
+        'username'       => 'DanteVR',
+        'avatar_letter'  => 'D',
+        'rating'         => 4,
+        'date'           => 'Feb 22, 2025',
+        'review_text'    => 'Solid buy for the price. Performance is great and it looks even better in person. Customer support was also very responsive when I had a question.',
+    ],
+    [
+        'username'       => 'PaulM',
+        'avatar_letter'  => 'P',
+        'rating'         => 5,
+        'date'           => 'Feb 10, 2025',
+        'review_text'    => 'One of the best purchases I\'ve made this year. Exactly what I needed for work and gaming. Zero complaints!',
+    ],
+];
+
+$total_reviews = count($reviews);
+$rating_counts = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
+$sum = 0;
+foreach ($reviews as $rev) {
+    $r = (int)$rev['rating'];
+    $rating_counts[$r]++;
+    $sum += $r;
+}
+$avg_rating = round($sum / $total_reviews, 1);
+
+// 6. Fetch "You Might Also Like" — all products, exclude current
+$related_products = [];
+$rel_sql = "SELECT p.*, b.brand_name as brand
+            FROM products_tbl p
+            LEFT JOIN brands_tbl b ON p.brand_id = b.brand_id
+            WHERE p.product_id != ? AND p.is_archived = 0
+            ORDER BY RAND()
+            LIMIT 6";
+$rel_stmt = $conn->prepare($rel_sql);
+if ($rel_stmt) {
+    $rel_stmt->bind_param("i", $product_id);
+    $rel_stmt->execute();
+    $rel_result = $rel_stmt->get_result();
+    while ($row = $rel_result->fetch_assoc()) {
+        $related_products[] = $row;
+    }
+}
+
+// Helper: render star icons
+function renderStars($rating, $max = 5) {
+    $html = '';
+    for ($i = 1; $i <= $max; $i++) {
+        if ($rating >= $i) {
+            $html .= '<i class="fas fa-star" style="color:#f5a623;"></i>';
+        } elseif ($rating >= $i - 0.5) {
+            $html .= '<i class="fas fa-star-half-alt" style="color:#f5a623;"></i>';
+        } else {
+            $html .= '<i class="far fa-star" style="color:#f5a623;"></i>';
+        }
+    }
+    return $html;
+}
 ?>
 
 <!DOCTYPE html>
@@ -77,77 +161,335 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
+    <style>
+        /* ── Reviews Section ── */
+        .section-heading {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--apex-dark, #0d1117);
+        }
+
+        .reviews-wrapper {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid var(--apex-border, #e8ecf0);
+            padding: 2rem;
+        }
+
+        /* Big score */
+        .rating-score {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 5rem;
+            font-weight: 900;
+            line-height: 1;
+            color: var(--apex-dark, #0d1117);
+        }
+
+        .rating-score-sub {
+            font-size: .85rem;
+            color: var(--apex-muted, #8a9aaa);
+            font-weight: 600;
+        }
+
+        /* Bar rows */
+        .rating-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: .82rem;
+            font-weight: 600;
+            color: var(--apex-muted, #8a9aaa);
+        }
+
+        .rating-bar-row .progress {
+            flex: 1;
+            height: 7px;
+            border-radius: 99px;
+            background: #f0f2f5;
+        }
+
+        .rating-bar-row .progress-bar {
+            background: #f5a623;
+            border-radius: 99px;
+        }
+
+        .rating-bar-row .bar-count {
+            width: 20px;
+            text-align: right;
+            color: var(--apex-dark, #0d1117);
+        }
+
+        /* Review cards */
+        .review-card {
+            background: #fafbfc;
+            border: 1px solid var(--apex-border, #e8ecf0);
+            border-radius: 12px;
+            padding: 1.2rem 1.4rem;
+        }
+
+        .reviewer-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--apex-blue, #00c2ff);
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .reviewer-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* ── Description & Shipping Info Tabs ── */
+        .info-tabs-section {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid var(--apex-border, #e8ecf0);
+            overflow: hidden;
+        }
+
+        .info-tab-header {
+            display: flex;
+            border-bottom: 1px solid var(--apex-border, #e8ecf0);
+            background: #f7f8fa;
+        }
+
+        .info-tab-btn {
+            flex: 1;
+            padding: .85rem 1.5rem;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            border: none;
+            background: transparent;
+            color: var(--apex-muted, #8a9aaa);
+            cursor: pointer;
+            transition: color .2s, background .2s;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -1px;
+        }
+
+        .info-tab-btn.active {
+            color: var(--apex-dark, #0d1117);
+            background: #fff;
+            border-bottom-color: var(--apex-blue, #00c2ff);
+        }
+
+        .info-tab-pane {
+            display: none;
+            padding: 1.5rem;
+        }
+
+        .info-tab-pane.active {
+            display: block;
+        }
+
+        .info-tab-pane p {
+            color: #555;
+            font-size: .95rem;
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        .shipping-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .shipping-item {
+            display: flex;
+            align-items: flex-start;
+            gap: .75rem;
+        }
+
+        .shipping-item-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: #555;
+            font-size: .9rem;
+        }
+
+        .shipping-item-label {
+            font-size: .72rem;
+            color: var(--apex-muted, #8a9aaa);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            margin-bottom: .15rem;
+        }
+
+        .shipping-item-value {
+            font-weight: 700;
+            font-size: .9rem;
+            color: var(--apex-dark, #0d1117);
+        }
+
+        /* ── Related Products ── */
+        /* ── Related Products Slider ── */
+        .related-slider-wrapper {
+            padding: 0 2.5rem;
+        }
+
+        .related-slider-track {
+            display: flex;
+            gap: 1rem;
+            overflow: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .related-slider-item {
+            flex: 0 0 calc(25% - .75rem);
+            min-width: 0;
+        }
+
+        @media (max-width: 991px) {
+            .related-slider-item { flex: 0 0 calc(33.333% - .67rem); }
+        }
+
+        @media (max-width: 767px) {
+            .related-slider-item { flex: 0 0 calc(50% - .5rem); }
+        }
+
+        @media (max-width: 479px) {
+            .related-slider-item { flex: 0 0 calc(100%); }
+        }
+
+        .related-slider-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--apex-border, #e8ecf0);
+            background: #fff;
+            color: var(--apex-dark, #0d1117);
+            font-size: .85rem;
+            cursor: pointer;
+            box-shadow: 0 2px 12px rgba(0,0,0,.08);
+            transition: background .2s, color .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .related-slider-btn:hover {
+            background: var(--apex-blue, #00c2ff);
+            color: #fff;
+            border-color: var(--apex-blue, #00c2ff);
+        }
+
+        .related-slider-prev { left: 0; }
+        .related-slider-next { right: 0; }
+
+        .related-section {
+            background: #f7f8fa;
+            padding: 3.5rem 0;
+        }
+
+        .related-card {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid var(--apex-border, #e8ecf0);
+            overflow: hidden;
+            transition: transform .2s, box-shadow .2s;
+            text-decoration: none;
+            display: block;
+        }
+
+        .related-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0,0,0,.09);
+        }
+
+        .related-card-img {
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f2f5;
+            padding: 1rem;
+        }
+
+        .related-card-img img {
+            max-height: 150px;
+            object-fit: contain;
+        }
+
+        .related-card-body {
+            padding: 1rem 1.2rem 1.2rem;
+        }
+
+        .related-card-name {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            color: var(--apex-dark, #0d1117);
+            line-height: 1.3;
+            margin-bottom: .4rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .related-card-price {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--apex-blue, #00c2ff);
+        }
+
+        .related-card-stars {
+            font-size: .72rem;
+            color: #f5a623;
+        }
+
+        @media (max-width: 575px) {
+            .rating-score { font-size: 3.5rem; }
+            .reviews-wrapper { padding: 1.2rem; }
+        }
+    </style>
 </head>
 
 <body>
-    <?php include_once __DIR__ . '/includes\cookie_notif.php'; ?>
+    <?php include_once __DIR__ . '/includes/cookie_notif.php'; ?>
 
-    <div class="topbar">
-        <div class="container d-flex justify-content-between align-items-center">
-            <div>
-                <i class="fas fa-phone-alt me-1"></i>
-                <a href="tel:+1234567890">+1 (234) 567-890</a>
-                <span class="mx-2">|</span>
-                <i class="fas fa-envelope me-1"></i>
-                <a href="mailto:support@apexgear.com">support@apexgear.com</a>
-            </div>
-            <div class="d-flex align-items-center gap-3">
-                <span>Free shipping on orders over ₱5,000</span>
-            </div>
-        </div>
-    </div>
+    <!-- INJECT NAVBAR -->
+    <?php
+    $currentPage = 'product';
+    include 'includes/navbar.php';
+    ?>
 
-    <nav id="mainNav" class="main-nav navbar navbar-expand-lg">
-        <div class="container">
-            <a href="index.php" class="brand me-4">
-                <img src="assets/images/ApeX Logo.png" alt="ApeX Gear Logo" class="brand-logo-img">
-                <div class="brand-text" style="color: white; margin-left:-10px">ApeX</div>
-                <div class="brand-text" style="color: #00c2ff; margin-left:-10px">Gear</div>
-
-            </a>
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainMenu"
-                style="color:#fff; font-size:1.3rem;">
-                <i class="fas fa-bars"></i>
-            </button>
-            <div class="collapse navbar-collapse" id="mainMenu">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="store.php">Products</a></li>
-                    <li class="nav-item"><a class="nav-link" href="deals.php">Deals</a></li>
-
-                    <li class="nav-item"><a class="nav-link" href="about">About Us</a></li>
-                </ul>
-                <div class="nav-icons d-flex align-items-center">
-                    <a href="#"><i class="fas fa-search"></i></a>
-                    <a href="#favoritesOffcanvas" data-bs-toggle="offcanvas" role="button" aria-controls="favoritesOffcanvas" style="position:relative; cursor:pointer; color: rgba(255, 255, 255, .75);">
-                        <i class="fas fa-heart"></i>
-                        <span class="cart-badge" style="background: #ff3b5c; color: white;"><?php echo isset($_SESSION['favorites']) ? count($_SESSION['favorites']) : 0; ?></span>
-                    </a>
-                    <a href="#cartOffcanvas" data-bs-toggle="offcanvas" role="button" aria-controls="cartOffcanvas" style="position:relative; cursor:pointer;">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span class="cart-badge"><?php echo isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'qty')) : 0; ?></span>
-                    </a>
-                    <?php if (isset($_SESSION['user'])): ?>
-                        <div class="profile-btn-wrap ms-3">
-                            <button class="profile-btn" id="profileToggle" onclick="toggleProfilePanel(event)">
-                                <span class="profile-avatar"><?php echo !empty($_SESSION['user']['profile_picture']) ? '<img src="' . htmlspecialchars($_SESSION['user']['profile_picture']) . '" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">' : htmlspecialchars($_SESSION['user']['avatar']); ?></span>
-                                <span class="profile-name d-none d-lg-inline"><?php echo htmlspecialchars($_SESSION['user']['username']); ?></span>
-                                <i class="fas fa-chevron-down ms-1" style="font-size:.65rem; opacity:.6;"></i>
-                            </button>
-                        </div>
-                    <?php else: ?>
-                        <a href="auth.php" class="btn-apex ms-3" style="padding:8px 20px; font-size:.82rem;">Sign In</a>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <section class="inner-page">
+    <!-- ── Product Detail ── -->
+    <section class="inner-page" style="padding-top: 40px; padding-bottom: 20px;">
         <div class="container">
 
             <?php if ($cartSuccess): ?>
-                <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 bg-white" role="alert" style="border-left: 5px solid var(--apex-accent) !important;">
+                <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 bg-white" role="alert"
+                    style="border-left: 5px solid var(--apex-accent) !important;">
                     <i class="fas fa-check-circle text-apex-accent me-2"></i>
                     <strong>Added to Cart!</strong> <?php echo htmlspecialchars($product['name']); ?> is ready for checkout.
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -155,7 +497,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
             <?php endif; ?>
 
             <?php if ($cartError): ?>
-                <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 bg-white" role="alert" style="border-left: 5px solid #ff3b5c !important;">
+                <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 bg-white" role="alert"
+                    style="border-left: 5px solid #ff3b5c !important;">
                     <i class="fas fa-exclamation-circle text-danger me-2"></i>
                     <strong>Error!</strong> <?php echo $cartError; ?>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -164,8 +507,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
 
             <div class="row g-5 align-items-center apex-card">
 
+                <!-- Product Image -->
                 <div class="col-md-6 text-center">
-                    <div class="p-4 rounded-4 d-flex align-items-center justify-content-center" style="min-height: 400px;">
+                    <div class="p-4 rounded-4 d-flex align-items-center justify-content-center"
+                        style="min-height: 400px;">
                         <?php
                         if (strpos($product['image'], '<svg') !== false) {
                             echo $product['image'];
@@ -176,25 +521,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                     </div>
                 </div>
 
+                <!-- Product Info -->
                 <div class="col-md-6">
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb small text-uppercase fw-bold">
-                            <li class="breadcrumb-item"><a href="store.php" class="text-decoration-none text-muted">Store</a></li>
-                            <li class="breadcrumb-item active text-apex-accent" aria-current="page">Hardware</li>
+                            <li class="breadcrumb-item">
+                                <a href="store.php" class="text-decoration-none text-muted">Store</a>
+                            </li>
+                            <li class="breadcrumb-item active text-apex-accent" aria-current="page">
+                                <?php echo htmlspecialchars($product['category'] ?? 'Hardware'); ?>
+                            </li>
                         </ol>
                     </nav>
 
-                    <h1 class="display-5 fw-bold mb-3 text-apex-dark" style="font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase;">
+                    <h1 class="display-5 fw-bold mb-3 text-apex-dark"
+                        style="font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase;">
                         <?php echo htmlspecialchars($product['name']); ?>
                     </h1>
 
-                    <h2 class="text-apex-blue fw-bold mb-4" style="font-family: 'Barlow Condensed', sans-serif; font-size: 2.5rem;">
+                    <!-- Inline avg stars under title if reviews exist -->
+                    <?php if ($total_reviews > 0): ?>
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <div><?php echo renderStars($avg_rating); ?></div>
+                            <span class="fw-bold" style="font-size:.9rem;"><?php echo $avg_rating; ?></span>
+                            <span class="text-muted small">(<?php echo $total_reviews; ?> review<?php echo $total_reviews !== 1 ? 's' : ''; ?>)</span>
+                            <a href="#reviews" class="text-muted small text-decoration-underline">See all</a>
+                        </div>
+                    <?php endif; ?>
+
+                    <h2 class="text-apex-blue fw-bold mb-4"
+                        style="font-family: 'Barlow Condensed', sans-serif; font-size: 2.5rem;">
                         ₱<?php echo number_format($product['price'], 2); ?>
                     </h2>
-
-                    <p class="text-muted lead mb-4" style="font-size: 1.1rem;">
-                        <?php echo isset($product['desc']) && !empty($product['desc']) ? htmlspecialchars($product['desc']) : 'Experience next-level performance. This gear is engineered for ultimate speed, precision, and durability. Equip yourself with the best.'; ?>
-                    </p>
 
                     <hr class="mb-4 border-secondary">
 
@@ -206,13 +564,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                         <div class="row g-3 align-items-end mb-4">
                             <div class="col-4 col-md-3">
                                 <label class="form-label fw-bold text-muted small text-uppercase">Quantity</label>
-                                <input type="number" name="quantity" class="form-control form-control-lg text-center bg-light fw-bold"
-                                    value="<?php echo $stock > 0 ? 1 : 0; ?>" min="1" max="<?php echo $stock; ?>"
+                                <input type="number" name="quantity"
+                                    class="form-control form-control-lg text-center bg-light fw-bold"
+                                    value="<?php echo $stock > 0 ? 1 : 0; ?>"
+                                    min="1" max="<?php echo $stock; ?>"
                                     <?php echo $stock <= 0 ? 'disabled' : ''; ?>>
                             </div>
                             <div class="col-8 col-md-9">
                                 <label class="form-label fw-bold text-muted small text-uppercase">Configuration</label>
-                                <select class="form-select form-select-lg bg-light fw-bold text-dark" <?php echo $stock <= 0 ? 'disabled' : ''; ?>>
+                                <select class="form-select form-select-lg bg-light fw-bold text-dark"
+                                    <?php echo $stock <= 0 ? 'disabled' : ''; ?>>
                                     <option>Standard Edition</option>
                                     <option>Pro Edition (+₱100)</option>
                                 </select>
@@ -225,7 +586,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                                     Add to Cart <i class="fas fa-shopping-cart ms-2"></i>
                                 </button>
                             <?php else: ?>
-                                <button type="button" class="btn-apex btn-lg py-3 flex-grow-1 text-center" disabled style="background: var(--apex-muted); box-shadow: none; cursor: not-allowed; border-color: transparent; color: white;">
+                                <button type="button"
+                                    class="btn-apex btn-lg py-3 flex-grow-1 text-center" disabled
+                                    style="background: var(--apex-muted); box-shadow: none; cursor: not-allowed; border-color: transparent; color: white;">
                                     Out of Stock
                                 </button>
                             <?php endif; ?>
@@ -235,7 +598,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="product_id" value="<?php echo $product_id; ?>">
                         <input type="hidden" name="return_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
-                        <button type="submit" class="btn btn-light btn-lg py-3 px-4 border bg-white" style="border-color: var(--apex-border) !important;" title="Favorites">
+                        <button type="submit"
+                            class="btn btn-light btn-lg py-3 px-4 border bg-white"
+                            style="border-color: var(--apex-border) !important;" title="Favorites">
                             <?php if (isset($_SESSION['favorites'][$product_id])): ?>
                                 <i class="fas fa-heart" style="color: #ff3b5c;"></i>
                             <?php else: ?>
@@ -245,263 +610,326 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                     </form>
                 </div>
 
-                <div class="d-flex gap-4 mt-4 text-muted small fw-bold product-meta-row">
-                    <span>
-                        <?php if ($stock > 0): ?>
-                            <i class="fas fa-check text-success me-1"></i> <?php echo $stock; ?> In Stock
-                        <?php else: ?>
-                            <i class="fas fa-times text-danger me-1"></i> <span class="text-danger">Out of Stock</span>
-                        <?php endif; ?>
-                    </span>
-                    <span><i class="fas fa-truck text-success me-1"></i> Free Shipping</span>
-                    <span><i class="fas fa-shield-alt text-success me-1"></i> 1-Year Warranty</span>
+        </div>
+        </div><!-- end .container / .row -->
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         DESCRIPTION & SHIPPING INFO
+    ═══════════════════════════════════════ -->
+    <section class="py-5" style="background:#f7f8fa;">
+        <div class="container">
+            <div class="row g-4">
+                <!-- Description & Fit -->
+                <div class="col-md-6">
+                    <div class="info-tabs-section">
+                        <div class="info-tab-header">
+                            <button class="info-tab-btn active" onclick="switchTab(this,'desc-pane')">Description &amp; Fit</button>
+                        </div>
+                        <div id="desc-pane" class="info-tab-pane active">
+                            <p><?php echo isset($product['desc']) && !empty($product['desc'])
+                                ? htmlspecialchars($product['desc'])
+                                : 'Experience next-level performance. This gear is engineered for ultimate speed, precision, and durability — built to help you play harder, work smarter, and stay ahead of the curve. Equip yourself with the best.'; ?></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Info -->
+                <div class="col-md-6">
+                    <div class="info-tabs-section">
+                        <div class="info-tab-header">
+                            <button class="info-tab-btn active" onclick="switchTab(this,'ship-pane')">Additional Info</button>
+                        </div>
+                        <div id="ship-pane" class="info-tab-pane active">
+                            <div class="shipping-grid">
+                                <div class="shipping-item">
+                                    <div class="shipping-item-icon">
+                                        <?php if ($stock > 0): ?>
+                                            <i class="fas fa-check" style="color:#28a745;"></i>
+                                        <?php else: ?>
+                                            <i class="fas fa-times" style="color:#ff3b5c;"></i>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div>
+                                        <div class="shipping-item-label">Stock</div>
+                                        <div class="shipping-item-value">
+                                            <?php echo $stock > 0 ? $stock . ' In Stock' : 'Out of Stock'; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="shipping-item">
+                                    <div class="shipping-item-icon"><i class="fas fa-truck"></i></div>
+                                    <div>
+                                        <div class="shipping-item-label">Shipping</div>
+                                        <div class="shipping-item-value">Free Shipping</div>
+                                    </div>
+                                </div>
+                                <div class="shipping-item">
+                                    <div class="shipping-item-icon"><i class="fas fa-shield-alt"></i></div>
+                                    <div>
+                                        <div class="shipping-item-label">Warranty</div>
+                                        <div class="shipping-item-value">1-Year Warranty</div>
+                                    </div>
+                                </div>
+                                <div class="shipping-item">
+                                    <div class="shipping-item-icon"><i class="fas fa-tag"></i></div>
+                                    <div>
+                                        <div class="shipping-item-label">Category</div>
+                                        <div class="shipping-item-value">
+                                            <?php echo htmlspecialchars($product['category'] ?? 'N/A'); ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-        </div>
         </div>
     </section>
 
-    <footer>
+    <!-- ═══════════════════════════════════════
+         RATINGS & REVIEWS SECTION
+    ═══════════════════════════════════════ -->
+    <section id="reviews" class="py-5" style="background:#f7f8fa;">
         <div class="container">
-            <div class="row g-5">
-                <div class="col-lg-3">
-                    <a href="index.php" class="footer-logo-brand">
-                        <img src="assets/images/ApeX Logo.png" alt="ApeX Gear Logo" class="footer-logo-img">
-                        <div class="footer-brand-text">
-                            <div class="footer-brand">ApeX<span style="margin-left:2px">Gear</span></div>
-                        </div>
-                    </a>
-                    <p style="font-size:.85rem; line-height:1.7; color:rgba(255,255,255,.45); margin-top:-28px">Your one-stop shop for laptops, desktops, cellphones, and premium accessories. Quality gear. Unbeatable prices.</p>
-                    <div class="footer-social">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-youtube"></i></a>
-                        <a href="#"><i class="fab fa-tiktok"></i></a>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3 col-lg-2">
-                    <div class="footer-heading">Useful Links</div>
-                    <ul>
-                        <li><a href="index.php">Home</a></li>
-                        <li><a href="about.php">About Us</a></li>
-                        <li><a href="product.php">Products</a></li>
-                        <li><a href="deals.php">Deals</a></li>
-                        <li><a href="#">Blog</a></li>
-                        <li><a href="#">Contact Us</a></li>
-                    </ul>
-                </div>
-                <div class="col-6 col-md-3 col-lg-2">
-                    <div class="footer-heading">Support</div>
-                    <ul>
-                        <li><a href="#">FAQ</a></li>
-                        <li><a href="#">Shipping Policy</a></li>
-                        <li><a href="#">Returns</a></li>
-                        <li><a href="#">Order Tracking</a></li>
-                        <li><a href="#">Warranty</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="footer-heading">Contact Us</div>
-                    <ul>
-                        <li style="color:rgba(255,255,255,.45); font-size:.85rem;"><i class="fas fa-map-marker-alt me-2" style="color:var(--apex-accent);"></i>123 Tech Ave, Silicon City, PH</li>
-                        <li><a href="tel:+1234567890"><i class="fas fa-phone-alt me-2" style="color:var(--apex-accent);"></i>+1 (234) 567-890</a></li>
-                        <li><a href="mailto:support@apexgear.com"><i class="fas fa-envelope me-2" style="color:var(--apex-accent);"></i>support@apexgear.com</a></li>
-                        <li style="color:rgba(255,255,255,.45); font-size:.85rem;"><i class="fas fa-clock me-2" style="color:var(--apex-accent);"></i>Mon–Sat: 9AM – 9PM</li>
-                    </ul>
-                    <div class="footer-heading mt-4">Accept Payment</div>
-                    <div class="payment-icons">
-                        <div class="pay-icon">VISA</div>
-                        <div class="pay-icon">MC</div>
-                        <div class="pay-icon">GCash</div>
-                        <div class="pay-icon">PayMaya</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <div class="container d-flex flex-wrap justify-content-between align-items-center">
-                <p>© 2026 ApeX Gear. All rights reserved.</p>
-                <p style="margin:0;">Terms &nbsp;|&nbsp; Privacy &nbsp;|&nbsp; Cookies</p>
-            </div>
-        </div>
-    </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/navbar.js"></script>
-    <script src="assets/js/main.js"></script>
+            <h2 class="section-heading mb-4">Ratings &amp; Reviews</h2>
 
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="cartOffcanvas" aria-labelledby="cartOffcanvasLabel" style="width: 400px; border-left: none; box-shadow: -4px 0 24px rgba(0,0,0,0.1);">
-        <div class="offcanvas-header border-bottom pb-3 pt-4 px-4">
-            <h6 class="offcanvas-title fw-bold text-dark d-flex align-items-center" id="cartOffcanvasLabel">
-                <i class="fas fa-shopping-bag me-2" style="color: var(--apex-blue);"></i> Cart Summary
-            </h6>
-            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
+            <div class="row g-4">
 
-        <div class="offcanvas-body p-4 d-flex flex-column">
-            <?php if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])): ?>
-                <div class="m-auto text-center w-100">
-                    <div class="mb-4">
-                        <div style="width: 80px; height: 80px; background: var(--apex-grey); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
-                            <i class="fas fa-shopping-bag fa-2x text-muted opacity-50"></i>
-                        </div>
-                    </div>
-                    <h6 class="fw-bold mb-2">Your cart is empty</h6>
-                    <p class="text-muted small mb-4">Looks like you haven't added any gadgets yet.</p>
-                    <button type="button" class="btn btn-primary rounded-pill px-4 py-2" style="background: var(--apex-blue); border-color: var(--apex-blue); font-weight: 600; font-size: .9rem;" data-bs-dismiss="offcanvas">Continue Shopping</button>
-                </div>
-            <?php else: ?>
-                <div class="cart-items flex-grow-1 overflow-auto pe-2">
-                    <?php
-                    $subtotal = 0;
-                    foreach ($_SESSION['cart'] as $id => $item):
-                        $subtotal += ($item['price'] * $item['qty']);
-                    ?>
-                        <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
-                            <div style="width: 50px; height: 50px; border-radius: 6px; background: var(--apex-grey); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink: 0;">
-                                <?php
-                                if (strpos($item['image'], '<svg') !== false) {
-                                    echo $item['image'];
-                                } else {
-                                    echo '<img src="' . htmlspecialchars($item['image']) . '" style="max-width: 100%; object-fit: contain;">';
-                                }
-                                ?>
-                            </div>
-                            <div class="flex-grow-1 min-width-0">
-                                <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: .85rem;"><?php echo htmlspecialchars($item['name']); ?></h6>
-                                <div class="text-muted small mt-1">
-                                    <?php echo $item['qty']; ?> x ₱<?php echo number_format($item['price'], 2); ?>
+                <!-- LEFT: Score summary -->
+                <div class="col-lg-4">
+                    <div class="reviews-wrapper" style="height:fit-content;">
+
+                        <?php if ($total_reviews > 0): ?>
+                            <div class="d-flex align-items-flex-start gap-4 mb-4">
+                                <div>
+                                    <div class="rating-score"><?php echo $avg_rating; ?></div>
+                                    <div class="mb-1"><?php echo renderStars($avg_rating); ?></div>
+                                    <div class="rating-score-sub"><?php echo $total_reviews; ?> Review<?php echo $total_reviews !== 1 ? 's' : ''; ?></div>
                                 </div>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
 
-                <div class="cart-footer pt-3 mt-auto border-top">
-                    <div class="d-flex justify-content-between mb-4">
-                        <span class="fw-bold text-muted text-uppercase small" style="letter-spacing: 0.05em;">Subtotal</span>
-                        <span class="fw-bold text-dark fs-5">₱<?php echo number_format($subtotal, 2); ?></span>
-                    </div>
-
-                    <div class="d-flex flex-column gap-2">
-                        <a href="checkout.php" class="btn-apex w-100 text-center py-2" style="border-radius: 50px;">Secure Checkout</a>
-                        <a href="cart.php" class="btn btn-light w-100 text-center py-2 fw-bold text-apex-blue" style="border-radius: 50px; border: 1px solid var(--apex-border);">View Full Cart</a>
-                    </div>
-                </div>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="favoritesOffcanvas" aria-labelledby="favoritesOffcanvasLabel" style="width: 400px; border-left: none; box-shadow: -4px 0 24px rgba(0,0,0,0.1);">
-        <div class="offcanvas-header border-bottom pb-3 pt-4 px-4">
-            <h6 class="offcanvas-title fw-bold text-dark d-flex align-items-center" id="favoritesOffcanvasLabel">
-                <i class="fas fa-heart me-2" style="color: #ff3b5c;"></i> Your Favorites
-            </h6>
-            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-
-        <div class="offcanvas-body p-4 d-flex flex-column">
-            <?php if (!isset($_SESSION['favorites']) || empty($_SESSION['favorites'])): ?>
-                <div class="m-auto text-center w-100">
-                    <div class="mb-4">
-                        <div style="width: 80px; height: 80px; background: var(--apex-grey); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
-                            <i class="far fa-heart fa-2x text-muted opacity-50"></i>
-                        </div>
-                    </div>
-                    <h6 class="fw-bold mb-2">No favorites yet</h6>
-                    <p class="text-muted small mb-4">Tap the heart on any product to save it for later.</p>
-                    <button type="button" class="btn btn-primary rounded-pill px-4 py-2" style="background: var(--apex-blue); border-color: var(--apex-blue); font-weight: 600; font-size: .9rem;" data-bs-dismiss="offcanvas">Explore Products</button>
-                </div>
-            <?php else: ?>
-                <div class="cart-items flex-grow-1 overflow-auto pe-2">
-                    <?php foreach ($_SESSION['favorites'] as $id => $item): ?>
-                        <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
-                            <div style="width: 50px; height: 50px; border-radius: 6px; background: var(--apex-grey); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink: 0;">
-                                <?php
-                                if (strpos($item['image'], '<svg') !== false) {
-                                    echo $item['image'];
-                                } else {
-                                    echo '<img src="' . htmlspecialchars($item['image']) . '" style="max-width: 100%; object-fit: contain;">';
-                                }
-                                ?>
+                            <!-- Bar breakdown -->
+                            <div class="d-flex flex-column gap-2">
+                                <?php for ($s = 5; $s >= 1; $s--): ?>
+                                    <?php
+                                    $pct = $total_reviews > 0 ? round(($rating_counts[$s] / $total_reviews) * 100) : 0;
+                                    ?>
+                                    <div class="rating-bar-row">
+                                        <i class="fas fa-star" style="color:#f5a623; font-size:.75rem;"></i>
+                                        <span><?php echo $s; ?></span>
+                                        <div class="progress">
+                                            <div class="progress-bar" style="width:<?php echo $pct; ?>%"></div>
+                                        </div>
+                                        <span class="bar-count"><?php echo $rating_counts[$s]; ?></span>
+                                    </div>
+                                <?php endfor; ?>
                             </div>
-                            <div class="flex-grow-1 min-width-0">
-                                <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: .85rem;">
-                                    <a href="product.php?id=<?php echo $id; ?>" class="text-dark text-decoration-none"><?php echo htmlspecialchars($item['name']); ?></a>
-                                </h6>
-                                <div class="fw-bold text-apex-blue small mt-1">
-                                    ₱<?php echo number_format($item['price'], 2); ?>
+
+                        <?php else: ?>
+                            <div class="text-center py-4">
+                                <i class="far fa-star fa-3x mb-3" style="color:#ddd;"></i>
+                                <p class="fw-bold text-muted mb-1">No reviews yet</p>
+                                <p class="text-muted small">Be the first to share your thoughts!</p>
+                            </div>
+                        <?php endif; ?>
+
+                    </div><!-- end reviews-wrapper -->
+                </div>
+
+                <!-- RIGHT: Review cards -->
+                <div class="col-lg-8">
+
+                    <!-- First 5 reviews -->
+                    <div class="d-flex flex-column gap-3 mb-4">
+                        <?php foreach (array_slice($reviews, 0, 5) as $rev): ?>
+                            <div class="review-card">
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <div class="reviewer-avatar">
+                                        <?php echo htmlspecialchars($rev['avatar_letter']); ?>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold text-dark" style="font-size:.9rem;">
+                                            <?php echo htmlspecialchars($rev['username']); ?>
+                                        </div>
+                                        <div style="font-size:.72rem;"><?php echo renderStars((int)$rev['rating']); ?></div>
+                                    </div>
+                                    <div class="text-muted" style="font-size:.78rem; white-space:nowrap;">
+                                        <?php echo htmlspecialchars($rev['date']); ?>
+                                    </div>
                                 </div>
+                                <p class="mb-0 text-muted" style="font-size:.9rem; line-height:1.6;">
+                                    <?php echo htmlspecialchars($rev['review_text']); ?>
+                                </p>
                             </div>
-                            <form method="POST" action="actions/favorites_action.php" class="ms-auto m-0">
-                                <input type="hidden" name="action" value="remove">
-                                <input type="hidden" name="product_id" value="<?php echo $id; ?>">
-                                <input type="hidden" name="return_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
-                                <button type="submit" class="btn btn-sm text-danger border-0 bg-transparent" title="Remove from favorites">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <?php if ($total_reviews > 5): ?>
+                        <button class="btn btn-outline-secondary rounded-pill px-4 py-2 mb-4"
+                            style="font-size:.85rem; font-weight:600;"
+                            id="loadMoreReviews">
+                            Show more reviews (<?php echo $total_reviews - 5; ?> more)
+                        </button>
+
+                        <div id="extraReviews" class="d-flex flex-column gap-3 mb-4" style="display:none!important;">
+                            <?php foreach (array_slice($reviews, 5) as $rev): ?>
+                                <div class="review-card">
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <div class="reviewer-avatar">
+                                            <?php echo htmlspecialchars($rev['avatar_letter']); ?>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-bold text-dark" style="font-size:.9rem;">
+                                                <?php echo htmlspecialchars($rev['username']); ?>
+                                            </div>
+                                            <div style="font-size:.72rem;"><?php echo renderStars((int)$rev['rating']); ?></div>
+                                        </div>
+                                        <div class="text-muted" style="font-size:.78rem; white-space:nowrap;">
+                                            <?php echo htmlspecialchars($rev['date']); ?>
+                                        </div>
+                                    </div>
+                                    <p class="mb-0 text-muted" style="font-size:.9rem; line-height:1.6;">
+                                        <?php echo htmlspecialchars($rev['review_text']); ?>
+                                    </p>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
-                    <?php endforeach; ?>
+                    <?php endif; ?>
+
+
+
                 </div>
-            <?php endif; ?>
+            </div><!-- end .row -->
         </div>
-    </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         YOU MIGHT ALSO LIKE
+    ═══════════════════════════════════════ -->
+    <?php if (!empty($related_products)): ?>
+        <section class="related-section">
+            <div class="container">
+                <h2 class="section-heading text-center mb-4">You Might Also Like</h2>
+
+                <div class="related-slider-wrapper position-relative">
+                    <!-- Prev button -->
+                    <button class="related-slider-btn related-slider-prev" id="relPrev" aria-label="Previous">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+
+                    <div class="related-slider-track" id="relTrack">
+                        <?php foreach ($related_products as $rel): ?>
+                            <div class="related-slider-item">
+                                <a href="product.php?id=<?php echo $rel['product_id']; ?>" class="related-card">
+                                    <div class="related-card-img">
+                                        <?php
+                                        if (strpos($rel['image'], '<svg') !== false) {
+                                            echo $rel['image'];
+                                        } else {
+                                            echo '<img src="' . htmlspecialchars($rel['image']) . '" alt="' . htmlspecialchars($rel['name']) . '">';
+                                        }
+                                        ?>
+                                    </div>
+                                    <div class="related-card-body">
+                                        <div class="related-card-name"><?php echo htmlspecialchars($rel['name']); ?></div>
+                                        <div class="related-card-price">₱<?php echo number_format($rel['price'], 2); ?></div>
+                                        <?php if (isset($rel['stock']) && (int)$rel['stock'] <= 0): ?>
+                                            <span class="badge mt-1" style="background:#ff3b5c; font-size:.7rem;">Out of Stock</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </a>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <!-- Next button -->
+                    <button class="related-slider-btn related-slider-next" id="relNext" aria-label="Next">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+    <?php endif; ?>
+
+    <!-- ── Footer (external) ── -->
+    <?php include_once __DIR__ . '/includes/footer.php'; ?>
+
+    <!-- ── Load More Reviews JS ── -->
     <script>
-        <?php if (isset($_SESSION['user'])): ?>
-                (function() {
-                    const panel = document.createElement('div');
-                    panel.id = 'profilePanel';
-                    panel.className = 'profile-panel';
-                    panel.innerHTML = `
-            <div class="pp-header">
-                <div class="pp-avatar"><?php echo !empty($_SESSION['user']['profile_picture']) ? '<img src="' . htmlspecialchars($_SESSION['user']['profile_picture']) . '" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">' : htmlspecialchars($_SESSION['user']['avatar']); ?></div>
-                <div>
-                    <div class="pp-username"><?php echo htmlspecialchars($_SESSION['user']['username']); ?></div>
-                    <div class="pp-email"><?php echo htmlspecialchars($_SESSION['user']['email']); ?></div>
-                </div>
-            </div>
-            <div class="pp-divider"></div>
-            <a href="javascript:void(0)" class="pp-link"><i class="fas fa-user"></i> My Profile</a>
-            <a href="javascript:void(0)" class="pp-link"><i class="fas fa-box"></i> My Orders</a>
-            <a href="#favoritesOffcanvas" data-bs-toggle="offcanvas" class="pp-link"><i class="fas fa-heart"></i> Favorites</a>
-            <a href="#cartOffcanvas" data-bs-toggle="offcanvas" class="pp-link"><i class="fas fa-shopping-cart"></i> My Cart</a>
-            <a href="javascript:void(0)" class="pp-link"><i class="fas fa-cog"></i> Settings</a>
-            <div class="pp-divider"></div>
-            <a href="logout.php" class="pp-link pp-logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
-        `;
-                    document.body.appendChild(panel);
-                })();
-
-            function toggleProfilePanel(e) {
-                e.stopPropagation();
-                const panel = document.getElementById('profilePanel');
-                const btn = document.getElementById('profileToggle');
-                const rect = btn.getBoundingClientRect();
-                const isOpen = panel.classList.contains('open');
-                if (isOpen) {
-                    panel.classList.remove('open');
-                    return;
-                }
-                panel.style.top = (rect.bottom + window.scrollY + 12) + 'px';
-                panel.style.left = 'auto';
-                panel.style.right = (document.documentElement.clientWidth - rect.right) + 'px';
-                panel.classList.add('open');
-            }
-            document.addEventListener('click', function(e) {
-                const panel = document.getElementById('profilePanel');
-                const btn = document.getElementById('profileToggle');
-                if (panel && btn && !btn.contains(e.target) && !panel.contains(e.target)) panel.classList.remove('open');
+        const loadMoreBtn = document.getElementById('loadMoreReviews');
+        const extraReviews = document.getElementById('extraReviews');
+        if (loadMoreBtn && extraReviews) {
+            loadMoreBtn.addEventListener('click', function () {
+                extraReviews.style.setProperty('display', 'flex', 'important');
+                extraReviews.style.flexDirection = 'column';
+                loadMoreBtn.style.display = 'none';
             });
-            window.addEventListener('scroll', function() {
-                const panel = document.getElementById('profilePanel');
-                if (panel) panel.classList.remove('open');
-            });
-        <?php endif; ?>
+        }
     </script>
-</body>
 
+    <!-- ── Info Tabs JS ── -->
+    <script>
+        function switchTab(btn, paneId) {
+            const section = btn.closest('.info-tabs-section');
+            section.querySelectorAll('.info-tab-btn').forEach(b => b.classList.remove('active'));
+            section.querySelectorAll('.info-tab-pane').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(paneId).classList.add('active');
+        }
+    </script>
+
+    <!-- ── Related Slider JS ── -->
+    <script>
+        (function () {
+            const track = document.getElementById('relTrack');
+            const prevBtn = document.getElementById('relPrev');
+            const nextBtn = document.getElementById('relNext');
+            if (!track) return;
+
+            function getVisibleCount() {
+                const w = window.innerWidth;
+                if (w <= 479) return 1;
+                if (w <= 767) return 2;
+                if (w <= 991) return 3;
+                return 4;
+            }
+
+            function getItemWidth() {
+                const item = track.querySelector('.related-slider-item');
+                if (!item) return 0;
+                return item.offsetWidth + parseInt(getComputedStyle(track).gap || 16);
+            }
+
+            let currentIndex = 0;
+
+            function totalItems() {
+                return track.querySelectorAll('.related-slider-item').length;
+            }
+
+            function slide(dir) {
+                const visible = getVisibleCount();
+                const max = Math.max(0, totalItems() - visible);
+                currentIndex = Math.min(max, Math.max(0, currentIndex + dir));
+                track.style.transform = `translateX(-${currentIndex * getItemWidth()}px)`;
+                track.style.transition = 'transform .35s ease';
+                prevBtn.disabled = currentIndex === 0;
+                nextBtn.disabled = currentIndex >= max;
+            }
+
+            // Make track use transform instead of overflow
+            track.style.overflow = 'visible';
+            track.parentElement.style.overflow = 'hidden';
+
+            prevBtn.addEventListener('click', () => slide(-1));
+            nextBtn.addEventListener('click', () => slide(1));
+
+            window.addEventListener('resize', () => slide(0));
+            slide(0);
+        })();
+    </script>
+
+</body>
 </html>

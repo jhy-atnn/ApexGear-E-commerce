@@ -1,37 +1,53 @@
 <?php
 session_start();
-// Require our OOP backend to fetch the data
 require_once 'classes/Inventory.php';
 
-// Instantiate the Inventory object
 $inventoryManager = new Inventory();
-
-// Fetch ALL products (not just featured ones)
 $products = $inventoryManager->getAllProducts();
 
 $searchQuery = trim($_GET['q'] ?? '');
+$activeCategory = trim($_GET['cat'] ?? '');
+$activeSort = trim($_GET['sort'] ?? '');
+
+// Search filter
 if ($searchQuery !== '') {
     $filteredProducts = [];
     $query = mb_strtolower($searchQuery, 'UTF-8');
-
     foreach ($products as $product) {
         $haystack = mb_strtolower(implode(' ', [
             $product['name'] ?? '',
             $product['brand'] ?? '',
             $product['category'] ?? '',
         ]), 'UTF-8');
-
         if (mb_strpos($haystack, $query, 0, 'UTF-8') !== false) {
             $filteredProducts[] = $product;
         }
     }
-
     $products = $filteredProducts;
 }
 
-$productCount = count($products);
-?>
+// Category filter
+if ($activeCategory !== '') {
+    $products = array_filter($products, fn($p) =>
+        mb_strtolower($p['category'] ?? '') === mb_strtolower($activeCategory)
+    );
+    $products = array_values($products);
+}
 
+// Sort
+if ($activeSort === 'price_asc') {
+    usort($products, fn($a, $b) => $a['price'] <=> $b['price']);
+} elseif ($activeSort === 'price_desc') {
+    usort($products, fn($a, $b) => $b['price'] <=> $a['price']);
+}
+
+$productCount = count($products);
+
+// Collect all unique categories for filter chips
+$allProducts = $inventoryManager->getAllProducts();
+$allCategories = array_unique(array_filter(array_column($allProducts, 'category')));
+sort($allCategories);
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -44,61 +60,109 @@ $productCount = count($products);
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
+    <link href="assets/css/store-styles.css" rel="stylesheet" />
 </head>
 
 <body>
-    <?php include_once __DIR__ . '/includes\cookie_notif.php'; ?>
+    <?php include_once __DIR__ . '/includes/cookie_notif.php'; ?>
 
-    <!-- INJECT NAVBAR -->
     <?php
     $currentPage = 'store';
-    include 'includes\navbar.php';
+    include 'includes/navbar.php';
     ?>
 
-    <header class="inner-header store-hero">
+    <!-- ── STORE HERO ───────────────────────────────────────── -->
+    <header class="store-hero">
         <div class="container">
-            <div class="store-hero-copy">
-                <span class="store-kicker">ApeX Gear Store</span>
-                <h1>Complete Catalog</h1>
-                <p>Equip your setup with industry-leading hardware.</p>
+            <div class="store-hero-copy" style="top: 70%; transform: translateY(-3%);">
+
+                <h1>Product<br><em>Store</em></h1>
+                <p>Equip your setup with the latest and best in tech hardware.</p>
+
+                <!-- Inline search -->
+                <form method="GET" action="store.php" class="store-hero-search">
+                    <input
+                        type="text"
+                        name="q"
+                        placeholder="Search products, brands…"
+                        value="<?php echo htmlspecialchars($searchQuery); ?>"
+                        autocomplete="off"
+                    />
+                    <button type="submit"><i class="fas fa-search me-1"></i> Search</button>
+                </form>
             </div>
-            <div class="store-hero-stat">
-                <span><?php echo $productCount; ?></span>
-                <small>Products Available</small>
+
+            <!-- Decorative laptop image -->
+            <div class="store-hero-img" aria-hidden="true">
+                <img src="assets/images/products/zephyrusg14.png" alt="" />
             </div>
         </div>
     </header>
 
-    <section class="inner-page" style="padding-bottom: 4rem;">
+    <!-- ── CATALOG ──────────────────────────────────────────── -->
+    <section class="store-catalog-section">
         <div class="container">
+
+            <!-- Toolbar -->
             <div class="catalog-toolbar">
                 <div class="catalog-summary">
                     <span class="catalog-count"><?php echo $productCount; ?> Product<?php echo $productCount === 1 ? '' : 's'; ?></span>
                     <?php if ($searchQuery !== ''): ?>
                         <span class="catalog-context">Results for "<?php echo htmlspecialchars($searchQuery); ?>"</span>
+                    <?php elseif ($activeCategory !== ''): ?>
+                        <span class="catalog-context">Filtered by: <?php echo htmlspecialchars(ucfirst($activeCategory)); ?></span>
                     <?php else: ?>
                         <span class="catalog-context">All current inventory</span>
                     <?php endif; ?>
                 </div>
-                <label class="catalog-sort">
-                    <span>Sort</span>
-                    <select>
-                        <option>Featured</option>
-                        <option>Price: Low to High</option>
-                        <option>Price: High to Low</option>
-                    </select>
-                </label>
+                <div class="apex-sort-wrap">
+                    <span class="apex-sort-label"><i class="fas fa-sliders-h me-1"></i> Sort</span>
+                    <div class="apex-sort-dropdown" id="sortDropdown">
+                        <?php
+                        $sortOptions = [
+                            ''           => ['label' => 'Featured',          'icon' => 'fa-star'],
+                            'price_asc'  => ['label' => 'Price: Low to High','icon' => 'fa-arrow-up'],
+                            'price_desc' => ['label' => 'Price: High to Low','icon' => 'fa-arrow-down'],
+                        ];
+                        $currentLabel = $sortOptions[$activeSort]['label'] ?? 'Featured';
+                        $currentIcon  = $sortOptions[$activeSort]['icon'] ?? 'fa-star';
+                        ?>
+                        <button class="apex-sort-btn" onclick="toggleSort(event)" type="button">
+                            <i class="fas <?php echo $currentIcon; ?> me-2"></i>
+                            <span><?php echo $currentLabel; ?></span>
+                            <i class="fas fa-chevron-down apex-sort-caret ms-2"></i>
+                        </button>
+                        <ul class="apex-sort-menu" id="sortMenu">
+                            <?php foreach ($sortOptions as $val => $opt): ?>
+                                <li>
+                                    <a href="#" class="apex-sort-item <?php echo $activeSort === $val ? 'active' : ''; ?>"
+                                       onclick="applySort('<?php echo $val; ?>'); return false;">
+                                        <i class="fas <?php echo $opt['icon']; ?> me-2"></i>
+                                        <?php echo $opt['label']; ?>
+                                        <?php if ($activeSort === $val): ?>
+                                            <i class="fas fa-check ms-auto"></i>
+                                        <?php endif; ?>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
             </div>
 
+            <!-- Product grid -->
             <div class="row g-4">
                 <?php if (empty($products)): ?>
                     <div class="col-12 text-center py-5">
                         <?php if ($searchQuery !== ''): ?>
-                            <h3 class="text-muted">No products matched your search.</h3>
-                            <p>Try searching by another name or category.</p>
+                            <div style="color: var(--apex-muted); font-size: 2.5rem; margin-bottom: 12px;"><i class="fas fa-search"></i></div>
+                            <h4 style="color: var(--apex-text); font-family: 'Barlow Condensed', sans-serif; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;">No results for "<?php echo htmlspecialchars($searchQuery); ?>"</h4>
+                            <p style="color: var(--apex-muted); margin-top: 6px;">Try a different keyword or browse all products.</p>
+                            <a href="store.php" class="btn-shop d-inline-block mt-3" style="padding: 10px 24px; border-radius: 6px;">Browse All</a>
                         <?php else: ?>
-                            <h3 class="text-muted">Inventory is currently empty.</h3>
-                            <p>Head over to the <a href="admin\apex26admin.php" class="text-apex-accent">Admin Panel</a> to add some gadgets.</p>
+                            <div style="color: var(--apex-muted); font-size: 2.5rem; margin-bottom: 12px;"><i class="fas fa-box-open"></i></div>
+                            <h4 style="color: var(--apex-text); font-family: 'Barlow Condensed', sans-serif; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;">Inventory is empty</h4>
+                            <p style="color: var(--apex-muted); margin-top: 6px;">Head over to the <a href="admin/apex26admin.php" style="color: var(--apex-blue);">Admin Panel</a> to add products.</p>
                         <?php endif; ?>
                     </div>
                 <?php else: ?>
@@ -106,21 +170,29 @@ $productCount = count($products);
                         <div class="col-sm-6 col-md-4 col-lg-3 fade-up">
                             <div class="product-card h-100 position-relative">
 
-                                <?php if (isset($product['badge']) && $product['badge']): ?>
-                                    <div class="product-badge <?php echo isset($product['badge_type']) && $product['badge_type'] === 'sale' ? 'sale' : ''; ?>">
+                                <?php
+                                $badgeType = $product['badge_type'] ?? 'normal';
+                                $badgeClass = match($badgeType) {
+                                    'sale'   => 'sale',
+                                    'new'    => 'new',
+                                    'ribbon' => 'sale',
+                                    default  => '',
+                                };
+                                ?>
+                                <?php if (!empty($product['badge'])): ?>
+                                    <div class="product-badge <?php echo $badgeClass; ?>">
                                         <?php echo htmlspecialchars($product['badge']); ?>
                                     </div>
                                 <?php endif; ?>
 
-                                <div class="product-img bg-white">
+                                <div class="product-img">
                                     <?php
                                     $rawImage = $product['image'] ?? '';
-                                    // Handle both image URLs and SVG snippets gracefully
                                     if (strpos($rawImage, '<svg') !== false) {
                                         echo $rawImage;
                                     } else {
                                         $productImage = Inventory::getProductImageSrc($rawImage);
-                                        echo '<img src="' . htmlspecialchars($productImage) . '" alt="' . htmlspecialchars($product['name']) . '">';
+                                        echo '<img src="' . htmlspecialchars($productImage) . '" alt="' . htmlspecialchars($product['name']) . '" loading="lazy">';
                                     }
                                     ?>
                                 </div>
@@ -128,36 +200,44 @@ $productCount = count($products);
                                 <div class="product-body">
                                     <div class="product-tags">
                                         <span class="filter-tag brand">
-                                            <i class="fas fa-tag me-1" style="opacity: 0.6;"></i> <?php echo isset($product['brand']) ? htmlspecialchars($product['brand']) : 'Unknown Brand'; ?>
+                                            <i class="fas fa-tag me-1" style="opacity:.55;"></i>
+                                            <?php echo htmlspecialchars($product['brand'] ?? 'Unknown'); ?>
                                         </span>
                                         <span class="filter-tag category">
-                                            <i class="fas fa-layer-group me-1" style="opacity: 0.6;"></i> <?php echo isset($product['category']) ? htmlspecialchars(ucfirst($product['category'])) : 'Accessories'; ?>
+                                            <i class="fas fa-layer-group me-1" style="opacity:.55;"></i>
+                                            <?php echo htmlspecialchars(ucfirst($product['category'] ?? 'Accessories')); ?>
                                         </span>
                                     </div>
+
                                     <div class="product-name"><?php echo htmlspecialchars($product['name']); ?></div>
+
                                     <div class="product-rating">
                                         <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                                        <span>(<?php echo isset($product['rating']) ? $product['rating'] : rand(50, 400); ?>)</span>
+                                        <span>(<?php echo $product['rating'] ?? rand(50, 400); ?>)</span>
                                     </div>
-                                    <?php $stock = isset($product['stock']) ? (int)$product['stock'] : 0; ?>
+
+                                    <?php $stock = (int)($product['stock'] ?? 0); ?>
                                     <div class="product-price">
                                         ₱<?php echo number_format($product['price'], 2); ?>
-                                        <?php if (isset($product['old_price']) && $product['old_price']): ?>
+                                        <?php if (!empty($product['old_price'])): ?>
                                             <span class="old">₱<?php echo number_format($product['old_price'], 2); ?></span>
                                         <?php endif; ?>
-                                        <span class="d-block small fw-bold mt-1" style="font-size: 0.75rem; color: <?php echo $stock > 0 ? 'var(--apex-muted)' : '#ff3b5c'; ?>;">
-                                            <?php echo $stock > 0 ? "Stock: " . $stock : "Out of Stock"; ?>
+                                        <span class="d-block" style="font-size:.72rem; font-family:'Barlow',sans-serif; font-weight:600; margin-top:4px; color:<?php echo $stock > 0 ? 'var(--apex-muted)' : '#ff3b5c'; ?>;">
+                                            <?php echo $stock > 0 ? 'In stock: ' . $stock : 'Out of Stock'; ?>
                                         </span>
                                     </div>
+
                                     <div class="product-actions">
-                                        <a href="product.php?id=<?php echo $product['id']; ?>" class="btn-shop stretched-link">View Details</a>
-                                        <form method="POST" action="actions/favorites_action.php" class="m-0 position-relative" style="display: inline-block; z-index: 2;">
+                                        <a href="product.php?id=<?php echo $product['id']; ?>" class="btn-shop stretched-link">
+                                            View Details
+                                        </a>
+                                        <form method="POST" action="actions/favorites_action.php" class="m-0 position-relative" style="display:inline-block; z-index:2;">
                                             <input type="hidden" name="action" value="add">
                                             <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
                                             <input type="hidden" name="return_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
                                             <button type="submit" class="btn-wish border-0" title="Add to Favorites">
                                                 <?php if (isset($_SESSION['favorites'][$product['id']])): ?>
-                                                    <i class="fas fa-heart" style="color: #ff3b5c;"></i>
+                                                    <i class="fas fa-heart" style="color:#ff3b5c;"></i>
                                                 <?php else: ?>
                                                     <i class="far fa-heart"></i>
                                                 <?php endif; ?>
@@ -165,17 +245,42 @@ $productCount = count($products);
                                         </form>
                                     </div>
                                 </div>
+
                             </div>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
+
         </div>
     </section>
 
-    <!-- INJECT FOOTER, MODALS, AND SCRIPTS -->
-    <?php include 'includes\footer.php'; ?>
+    <?php include 'includes/footer.php'; ?>
+
+    <script>
+        function applySort(val) {
+            const url = new URL(window.location.href);
+            if (val) url.searchParams.set('sort', val);
+            else url.searchParams.delete('sort');
+            window.location.href = url.toString();
+        }
+
+        function toggleSort(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('sortMenu');
+            const caret = document.querySelector('.apex-sort-caret');
+            const open = menu.classList.toggle('open');
+            caret.style.transform = open ? 'rotate(180deg)' : '';
+        }
+
+        document.addEventListener('click', () => {
+            const menu = document.getElementById('sortMenu');
+            if (menu) {
+                menu.classList.remove('open');
+                document.querySelector('.apex-sort-caret').style.transform = '';
+            }
+        });
+    </script>
 
 </body>
-
 </html>

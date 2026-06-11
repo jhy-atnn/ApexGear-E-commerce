@@ -1,5 +1,6 @@
 <!-- ── Footer ── -->
 <footer>
+    <?php include_once __DIR__ . '/order_status.php'; ?>
     <div class="container">
         <div class="row g-5">
             <div class="col-lg-3">
@@ -295,6 +296,7 @@
         margin-bottom: 5px;
     }
 </style>
+
 <!-- Profile Dropdown Logic -->
 <script>
     <?php if (isset($_SESSION['user'])): ?>
@@ -444,4 +446,3 @@
         }
     <?php endif; ?>
 </script>
-<?php include_once __DIR__ . '/order_status.php'; ?>
