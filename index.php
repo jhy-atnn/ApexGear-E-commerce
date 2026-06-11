@@ -270,87 +270,87 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
                 </button>
                 <div class="featured-product-slider" id="productGrid" aria-label="Top featured products">
                     <?php foreach ($featuredProducts as $product) {
-                    $cat       = isset($product['category']) ? $product['category'] : 'laptop';
-                    $badgeType = isset($product['badge_type']) ? $product['badge_type'] : null;
-                    $badge     = isset($product['badge']) ? $product['badge'] : null;
-                    $brand     = isset($product['brand']) ? $product['brand'] : 'ApeX';
-                    $rating    = isset($product['rating']) ? $product['rating'] : '12';
-                    $sales     = isset($product['sales']) ? (int)$product['sales'] : 0;
-                    $oldPrice  = isset($product['old_price']) ? $product['old_price'] : null;
-                ?>
-                    <div class="featured-product-slide product-item" data-cat="<?php echo htmlspecialchars($cat); ?>">
-                        <div class="product-card h-100 position-relative">
+                        $cat       = isset($product['category']) ? $product['category'] : 'laptop';
+                        $badgeType = isset($product['badge_type']) ? $product['badge_type'] : null;
+                        $badge     = isset($product['badge']) ? $product['badge'] : null;
+                        $brand     = isset($product['brand']) ? $product['brand'] : 'ApeX';
+                        $rating    = isset($product['rating']) ? $product['rating'] : '12';
+                        $sales     = isset($product['sales']) ? (int)$product['sales'] : 0;
+                        $oldPrice  = isset($product['old_price']) ? $product['old_price'] : null;
+                    ?>
+                        <div class="featured-product-slide product-item" data-cat="<?php echo htmlspecialchars($cat); ?>">
+                            <div class="product-card h-100 position-relative">
 
-                            <?php if ($badgeType === 'new'): ?>
-                                <div class="product-badge new"><?php echo htmlspecialchars($badge); ?></div>
-                            <?php elseif ($badgeType === 'ribbon'): ?>
-                                <div class="ribbon"></div>
-                                <div class="ribbon-text"><?php echo htmlspecialchars($badge); ?></div>
-                            <?php elseif ($badgeType === 'sale'): ?>
-                                <div class="product-badge sale"><?php echo htmlspecialchars($badge); ?></div>
-                            <?php elseif ($badge): ?>
-                                <div class="product-badge"><?php echo htmlspecialchars($badge); ?></div>
-                            <?php endif; ?>
+                                <?php if ($badgeType === 'new'): ?>
+                                    <div class="product-badge new"><?php echo htmlspecialchars($badge); ?></div>
+                                <?php elseif ($badgeType === 'ribbon'): ?>
+                                    <div class="ribbon"></div>
+                                    <div class="ribbon-text"><?php echo htmlspecialchars($badge); ?></div>
+                                <?php elseif ($badgeType === 'sale'): ?>
+                                    <div class="product-badge sale"><?php echo htmlspecialchars($badge); ?></div>
+                                <?php elseif ($badge): ?>
+                                    <div class="product-badge"><?php echo htmlspecialchars($badge); ?></div>
+                                <?php endif; ?>
 
-                            <div class="product-img">
-                                <?php
-                                $imgData = isset($product['image']) ? $product['image'] : '';
-                                if (strpos($imgData, '<svg') !== false) {
-                                    echo $imgData;
-                                } elseif (!empty($imgData)) {
-                                    echo '<img src="' . htmlspecialchars($imgData) . '" alt="' . htmlspecialchars($product['name']) . '" style="max-height: 160px; max-width: 100%; object-fit: contain;">';
-                                }
-                                ?>
-                            </div>
-
-                            <div class="product-body">
-                                <div class="product-tags">
-                                    <span class="filter-tag brand">
-                                        <i class="fas fa-tag me-1" style="opacity: 0.6;"></i> <?php echo htmlspecialchars($brand); ?>
-                                    </span>
-                                    <span class="filter-tag category">
-                                        <i class="fas fa-layer-group me-1" style="opacity: 0.6;"></i> <?php echo htmlspecialchars(ucfirst($cat)); ?>
-                                    </span>
+                                <div class="product-img">
+                                    <?php
+                                    $imgData = isset($product['image']) ? $product['image'] : '';
+                                    if (strpos($imgData, '<svg') !== false) {
+                                        echo $imgData;
+                                    } elseif (!empty($imgData)) {
+                                        echo '<img src="' . htmlspecialchars($imgData) . '" alt="' . htmlspecialchars($product['name']) . '" style="max-height: 160px; max-width: 100%; object-fit: contain;">';
+                                    }
+                                    ?>
                                 </div>
-                                <div class="product-name"><?php echo htmlspecialchars($product['name']); ?></div>
-                                <div class="product-rating">
-                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                                    <span>(<?php echo htmlspecialchars($rating); ?>)</span>
-                                    <span class="product-sales"><i class="fas fa-bag-shopping"></i> <?php echo number_format($sales); ?> sold</span>
-                                </div>
-                                <?php $stock = isset($product['stock']) ? (int)$product['stock'] : 0; ?>
-                                <div class="product-price">
-                                    ₱<?php echo number_format($product['price'], 2); ?>
-                                    <?php if (isset($product['old_price']) && $product['old_price']): ?>
-                                        <span class="old">₱<?php echo number_format($product['old_price'], 2); ?></span>
-                                    <?php endif; ?>
-                                    <span class="d-block small fw-bold mt-1" style="font-size: 0.75rem; color: <?php echo $stock > 0 ? 'var(--apex-muted)' : '#ff3b5c'; ?>;">
-                                        <?php echo $stock > 0 ? "Stock: " . $stock : "Out of Stock"; ?>
-                                    </span>
-                                </div>
-                                <div class="product-actions">
-                                    <?php if ($stock > 0): ?>
-                                        <a href="product.php?id=<?php echo $product['id']; ?>" class="btn-shop stretched-link">View Details</a>
-                                    <?php else: ?>
-                                        <a href="#" class="btn-shop stretched-link" style="background: var(--apex-muted); pointer-events: none; border-color: transparent; color: white;">Sold Out</a>
-                                    <?php endif; ?>
 
-                                    <form method="POST" action="actions/favorites_action.php" class="m-0 position-relative" style="display: inline-block; z-index: 2;">
-                                        <input type="hidden" name="action" value="add">
-                                        <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
-                                        <input type="hidden" name="return_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
-                                        <button type="submit" class="btn-wish border-0" title="Add to Favorites">
-                                            <?php if (isset($_SESSION['favorites'][$product['id']])): ?>
-                                                <i class="fas fa-heart" style="color: #ff3b5c;"></i>
-                                            <?php else: ?>
-                                                <i class="far fa-heart"></i>
-                                            <?php endif; ?>
-                                        </button>
-                                    </form>
+                                <div class="product-body">
+                                    <div class="product-tags">
+                                        <span class="filter-tag brand">
+                                            <i class="fas fa-tag me-1" style="opacity: 0.6;"></i> <?php echo htmlspecialchars($brand); ?>
+                                        </span>
+                                        <span class="filter-tag category">
+                                            <i class="fas fa-layer-group me-1" style="opacity: 0.6;"></i> <?php echo htmlspecialchars(ucfirst($cat)); ?>
+                                        </span>
+                                    </div>
+                                    <div class="product-name"><?php echo htmlspecialchars($product['name']); ?></div>
+                                    <div class="product-rating">
+                                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                                        <span>(<?php echo htmlspecialchars($rating); ?>)</span>
+                                        <span class="product-sales"><i class="fas fa-bag-shopping"></i> <?php echo number_format($sales); ?> sold</span>
+                                    </div>
+                                    <?php $stock = isset($product['stock']) ? (int)$product['stock'] : 0; ?>
+                                    <div class="product-price">
+                                        ₱<?php echo number_format($product['price'], 2); ?>
+                                        <?php if (isset($product['old_price']) && $product['old_price']): ?>
+                                            <span class="old">₱<?php echo number_format($product['old_price'], 2); ?></span>
+                                        <?php endif; ?>
+                                        <span class="d-block small fw-bold mt-1" style="font-size: 0.75rem; color: <?php echo $stock > 0 ? 'var(--apex-muted)' : '#ff3b5c'; ?>;">
+                                            <?php echo $stock > 0 ? "Stock: " . $stock : "Out of Stock"; ?>
+                                        </span>
+                                    </div>
+                                    <div class="product-actions">
+                                        <?php if ($stock > 0): ?>
+                                            <a href="product.php?id=<?php echo $product['id']; ?>" class="btn-shop stretched-link">View Details</a>
+                                        <?php else: ?>
+                                            <a href="#" class="btn-shop stretched-link" style="background: var(--apex-muted); pointer-events: none; border-color: transparent; color: white;">Sold Out</a>
+                                        <?php endif; ?>
+
+                                        <form method="POST" action="actions/favorites_action.php" class="m-0 position-relative" style="display: inline-block; z-index: 2;">
+                                            <input type="hidden" name="action" value="add">
+                                            <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
+                                            <input type="hidden" name="return_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
+                                            <button type="submit" class="btn-wish border-0" title="Add to Favorites">
+                                                <?php if (isset($_SESSION['favorites'][$product['id']])): ?>
+                                                    <i class="fas fa-heart" style="color: #ff3b5c;"></i>
+                                                <?php else: ?>
+                                                    <i class="far fa-heart"></i>
+                                                <?php endif; ?>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
                     <?php } ?>
                 </div>
                 <button class="product-arrow product-arrow-right" type="button" aria-label="Next featured products">

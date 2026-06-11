@@ -253,7 +253,6 @@ require_once __DIR__ . '/../includes/storage.php';
         <nav class="sidebar-nav">
             <div class="sidebar-section-label">Main</div>
             <a href="apex26admin.php"><i class="fas fa-th-large"></i> Dashboard</a>
-            <a href="manage_products.php" class="active"><i class="fas fa-box-open"></i> Manage Products</a>
             <a href="manage_orders.php"><i class="fas fa-shopping-cart"></i> Orders</a>
             <a href="manage_archives.php"><i class="fas fa-archive"></i> Archives</a>
             <div class="sidebar-section-label">Store</div>
