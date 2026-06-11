@@ -118,7 +118,8 @@ class Inventory
                     'badge_type' => $p['badge_type'] ?? null,
                     'image' => $p['image'] ?? 'https://placehold.co/400x300/eeeeee/1D1D1F?text=No+Image',
                     'sales' => rand(50, 2000),
-                    'desc' => $p['desc'] ?? ''
+                    'desc' => $p['desc'] ?? '',
+                    'shipping_time' => $p['shipping_time'] ?? '1-3 business days'
                 ];
             }
         }
@@ -168,7 +169,7 @@ class Inventory
      * @param string $desc
      * @return int New product id
      */
-    public function addProduct($name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc)
+    public function addProduct($name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc, $shipping_time = null)
     {
         // Session-backed addProduct
         $price = (float)$price;
@@ -178,6 +179,10 @@ class Inventory
         $badge = $badge === '' ? null : $badge;
         $badge_type = $badge_type === '' ? null : $badge_type;
         $image = self::normalizeProductImagePath($image);
+        $shipping_time = trim((string)$shipping_time);
+        if ($shipping_time === '') {
+            $shipping_time = null;
+        }
 
         if (!isset($_SESSION['fake_db'])) {
             $_SESSION['fake_db'] = [];
@@ -204,6 +209,7 @@ class Inventory
             'badge_type' => $badge_type,
             'image' => $image,
             'desc' => $desc,
+            'shipping_time' => $shipping_time,
             'is_archived' => 0,
         ];
 
@@ -231,7 +237,7 @@ class Inventory
      * @param string $desc
      * @return bool
      */
-    public function editProduct($id, $name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc)
+    public function editProduct($id, $name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc, $shipping_time = null)
     {
         // Session-backed editProduct
         $id = (int)$id;
@@ -242,6 +248,10 @@ class Inventory
         $badge = $badge === '' ? null : $badge;
         $badge_type = $badge_type === '' ? null : $badge_type;
         $image = self::normalizeProductImagePath($image);
+        $shipping_time = trim((string)$shipping_time);
+        if ($shipping_time === '') {
+            $shipping_time = null;
+        }
 
         if (empty($_SESSION['fake_db']['products'])) return false;
 
@@ -258,6 +268,7 @@ class Inventory
                 $p['badge_type'] = $badge_type;
                 $p['image'] = $image;
                 $p['desc'] = $desc;
+                $p['shipping_time'] = $shipping_time;
                 if (function_exists('save_fake_db')) save_fake_db();
                 return true;
             }

@@ -26,8 +26,9 @@ $cartSuccess = false;
 $cartError   = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
-    $qty   = (int)$_POST['quantity'];
-    $stock = isset($product['stock']) ? (int)$product['stock'] : 0;
+    $qty    = (int)$_POST['quantity'];
+    $stock  = isset($product['stock']) ? (int)$product['stock'] : 0;
+    $isBuyNow = isset($_POST['buy_now']);
 
     $current_cart_qty = isset($_SESSION['cart'][$product_id]) ? $_SESSION['cart'][$product_id]['qty'] : 0;
 
@@ -45,6 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
             ];
         }
         $cartSuccess = true;
+        if ($isBuyNow) {
+            header('Location: checkout.php');
+            exit;
+        }
     } else {
         $cartError = "Cannot add to cart. Only $stock left in stock.";
     }
@@ -570,18 +575,24 @@ function renderStars($rating, $max = 5) {
                             </div>
                         </div>
 
-                        <div class="d-flex gap-2">
+                        <div class="mb-3 text-muted small">
+                            Estimated shipping: <?php echo htmlspecialchars($product['shipping_time'] ?? '1-3 business days'); ?>
+                        </div>
+                        <div class="d-flex gap-2 mb-3">
                             <?php if ($stock > 0): ?>
+                                <button type="submit" name="buy_now" value="1" class="btn-apex btn-lg py-3 flex-grow-1 text-center">
+                                    Buy Now <i class="fas fa-bolt ms-2"></i>
+                                </button>
                                 <button type="submit" class="btn-apex btn-lg py-3 flex-grow-1 text-center">
                                     Add to Cart <i class="fas fa-shopping-cart ms-2"></i>
                                 </button>
                             <?php else: ?>
-                                <button type="button"
-                                    class="btn-apex btn-lg py-3 flex-grow-1 text-center" disabled
+                                <button type="button" class="btn-apex btn-lg py-3 flex-grow-1 text-center" disabled
                                     style="background: var(--apex-muted); box-shadow: none; cursor: not-allowed; border-color: transparent; color: white;">
                                     Out of Stock
                                 </button>
                             <?php endif; ?>
+                        </div>
                     </form>
 
                     <form method="POST" action="actions/favorites_action.php" class="m-0">
@@ -652,6 +663,13 @@ function renderStars($rating, $max = 5) {
                                     <div>
                                         <div class="shipping-item-label">Shipping</div>
                                         <div class="shipping-item-value">Free Shipping</div>
+                                    </div>
+                                </div>
+                                <div class="shipping-item">
+                                    <div class="shipping-item-icon"><i class="fas fa-clock"></i></div>
+                                    <div>
+                                        <div class="shipping-item-label">Est. Shipping</div>
+                                        <div class="shipping-item-value"><?php echo htmlspecialchars($product['shipping_time'] ?? '1-3 business days'); ?></div>
                                     </div>
                                 </div>
                                 <div class="shipping-item">

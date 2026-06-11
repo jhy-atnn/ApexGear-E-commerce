@@ -10,20 +10,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
 
     if ($action === 'add' || $action === 'edit') {
-        $name       = $_POST['name']       ?? '';
-        $brand      = $_POST['brand']      ?? '';
-        $category   = $_POST['category']   ?? '';
-        $price      = $_POST['price']      ?? 0;
-        $old_price  = $_POST['old_price']  ?? '';
-        $stock      = $_POST['stock']      ?? 0;
-        $rating     = $_POST['rating']     ?? '';
-        $badge      = $_POST['badge']      ?? '';
-        $badge_type = $_POST['badge_type'] ?? '';
-        $desc       = $_POST['desc']       ?? '';
-
-        $image_source = $_POST['image_source'] ?? 'upload';
-        $image = '';
-
+        $name          = $_POST['name']          ?? '';
+        $brand         = $_POST['brand']         ?? '';
+        $category      = $_POST['category']      ?? '';
+        $price         = $_POST['price']         ?? 0;
+        $old_price     = $_POST['old_price']     ?? '';
+        $stock         = $_POST['stock']         ?? 0;
+        $rating        = $_POST['rating']        ?? '';
+        $badge         = $_POST['badge']         ?? '';
+        $badge_type    = $_POST['badge_type']    ?? '';
+        $shipping_time = trim($_POST['shipping_time'] ?? '');
+        $desc          = $_POST['desc']          ?? '';
         if ($image_source === 'upload' && isset($_FILES['image_upload']) && $_FILES['image_upload']['error'] === 0) {
             $target_dir = __DIR__ . "/../assets/images/products/";
             if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
@@ -38,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
 
         if ($action === 'add') {
-            $inventoryManager->addProduct($name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc);
+            $inventoryManager->addProduct($name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc, $shipping_time);
             header("Location: apex26admin.php?success=added");
             exit;
         } else {
@@ -47,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $products_temp = $inventoryManager->getAllProducts();
                 if (isset($products_temp[$product_id])) $image = $products_temp[$product_id]['image'];
             }
-            $inventoryManager->editProduct($product_id, $name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc);
+            $inventoryManager->editProduct($product_id, $name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc, $shipping_time);
             header("Location: apex26admin.php?success=edited");
             exit;
         }
@@ -281,9 +278,15 @@ $lowStock      = count(array_filter($products, fn($p) => isset($p['stock']) && $
 
                             <div class="field-row">
                                 <div class="field-group">
+                                    <label class="field-label">Estimated Shipping Time</label>
+                                    <input type="text" name="shipping_time" class="field-control" placeholder="e.g. 1-3 business days">
+                                </div>
+                                <div class="field-group">
                                     <label class="field-label">Badge Text</label>
                                     <input type="text" name="badge" class="field-control" placeholder="e.g. Popular">
                                 </div>
+                            </div>
+                            <div class="field-row">
                                 <div class="field-group">
                                     <label class="field-label">Badge Style</label>
                                     <select name="badge_type" class="field-control">
@@ -406,6 +409,7 @@ $lowStock      = count(array_filter($products, fn($p) => isset($p['stock']) && $
                                                     data-rating="<?php echo isset($product['rating']) ? $product['rating'] : ''; ?>"
                                                     data-badge="<?php echo isset($product['badge']) ? htmlspecialchars($product['badge']) : ''; ?>"
                                                     data-badge_type="<?php echo isset($product['badge_type']) ? htmlspecialchars($product['badge_type']) : ''; ?>"
+                                                    data-shipping_time="<?php echo isset($product['shipping_time']) ? htmlspecialchars($product['shipping_time']) : ''; ?>"
                                                     data-stock="<?php echo isset($product['stock']) ? $product['stock'] : ''; ?>"
                                                     data-image="<?php echo htmlspecialchars($product['image']); ?>"
                                                     data-desc="<?php echo isset($product['desc']) ? htmlspecialchars($product['desc']) : ''; ?>"
@@ -513,9 +517,14 @@ $lowStock      = count(array_filter($products, fn($p) => isset($p['stock']) && $
 
                         <div class="field-row">
                             <div class="field-group">
+                                <label class="field-label">Estimated Shipping Time</label>
+                                <input type="text" name="shipping_time" id="edit_shipping_time" class="field-control" placeholder="e.g. 1-3 business days">
+                            </div>
+                            <div class="field-group">
                                 <label class="field-label">Badge Text</label>
                                 <input type="text" name="badge" id="edit_badge" class="field-control">
                             </div>
+                        </div>
                             <div class="field-group">
                                 <label class="field-label">Badge Style</label>
                                 <select name="badge_type" id="edit_badge_type" class="field-control">
@@ -714,6 +723,7 @@ $lowStock      = count(array_filter($products, fn($p) => isset($p['stock']) && $
             document.getElementById('edit_rating').value = btn.getAttribute('data-rating');
             document.getElementById('edit_badge').value = btn.getAttribute('data-badge');
             document.getElementById('edit_badge_type').value = btn.getAttribute('data-badge_type');
+            document.getElementById('edit_shipping_time').value = btn.getAttribute('data-shipping_time');
             document.getElementById('edit_image').value = btn.getAttribute('data-image');
             document.getElementById('edit_desc').value = btn.getAttribute('data-desc');
         }
