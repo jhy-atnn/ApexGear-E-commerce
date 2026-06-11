@@ -116,37 +116,77 @@ sort($allCategories);
                         <span class="catalog-context">All current inventory</span>
                     <?php endif; ?>
                 </div>
-                <div class="apex-sort-wrap">
-                    <span class="apex-sort-label"><i class="fas fa-sliders-h me-1"></i> Sort</span>
-                    <div class="apex-sort-dropdown" id="sortDropdown">
-                        <?php
-                        $sortOptions = [
-                            ''           => ['label' => 'Featured',          'icon' => 'fa-star'],
-                            'price_asc'  => ['label' => 'Price: Low to High','icon' => 'fa-arrow-up'],
-                            'price_desc' => ['label' => 'Price: High to Low','icon' => 'fa-arrow-down'],
-                        ];
-                        $currentLabel = $sortOptions[$activeSort]['label'] ?? 'Featured';
-                        $currentIcon  = $sortOptions[$activeSort]['icon'] ?? 'fa-star';
-                        ?>
-                        <button class="apex-sort-btn" onclick="toggleSort(event)" type="button">
-                            <i class="fas <?php echo $currentIcon; ?> me-2"></i>
-                            <span><?php echo $currentLabel; ?></span>
-                            <i class="fas fa-chevron-down apex-sort-caret ms-2"></i>
-                        </button>
-                        <ul class="apex-sort-menu" id="sortMenu">
-                            <?php foreach ($sortOptions as $val => $opt): ?>
-                                <li>
-                                    <a href="#" class="apex-sort-item <?php echo $activeSort === $val ? 'active' : ''; ?>"
-                                       onclick="applySort('<?php echo $val; ?>'); return false;">
-                                        <i class="fas <?php echo $opt['icon']; ?> me-2"></i>
-                                        <?php echo $opt['label']; ?>
-                                        <?php if ($activeSort === $val): ?>
-                                            <i class="fas fa-check ms-auto"></i>
-                                        <?php endif; ?>
-                                    </a>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
+                <div class="apex-filter-row">
+                    <div class="apex-sort-wrap apex-category-wrap">
+                        <span class="apex-sort-label"><i class="fas fa-filter me-1"></i> Category</span>
+                        <div class="apex-sort-dropdown" id="categoryDropdown">
+                            <?php
+                            $categoryOptions = [
+                                '' => 'All Categories',
+                                'Laptop' => 'Laptop',
+                                'Desktop' => 'Desktop',
+                                'Tablet' => 'Tablet',
+                                'Phone' => 'Phone',
+                                'Audio' => 'Audio',
+                                'Peripheral' => 'Peripheral',
+                                'CPU' => 'CPU',
+                                'GPU' => 'GPU',
+                            ];
+                            $currentCategoryLabel = isset($categoryOptions[$activeCategory]) ? $categoryOptions[$activeCategory] : 'Category';
+                            ?>
+                            <button class="apex-sort-btn" onclick="toggleCategory(event)" type="button">
+                                <i class="fas fa-layer-group me-2"></i>
+                                <span><?php echo htmlspecialchars($currentCategoryLabel); ?></span>
+                                <i class="fas fa-chevron-down apex-sort-caret ms-2"></i>
+                            </button>
+                            <ul class="apex-sort-menu" id="categoryMenu">
+                                <?php foreach ($categoryOptions as $val => $label): ?>
+                                    <li>
+                                        <a href="#" class="apex-sort-item <?php echo $activeCategory === $val ? 'active' : ''; ?>"
+                                           onclick="applyCategory('<?php echo $val; ?>'); return false;">
+                                            <?php echo htmlspecialchars($label); ?>
+                                            <?php if ($activeCategory === $val): ?>
+                                                <i class="fas fa-check ms-auto"></i>
+                                            <?php endif; ?>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="apex-sort-wrap">
+                        <span class="apex-sort-label"><i class="fas fa-sliders-h me-1"></i> Sort</span>
+                        <div class="apex-sort-dropdown" id="sortDropdown">
+                            <?php
+                            $sortOptions = [
+                                ''           => ['label' => 'Featured',          'icon' => 'fa-star'],
+                                'price_asc'  => ['label' => 'Price: Low to High','icon' => 'fa-arrow-up'],
+                                'price_desc' => ['label' => 'Price: High to Low','icon' => 'fa-arrow-down'],
+                            ];
+                            $currentLabel = $sortOptions[$activeSort]['label'] ?? 'Featured';
+                            $currentIcon  = $sortOptions[$activeSort]['icon'] ?? 'fa-star';
+                            ?>
+                            <button class="apex-sort-btn" onclick="toggleSort(event)" type="button">
+                                <i class="fas <?php echo $currentIcon; ?> me-2"></i>
+                                <span><?php echo $currentLabel; ?></span>
+                                <i class="fas fa-chevron-down apex-sort-caret ms-2"></i>
+                            </button>
+                            <ul class="apex-sort-menu" id="sortMenu">
+                                <?php foreach ($sortOptions as $val => $opt): ?>
+                                    <li>
+                                        <a href="#" class="apex-sort-item <?php echo $activeSort === $val ? 'active' : ''; ?>"
+                                           onclick="applySort('<?php echo $val; ?>'); return false;">
+                                            <i class="fas <?php echo $opt['icon']; ?> me-2"></i>
+                                            <?php echo $opt['label']; ?>
+                                            <?php if ($activeSort === $val): ?>
+                                                <i class="fas fa-check ms-auto"></i>
+                                            <?php endif; ?>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -266,20 +306,42 @@ sort($allCategories);
             window.location.href = url.toString();
         }
 
+        function applyCategory(val) {
+            const url = new URL(window.location.href);
+            if (val) url.searchParams.set('cat', val);
+            else url.searchParams.delete('cat');
+            window.location.href = url.toString();
+        }
+
         function toggleSort(e) {
             e.stopPropagation();
             const menu = document.getElementById('sortMenu');
-            const caret = document.querySelector('.apex-sort-caret');
+            const caret = document.querySelector('#sortDropdown .apex-sort-caret');
             const open = menu.classList.toggle('open');
-            caret.style.transform = open ? 'rotate(180deg)' : '';
+            if (caret) {
+                caret.style.transform = open ? 'rotate(180deg)' : '';
+            }
+        }
+
+        function toggleCategory(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('categoryMenu');
+            const caret = document.querySelector('#categoryDropdown .apex-sort-caret');
+            const open = menu.classList.toggle('open');
+            if (caret) {
+                caret.style.transform = open ? 'rotate(180deg)' : '';
+            }
         }
 
         document.addEventListener('click', () => {
-            const menu = document.getElementById('sortMenu');
-            if (menu) {
-                menu.classList.remove('open');
-                document.querySelector('.apex-sort-caret').style.transform = '';
-            }
+            const sortMenu = document.getElementById('sortMenu');
+            const categoryMenu = document.getElementById('categoryMenu');
+            const carets = document.querySelectorAll('.apex-sort-caret');
+            if (sortMenu) sortMenu.classList.remove('open');
+            if (categoryMenu) categoryMenu.classList.remove('open');
+            carets.forEach(caret => {
+                caret.style.transform = '';
+            });
         });
     </script>
 

@@ -520,23 +520,6 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
         </div>
     </section>
 
-    <section class="newsletter-section">
-        <div class="container" style="position:relative; z-index:1;">
-            <div class="row align-items-center g-4">
-                <div class="col-lg-6 fade-up">
-                    <h2 class="newsletter-title">Join the <span>ApeX</span> Inner Circle</h2>
-                    <p class="newsletter-sub">Get exclusive deals, early access to new arrivals, and tech tips delivered straight to your inbox.</p>
-                </div>
-                <div class="col-lg-6 fade-up">
-                    <div class="newsletter-form">
-                        <input type="email" placeholder="Enter your email address…" />
-                        <button>Subscribe</button>
-                    </div>
-                    <p style="font-size:.75rem; color:rgba(255,255,255,.35); margin-top:8px;">No spam. Unsubscribe anytime. We respect your privacy.</p>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <?php include 'includes\footer.php'; ?>
 

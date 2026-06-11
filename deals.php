@@ -180,26 +180,7 @@ $flash_deal_ids = [10, 11, 12, 13];
         </div>
     </section>
 
-    <!-- ── PROMO CODE BANNER ── -->
-    <section class="promo-banner">
-        <div class="container promo-banner-content">
-            <div class="row align-items-center gy-4">
-                <div class="col-lg-7">
-                    <div class="section-label"><i class="fas fa-tag me-1"></i> Exclusive Code</div>
-                    <div class="promo-title">Extra <span>10% Off</span><br>Your Entire Order</div>
-                    <p class="promo-sub">Use the code below at checkout. Valid on all sale items. One use per account. Limited time only.</p>
-                    <div class="promo-code-box">
-                        <div class="promo-code" id="promoCode">APEX10</div>
-                        <button class="promo-copy-btn" onclick="copyCode()"><i class="fas fa-copy me-1"></i> Copy</button>
-                    </div>
-                    <div id="copiedMsg" style="display:none; color:var(--apex-accent); font-size:.82rem; margin-top:8px; font-weight:600;"><i class="fas fa-check me-1"></i> Copied to clipboard!</div>
-                </div>
-                <div class="col-lg-5 text-center">
-                    <div style="font-family:'Barlow Condensed',sans-serif; font-size:6rem; font-weight:900; line-height:.9; color:rgba(255,255,255,.08); user-select:none;">PROMO<br>CODE</div>
-                </div>
-            </div>
-        </div>
-    </section>
+   
 
     <!-- ── ALL SALE ITEMS (Dynamically loaded from Inventory) ── -->
     <section class="sale-section" id="sale-items">
@@ -249,58 +230,7 @@ $flash_deal_ids = [10, 11, 12, 13];
         </div>
     </section>
 
-    <!-- ── BUNDLE DEALS ── -->
-    <section class="bundle-section" id="bundles">
-        <div class="container">
-            <div class="row align-items-end mb-5">
-                <div class="col">
-                    <div class="section-label"><i class="fas fa-layer-group me-1"></i> Bundle Deals</div>
-                    <h2 class="section-title">Save More, <span>Bundle Up</span></h2>
-                </div>
-            </div>
-            <div class="row g-4">
-                <?php foreach ($bundles as $bundle): ?>
-                    <div class="col-md-6 col-lg-4">
-                        <div class="bundle-card">
-                            <div class="bundle-icon"><i class="fas <?php echo $bundle['icon']; ?>"></i></div>
-                            <div class="bundle-title"><?php echo htmlspecialchars($bundle['title']); ?></div>
-                            <ul class="bundle-items">
-                                <?php foreach ($bundle['items'] as $bItem): ?>
-                                    <li><i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($bItem); ?></li>
-                                <?php endforeach; ?>
-                            </ul>
-                            <div class="bundle-savings">You save <?php echo $bundle['discount']; ?>% — ₱<?php echo number_format($bundle['old_price'] - $bundle['price'], 2); ?></div>
-                            <div class="bundle-price">₱<?php echo number_format($bundle['price'], 2); ?></div>
-                            <div class="bundle-old">₱<?php echo number_format($bundle['old_price'], 2); ?></div>
-                            <a href="store.php" class="btn-bundle"><i class="fas fa-box me-1"></i> Get Bundle</a>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </section>
-
-    <!-- ── NEWSLETTER SIGNUP ── -->
-    <section class="deals-newsletter">
-        <div class="container">
-            <div class="newsletter-inner">
-                <div class="row align-items-center gy-4">
-                    <div class="col-lg-6">
-                        <div class="section-label"><i class="fas fa-envelope me-1"></i> Stay in the Loop</div>
-                        <div class="newsletter-title">Get <span>Deals</span> First</div>
-                        <p class="newsletter-sub">Subscribe and be the first to know about flash sales, exclusive promos, and new arrivals. No spam — just gear.</p>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="newsletter-form">
-                            <input type="email" class="newsletter-input" placeholder="Your email address…" />
-                            <a href="#" class="btn-apex" style="white-space:nowrap; padding:11px 28px;">Subscribe</a>
-                        </div>
-                        <p style="font-size:.75rem; color:var(--apex-muted); margin-top:10px;"><i class="fas fa-lock me-1"></i> We respect your privacy. Unsubscribe anytime.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+  
 
     <?php include 'includes/footer.php'; ?>
 

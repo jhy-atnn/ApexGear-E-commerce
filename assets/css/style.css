@@ -2581,11 +2581,6 @@ footer ul li a:hover {
     color: var(--apex-blue-mid);
 }
 
-/* ── Milestones / Timeline ── */
-.timeline-section {
-    padding: 90px 0;
-    background: var(--apex-grey);
-}
 
 .timeline-img {
     width: 100%;

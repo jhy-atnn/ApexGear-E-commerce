@@ -31,13 +31,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
 
     // ── REGISTER ──
     if ($action === 'register') {
-        $username = trim($_POST['username'] ?? '');
-        $email    = trim($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
+        $username   = trim($_POST['username'] ?? '');
+        $email      = trim($_POST['email'] ?? '');
+        $password   = $_POST['password'] ?? '';
+        $lastName   = trim($_POST['last_name'] ?? '');
+        $firstName  = trim($_POST['first_name'] ?? '');
+        $middleName = trim($_POST['middle_name'] ?? '');
+        $gender     = trim($_POST['gender'] ?? '');
 
         // Validations
-        if (!$username || !$email || !$password) {
-            echo json_encode(['success' => false, 'message' => 'All fields are required.']);
+        if (!$username || !$email || !$password || !$lastName || !$firstName || !$gender) {
+            echo json_encode(['success' => false, 'message' => 'All required fields are required.']);
             exit;
         }
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -75,11 +79,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
 
         // Store pending registration
         $_SESSION['pending_register'] = [
-            'username' => $username,
-            'email'    => $email,
-            'password' => password_hash($password, PASSWORD_DEFAULT),
-            'code'     => $code,
-            'expires'  => time() + 600, // 10 min
+            'username'     => $username,
+            'email'        => $email,
+            'password'     => password_hash($password, PASSWORD_DEFAULT),
+            'last_name'    => $lastName,
+            'first_name'   => $firstName,
+            'middle_name'  => $middleName,
+            'gender'       => $gender,
+            'code'         => $code,
+            'expires'      => time() + 600, // 10 min
         ];
 
         // In a real app you'd email $code. We expose it for demo:
@@ -113,7 +121,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         // Create account in session store via Inventory
         /** @var Inventory $inv */
         $inv = new Inventory();
-        $user_id = $inv->createUser($pending['username'], $pending['email'], $pending['password'], 'customer');
+        $user_id = $inv->createUser(
+            $pending['username'],
+            $pending['email'],
+            $pending['password'],
+            'customer',
+            $pending['first_name'],
+            $pending['last_name'],
+            $pending['middle_name'],
+            $pending['gender']
+        );
         unset($_SESSION['pending_register']);
 
         // Log them in immediately
@@ -125,6 +142,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             'avatar' => strtoupper(substr($pending['username'], 0, 1)),
             'joined' => date('F Y')
         ];
+        $newUser['first_name'] = $pending['first_name'];
+        $newUser['last_name'] = $pending['last_name'];
+        $newUser['middle_name'] = $pending['middle_name'];
+        $newUser['gender'] = $pending['gender'];
         $_SESSION['user'] = $newUser;
 
         setcookie('apex_logged_in', time(), time() + 60, '/'); // cookie expires in 60 seconds
@@ -313,6 +334,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                         </div>
                     </div>
                     <div class="auth-field">
+                        <label>Last Name</label>
+                        <div class="auth-input-wrap">
+                            <i class="fas fa-id-badge"></i>
+                            <input type="text" id="regLname" placeholder="Last name" autocomplete="family-name" required />
+                        </div>
+                    </div>
+                    <div class="auth-field">
+                        <label>First Name</label>
+                        <div class="auth-input-wrap">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="regFname" placeholder="First name" autocomplete="given-name" required />
+                        </div>
+                    </div>
+                    <div class="auth-field">
+                        <label>Middle Name <span class="text-muted">(optional)</span></label>
+                        <div class="auth-input-wrap">
+                            <i class="fas fa-user-edit"></i>
+                            <input type="text" id="regMname" placeholder="Middle name" autocomplete="additional-name" />
+                        </div>
+                    </div>
+                    <div class="auth-field">
+                        <label>Gender</label>
+                        <div class="auth-input-wrap auth-select-wrap">
+                            <i class="fas fa-venus-mars"></i>
+                            <select id="regGender" required>
+                                <option value="">Choose gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Prefer not to say">Prefer not to say</option>
+                                <option value="Others">Others</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="auth-field">
                         <label>Email Address</label>
                         <div class="auth-input-wrap">
                             <i class="fas fa-envelope"></i>
@@ -465,10 +520,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         // ── REGISTER ──────────────────────────────────────────────────────────────────
         async function doRegister() {
             const u = document.getElementById('regUsername').value.trim();
+            const l = document.getElementById('regLname').value.trim();
+            const f = document.getElementById('regFname').value.trim();
+            const m = document.getElementById('regMname').value.trim();
+            const g = document.getElementById('regGender').value;
             const e = document.getElementById('regEmail').value.trim();
             const p = document.getElementById('regPassword').value;
-            if (!u || !e || !p) {
-                showAlert('registerAlert', 'All fields are required.');
+            if (!u || !l || !f || !g || !e || !p) {
+                showAlert('registerAlert', 'All required fields are required.');
                 return;
             }
             hideAlert('registerAlert');
@@ -477,7 +536,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                 action: 'register',
                 username: u,
                 email: e,
-                password: p
+                password: p,
+                last_name: l,
+                first_name: f,
+                middle_name: m,
+                gender: g
             });
             setLoading('registerBtn', false);
             if (r.success) {

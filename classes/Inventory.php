@@ -490,9 +490,13 @@ class Inventory
      * @param string $email
      * @param string $password_hash
      * @param string $role
+     * @param string|null $first_name
+     * @param string|null $last_name
+     * @param string|null $middle_name
+     * @param string|null $gender
      * @return int New user id
      */
-    public function createUser($username, $email, $password_hash, $role = 'customer')
+    public function createUser($username, $email, $password_hash, $role = 'customer', $first_name = null, $last_name = null, $middle_name = null, $gender = null)
     {
         if (!isset($_SESSION['fake_db'])) $_SESSION['fake_db'] = [];
         if (!isset($_SESSION['fake_db']['users'])) $_SESSION['fake_db']['users'] = [];
@@ -505,11 +509,12 @@ class Inventory
             'email' => $email,
             'password_hash' => $password_hash,
             'role' => $role,
-            'first_name' => null,
-            'last_name' => null,
+            'first_name' => $first_name,
+            'last_name' => $last_name,
+            'middle_name' => $middle_name,
             'profile_picture' => null,
             'bio' => null,
-            'gender' => null,
+            'gender' => $gender,
             'birthday' => null,
             'phone' => null,
         ];

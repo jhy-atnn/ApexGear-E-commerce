@@ -298,59 +298,8 @@ class AboutTeam extends AboutBrand
         </div>
     </section>
 
-    <!-- ══════════════════════════════
-         MILESTONES / TIMELINE
-    ══════════════════════════════ -->
-    <section class="timeline-section">
-        <div class="container">
-            <div class="row g-5 align-items-start">
-                <div class="col-lg-4 fade-up">
-                    <div class="sec-eyebrow">Our Journey</div>
-                    <h2 class="sec-title mb-1">ApeX <span>Milestones</span></h2>
-                    <div class="sec-divider left"></div>
-                    <p style="color:var(--apex-muted); font-size:.9rem; line-height:1.8;">Every big brand starts somewhere. Here's a look at how ApeX Gear grew from a weekend bazaar into a full-blown Philippine tech store.</p>
-                    <div class="mt-4">
-                        <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80" alt="ApeX team at work" class="timeline-img" />
-                    </div>
-                </div>
-                <div class="col-lg-8 fade-up">
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <div class="timeline-year">2022 — Q1</div>
-                            <div class="timeline-event">The Bazaar Begins</div>
-                            <p class="timeline-desc">ApeX Gear launches as a weekend stall in Dasmariñas, Cavite. First products: 10 refurbished laptops and a handful of gaming mice.</p>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-year">2022 — Q3</div>
-                            <div class="timeline-event">First 100 Customers</div>
-                            <p class="timeline-desc">Word-of-mouth spreads. We hit our first 100 customers and expand our catalog to include cellphones and desktops.</p>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-year">2023 — Q1</div>
-                            <div class="timeline-event">Official Online Store Launched</div>
-                            <p class="timeline-desc">ApeXGear.com goes live. Our first e-commerce platform enables nationwide shipping and 24/7 browsing for customers across the Philippines.</p>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-year">2023 — Q4</div>
-                            <div class="timeline-event">1,000+ Orders Milestone</div>
-                            <p class="timeline-desc">We cross 1,000 total orders. New categories added: GPUs, CPUs, and premium audio peripherals from brands like Razer and Sony.</p>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-year">2024 — Q2</div>
-                            <div class="timeline-event">Physical Storefront Opens</div>
-                            <p class="timeline-desc">ApeX Gear opens its first physical store, bringing a hands-on tech experience to Dasmariñas shoppers — try before you buy.</p>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-year">2025 — Present</div>
-                            <div class="timeline-event">Expanding Nationwide</div>
-                            <p class="timeline-desc">With 3,000+ satisfied customers and 500+ products, ApeX Gear is scaling — new brand partnerships, faster shipping, and more. The best is yet to come.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
 
+    
     <!-- ══════════════════════════════
          WHY CHOOSE US
     ══════════════════════════════ -->
@@ -428,24 +377,7 @@ class AboutTeam extends AboutBrand
         </div>
     </section>
 
-    <!-- ── Newsletter ── -->
-    <section class="newsletter-section">
-        <div class="container" style="position:relative; z-index:1;">
-            <div class="row align-items-center g-4">
-                <div class="col-lg-6 fade-up">
-                    <h2 class="newsletter-title">Join the <span>ApeX</span> Inner Circle</h2>
-                    <p class="newsletter-sub">Get exclusive deals, early access to new arrivals, and tech tips delivered straight to your inbox.</p>
-                </div>
-                <div class="col-lg-6 fade-up">
-                    <div class="newsletter-form">
-                        <input type="email" placeholder="Enter your email address…" />
-                        <button>Subscribe</button>
-                    </div>
-                    <p style="font-size:.75rem; color:rgba(255,255,255,.35); margin-top:8px;">No spam. Unsubscribe anytime. We respect your privacy.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+   
 
     <!-- INJECT FOOTER, MODALS, AND SCRIPTS -->
     <?php include 'includes/footer.php'; ?>

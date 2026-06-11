@@ -15,7 +15,6 @@
                     <a href="#"><i class="fab fa-facebook-f"></i></a>
                     <a href="#"><i class="fab fa-twitter"></i></a>
                     <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-youtube"></i></a>
                     <a href="#"><i class="fab fa-tiktok"></i></a>
                 </div>
             </div>
@@ -26,7 +25,7 @@
                     <li><a href="about.php">About Us</a></li>
                     <li><a href="product.php">Products</a></li>
                     <li><a href="deals.php">Deals</a></li>
-                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">News</a></li>
                     <li><a href="#">Contact Us</a></li>
                 </ul>
             </div>
