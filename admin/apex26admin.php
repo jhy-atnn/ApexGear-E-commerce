@@ -101,10 +101,6 @@ $lowStock      = count(array_filter($products, fn($p) => isset($p['stock']) && $
                 <i class="fas fa-th-large"></i>
                 Dashboard
             </a>
-            <a href="manage_products.php">
-                <i class="fas fa-box-open"></i>
-                Manage Products
-            </a>
             <a href="manage_orders.php">
                 <i class="fas fa-shopping-cart"></i>
                 Orders
