@@ -57,10 +57,7 @@ ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `brand_id` = VALUES(`brand_id`)
 
 ALTER TABLE `products_tbl` AUTO_INCREMENT = 21;
 
-INSERT INTO `users_tbl` (`user_id`, `username`, `first_name`, `last_name`, `profile_picture`, `bio`, `gender`, `birthday`, `phone`, `email`, `password_hash`, `role`) VALUES
-('1', 'Juday', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'atinon.jhody@gmail.com', '$2y$10$o/rJRTsc1AdhVnm/VOhI0eSPCOx9WAK8GDXgYtAANwYCBkYjullWi', 'customer')
-ON DUPLICATE KEY UPDATE `user_id` = `user_id`;
-
-ALTER TABLE `users_tbl` AUTO_INCREMENT = 2;
+-- NOTE: users_tbl is intentionally excluded from seed data.
+-- User accounts are created at runtime and must not be overwritten by seeds.
 
 SET FOREIGN_KEY_CHECKS = 1;

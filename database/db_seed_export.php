@@ -106,10 +106,8 @@ function apexgear_export_seed_data(mysqli $conn, string $outputPath): void
     );
     $sections[] = apexgear_auto_increment_sql($conn, 'products_tbl', 'product_id') . "\n";
 
-    $userColumns = ['user_id', 'username', 'first_name', 'last_name', 'profile_picture', 'bio', 'gender', 'birthday', 'phone', 'email', 'password_hash', 'role'];
-    $userRows = apexgear_export_table_rows($conn, 'users_tbl', $userColumns, 'user_id');
-    $sections[] = apexgear_insert_statement('users_tbl', $userColumns, $userRows, "\nON DUPLICATE KEY UPDATE `user_id` = `user_id`");
-    $sections[] = apexgear_auto_increment_sql($conn, 'users_tbl', 'user_id') . "\n";
+    // NOTE: users_tbl is intentionally excluded from seed data.
+    // User accounts are created at runtime and must not be overwritten by seeds.
 
     $sections[] = "SET FOREIGN_KEY_CHECKS = 1;\n";
 
