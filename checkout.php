@@ -1,6 +1,5 @@
 <?php
-session_start();
-require_once __DIR__ . '/database/db_connect.php';
+require_once __DIR__ . '/includes/storage.php';
 
 $cart_items = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? $_SESSION['cart'] : [];
 
@@ -90,24 +89,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         $paymentReference = isset($receipt_data['mayaMobile']) ? $receipt_data['mayaMobile'] : '';
     }
 
-    $stmtOrder = $conn->prepare("INSERT INTO orders_tbl (user_id, shipping_address, shipping_city, shipping_zip, reference_number, total_amount, order_status, payment_method, payment_reference) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $orderStatusValue = 'On Process';
-    $stmtOrder->bind_param('issssdsss', $dbUserId, $receipt_data['address'], $receipt_data['city'], $receipt_data['zipcode'], $receipt_number, $grand_total, $orderStatusValue, $paymentMethodDisplay, $paymentReference);
+    // Persist the order via Inventory helper
+    require_once __DIR__ . '/classes/Inventory.php';
+    /** @var Inventory $inv */
+    $inv = new Inventory();
+    $orderId = $inv->addOrder($dbUserId, $receipt_data['address'], $receipt_data['city'], $receipt_data['zipcode'], $grand_total, $paymentMethodDisplay, $paymentReference);
 
-    if ($stmtOrder->execute()) {
-        $orderId = $stmtOrder->insert_id;
-        $stmtItem = $conn->prepare("INSERT INTO order_items_tbl (order_id, product_id, purchased_price, quantity) VALUES (?, ?, ?, ?)");
-
-        foreach ($_SESSION['cart'] as $productId => $item) {
-            $productId = intval($productId);
-            $price = floatval($item['price']);
-            $quantity = intval($item['qty']);
-            $stmtItem->bind_param('iidi', $orderId, $productId, $price, $quantity);
-            $stmtItem->execute();
-        }
-        $stmtItem->close();
+    $orderItems = [];
+    foreach ($_SESSION['cart'] as $productId => $item) {
+        $productId = intval($productId);
+        $price = floatval($item['price']);
+        $quantity = intval($item['qty']);
+        $orderItems[] = [
+            'product_id' => $productId,
+            'purchased_price' => $price,
+            'quantity' => $quantity,
+            'name' => $item['name'] ?? null,
+            'image' => $item['image'] ?? null,
+        ];
     }
-    $stmtOrder->close();
+    $inv->addOrderItems($orderId, $orderItems);
 
     // Store in session for potential future use
     $_SESSION['last_receipt'] = $receipt_data;

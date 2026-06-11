@@ -1,35 +1,26 @@
 <?php
+/**
+ * Inventory helper — session-backed fake DB adapter.
+ *
+ * @package ApexGear
+ */
 class Inventory
 {
-    private $conn;
+    // No external DB connection in session-backed mode
+
+    /** @var array */
     private $currentProduct = [];
 
     public function __construct()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        global $conn;
-        $dbConnectPath = __DIR__ . '/../database/db_connect.php';
-        if (file_exists($dbConnectPath)) {
-            require_once $dbConnectPath;
-            $this->conn = $conn;
-        }
+        require_once __DIR__ . '/../includes/storage.php';
+        // Storage initializes `\$_SESSION['fake_db']` and persistence helpers.
     }
 
     private function refreshSharedSeed()
     {
-        if (!$this->conn) return;
-
-        $seedExportPath = __DIR__ . '/../database/db_seed_export.php';
-        if (!file_exists($seedExportPath)) return;
-
-        require_once $seedExportPath;
-
-        if (function_exists('apexgear_export_seed_data')) {
-            apexgear_export_seed_data($this->conn, __DIR__ . '/../database/seed_data.sql');
-        }
+        // Seed export and DB file operations removed for static/no-DB mode.
+        return;
     }
 
     public function getInventory()
@@ -52,6 +43,12 @@ class Inventory
         $this->currentProduct = $product;
     }
 
+    /**
+     * Normalize an image path or SVG/data URL to a safe string for display.
+     *
+     * @param string|mixed $image
+     * @return string
+     */
     public static function normalizeProductImagePath($image)
     {
         $image = trim((string)$image);
@@ -73,6 +70,13 @@ class Inventory
         return ltrim($image, '/');
     }
 
+    /**
+     * Get product image source (resolves relative paths).
+     *
+     * @param string|mixed $image
+     * @param string $basePath
+     * @return string
+     */
     public static function getProductImageSrc($image, $basePath = '')
     {
         $image = self::normalizeProductImagePath($image);
@@ -84,149 +88,485 @@ class Inventory
         return $basePath . $image;
     }
 
+    /**
+     * Get all products from the session-backed store.
+     *
+     * @return array<int,array> Map of product_id => product data
+     */
     public function getAllProducts()
     {
         $products = [];
-        if (!$this->conn) return $products;
 
-        $sql = "SELECT p.*, b.brand_name as brand, c.category_name as category 
-                FROM products_tbl p
-                LEFT JOIN brands_tbl b ON p.brand_id = b.brand_id
-                LEFT JOIN categories_tbl c ON p.category_id = c.category_id
-                WHERE p.is_archived = 0";
-                
-        $result = $this->conn->query($sql);
-        if ($result && $result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $categoryName = $row['category'] ? strtolower($row['category']) : 'uncategorized';
-                // normalize category name like "Laptops" to "laptop"
-                if (substr($categoryName, -1) === 's') {
-                    $categoryName = substr($categoryName, 0, -1);
-                }
 
-                $products[$row['product_id']] = [
-                    'id' => $row['product_id'],
-                    'name' => $row['name'],
-                    'brand' => $row['brand'],
+        // No DB: read from in-memory session fake DB if available
+        if (!empty($_SESSION['fake_db']['products'])) {
+            foreach ($_SESSION['fake_db']['products'] as $p) {
+                if (!empty($p['is_archived'])) continue;
+                $categoryName = isset($p['category']) && $p['category'] ? strtolower($p['category']) : 'uncategorized';
+                if (substr($categoryName, -1) === 's') $categoryName = substr($categoryName, 0, -1);
+
+                $products[$p['product_id']] = [
+                    'id' => $p['product_id'],
+                    'name' => $p['name'],
+                    'brand' => $p['brand'] ?? null,
                     'category' => $categoryName,
-                    'price' => (float)$row['price'],
-                    'old_price' => $row['old_price'] ? (float)$row['old_price'] : null,
-                    'stock' => (int)$row['stock'],
-                    'rating' => (int)$row['rating'],
-                    'badge' => $row['badge'],
-                    'badge_type' => $row['badge_type'],
-                    'image' => $row['image'],
-                    'sales' => rand(50, 2000), // mocked sales field as used by frontend
-                    'desc' => '' // we don't have desc in DB products_tbl, keep empty or null
+                    'price' => (float)($p['price'] ?? 0),
+                    'old_price' => isset($p['old_price']) ? (float)$p['old_price'] : null,
+                    'stock' => (int)($p['stock'] ?? 0),
+                    'rating' => (int)($p['rating'] ?? 0),
+                    'badge' => $p['badge'] ?? null,
+                    'badge_type' => $p['badge_type'] ?? null,
+                    'image' => $p['image'] ?? 'https://placehold.co/400x300/eeeeee/1D1D1F?text=No+Image',
+                    'sales' => rand(50, 2000),
+                    'desc' => $p['desc'] ?? ''
                 ];
             }
         }
+
         return $products;
+    }
+
+    /**
+     * Find a single product by id.
+     *
+     * @param int|string $id
+     * @return array|null
+     */
+    public function findProductById($id)
+    {
+        $all = $this->getAllProducts();
+        $id = (int)$id;
+        return $all[$id] ?? null;
     }
 
     private function getBrandId($brandName)
     {
-        if (!$this->conn) return null;
-        $sql = "SELECT brand_id FROM brands_tbl WHERE LOWER(brand_name) = LOWER(?)";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("s", $brandName);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($row = $result->fetch_assoc()) {
-            return $row['brand_id'];
-        }
-        // Insert new brand if not found
-        $sql = "INSERT INTO brands_tbl (brand_name) VALUES (?)";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("s", $brandName);
-        $stmt->execute();
-        return $stmt->insert_id;
+        // In session-backed mode we do not maintain a brands table.
+        // Return null to indicate no numeric brand id is available.
+        return null;
     }
 
     private function getCategoryId($categoryName)
     {
-        if (!$this->conn) return null;
-        // The DB has "Laptops", "Peripherals". We map "laptop" -> "Laptops", etc.
-        $searchCategory = ucfirst($categoryName);
-        if (in_array(strtolower($categoryName), ['laptop', 'peripheral', 'phone', 'desktop'])) {
-            $searchCategory .= 's';
-        }
-        
-        $sql = "SELECT category_id FROM categories_tbl WHERE LOWER(category_name) = LOWER(?) OR LOWER(category_name) = LOWER(?)";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("ss", $categoryName, $searchCategory);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($row = $result->fetch_assoc()) {
-            return $row['category_id'];
-        }
-        // Insert new category if not found
-        $sql = "INSERT INTO categories_tbl (category_name) VALUES (?)";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("s", $searchCategory);
-        $stmt->execute();
-        return $stmt->insert_id;
+        // Session-backed mode does not use category IDs. Return null.
+        return null;
     }
 
+    /**
+     * Add a product to the fake DB.
+     *
+     * @param string $name
+     * @param mixed $brand
+     * @param mixed $category
+     * @param float|int|string $price
+     * @param float|int|string|null $old_price
+     * @param int|string $stock
+     * @param int|string $rating
+     * @param string|null $badge
+     * @param string|null $badge_type
+     * @param string $image
+     * @param string $desc
+     * @return int New product id
+     */
     public function addProduct($name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc)
     {
-        if (!$this->conn) return;
-
-        $brand_id = $this->getBrandId($brand);
-        $category_id = $this->getCategoryId($category);
-
+        // Session-backed addProduct
         $price = (float)$price;
-        $old_price = empty($old_price) ? null : (float)$old_price;
+        $old_price = $old_price === '' ? null : (float)$old_price;
         $stock = (int)$stock;
         $rating = empty($rating) ? 0 : (int)$rating;
-        $badge = empty($badge) ? null : $badge;
-        $badge_type = empty($badge_type) ? null : $badge_type;
+        $badge = $badge === '' ? null : $badge;
+        $badge_type = $badge_type === '' ? null : $badge_type;
         $image = self::normalizeProductImagePath($image);
-        
-        $sql = "INSERT INTO products_tbl (name, brand_id, category_id, price, old_price, stock, rating, badge, badge_type, image) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("siiddiisss", $name, $brand_id, $category_id, $price, $old_price, $stock, $rating, $badge, $badge_type, $image);
-        $stmt->execute();
-        $this->refreshSharedSeed();
+
+        if (!isset($_SESSION['fake_db'])) {
+            $_SESSION['fake_db'] = [];
+        }
+        if (!isset($_SESSION['fake_db']['products'])) {
+            $_SESSION['fake_db']['products'] = [];
+        }
+        if (!isset($_SESSION['fake_db']['next_product_id'])) {
+            $_SESSION['fake_db']['next_product_id'] = 100;
+        }
+
+        $newId = $_SESSION['fake_db']['next_product_id']++;
+
+        $product = [
+            'product_id' => $newId,
+            'name' => $name,
+            'brand' => $brand,
+            'category' => $category,
+            'price' => $price,
+            'old_price' => $old_price,
+            'stock' => $stock,
+            'rating' => $rating,
+            'badge' => $badge,
+            'badge_type' => $badge_type,
+            'image' => $image,
+            'desc' => $desc,
+            'is_archived' => 0,
+        ];
+
+        $_SESSION['fake_db']['products'][] = $product;
+
+        if (function_exists('save_fake_db')) save_fake_db();
+
+        return $newId;
     }
 
+    /**
+     * Edit an existing product.
+     *
+     * @param int|string $id
+     * @param string $name
+     * @param mixed $brand
+     * @param mixed $category
+     * @param float|int|string $price
+     * @param float|int|string|null $old_price
+     * @param int|string $stock
+     * @param int|string $rating
+     * @param string|null $badge
+     * @param string|null $badge_type
+     * @param string $image
+     * @param string $desc
+     * @return bool
+     */
     public function editProduct($id, $name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc)
     {
-        if (!$this->conn) return;
-        
+        // Session-backed editProduct
         $id = (int)$id;
-        $brand_id = $this->getBrandId($brand);
-        $category_id = $this->getCategoryId($category);
-
         $price = (float)$price;
-        $old_price = empty($old_price) ? null : (float)$old_price;
+        $old_price = $old_price === '' ? null : (float)$old_price;
         $stock = (int)$stock;
         $rating = empty($rating) ? 0 : (int)$rating;
-        $badge = empty($badge) ? null : $badge;
-        $badge_type = empty($badge_type) ? null : $badge_type;
+        $badge = $badge === '' ? null : $badge;
+        $badge_type = $badge_type === '' ? null : $badge_type;
         $image = self::normalizeProductImagePath($image);
 
-        $sql = "UPDATE products_tbl 
-                SET name = ?, brand_id = ?, category_id = ?, price = ?, old_price = ?, stock = ?, rating = ?, badge = ?, badge_type = ?, image = ? 
-                WHERE product_id = ?";
-        
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("siiddiisssi", $name, $brand_id, $category_id, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $id);
-        $stmt->execute();
-        $this->refreshSharedSeed();
+        if (empty($_SESSION['fake_db']['products'])) return false;
+
+        foreach ($_SESSION['fake_db']['products'] as &$p) {
+            if ((int)$p['product_id'] === $id) {
+                $p['name'] = $name;
+                $p['brand'] = $brand;
+                $p['category'] = $category;
+                $p['price'] = $price;
+                $p['old_price'] = $old_price;
+                $p['stock'] = $stock;
+                $p['rating'] = $rating;
+                $p['badge'] = $badge;
+                $p['badge_type'] = $badge_type;
+                $p['image'] = $image;
+                $p['desc'] = $desc;
+                if (function_exists('save_fake_db')) save_fake_db();
+                return true;
+            }
+        }
+
+        return false;
     }
 
+    /**
+     * Soft-delete (archive) a product.
+     *
+     * @param int|string $id
+     * @return bool
+     */
     public function deleteProduct($id)
     {
-        if (!$this->conn) return;
+        // Session-backed delete (archive)
         $id = (int)$id;
-        
-        $sql = "UPDATE products_tbl SET is_archived = 1 WHERE product_id = ?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $this->refreshSharedSeed();
+        if (empty($_SESSION['fake_db']['products'])) return false;
+        foreach ($_SESSION['fake_db']['products'] as &$p) {
+            if ((int)$p['product_id'] === $id) {
+                $p['is_archived'] = 1;
+                if (function_exists('save_fake_db')) save_fake_db();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /* Orders and Users (session-backed) */
+    /**
+     * Create a new order record.
+     *
+     * @param int|string $userId
+     * @param string $shipping_address
+     * @param string $shipping_city
+     * @param string $shipping_zip
+     * @param float|int|string $total_amount
+     * @param string $payment_method
+     * @param string $payment_reference
+     * @return int Order ID
+     */
+    public function addOrder($userId, $shipping_address, $shipping_city, $shipping_zip, $total_amount, $payment_method, $payment_reference = '')
+    {
+        if (!isset($_SESSION['fake_db'])) $_SESSION['fake_db'] = [];
+        if (!isset($_SESSION['fake_db']['orders'])) $_SESSION['fake_db']['orders'] = [];
+        if (!isset($_SESSION['fake_db']['next_order_id'])) $_SESSION['fake_db']['next_order_id'] = 1;
+
+        $orderId = $_SESSION['fake_db']['next_order_id']++;
+        $record = [
+            'order_id' => $orderId,
+            'user_id' => $userId,
+            'shipping_address' => $shipping_address,
+            'shipping_city' => $shipping_city,
+            'shipping_zip' => $shipping_zip,
+            'reference_number' => 'APX-' . strtoupper(uniqid()),
+            'total_amount' => (float)$total_amount,
+            'order_status' => 'On Process',
+            'payment_method' => $payment_method,
+            'payment_reference' => $payment_reference,
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        $_SESSION['fake_db']['orders'][] = $record;
+        if (function_exists('save_fake_db')) save_fake_db();
+        return $orderId;
+    }
+
+    /**
+     * Add items for an order.
+     *
+     * @param int|string $orderId
+     * @param array $items
+     * @return bool
+     */
+    public function addOrderItems($orderId, array $items)
+    {
+        if (!isset($_SESSION['fake_db'])) $_SESSION['fake_db'] = [];
+        if (!isset($_SESSION['fake_db']['order_items'])) $_SESSION['fake_db']['order_items'] = [];
+
+        foreach ($items as $it) {
+            $entry = [
+                'order_id' => $orderId,
+                'product_id' => isset($it['product_id']) ? (int)$it['product_id'] : null,
+                'purchased_price' => isset($it['purchased_price']) ? (float)$it['purchased_price'] : 0,
+                'quantity' => isset($it['quantity']) ? (int)$it['quantity'] : 1,
+                'name' => $it['name'] ?? null,
+                'image' => $it['image'] ?? null,
+            ];
+            $_SESSION['fake_db']['order_items'][] = $entry;
+        }
+
+        if (function_exists('save_fake_db')) save_fake_db();
+        return true;
+    }
+
+    /**
+     * Get list of orders for a user.
+     *
+     * @param int|string $userId
+     * @return array
+     */
+    public function getOrdersByUser($userId)
+    {
+        $out = [];
+        if (empty($_SESSION['fake_db']['orders'])) return $out;
+        foreach ($_SESSION['fake_db']['orders'] as $ord) {
+            if ((int)$ord['user_id'] === (int)$userId) $out[] = $ord;
+        }
+        return $out;
+    }
+
+    /**
+     * Get order items for an order.
+     *
+     * @param int|string $orderId
+     * @return array
+     */
+    public function getOrderItems($orderId)
+    {
+        $out = [];
+        if (empty($_SESSION['fake_db']['order_items'])) return $out;
+        foreach ($_SESSION['fake_db']['order_items'] as $it) {
+            if ((int)$it['order_id'] === (int)$orderId) $out[] = $it;
+        }
+        return $out;
+    }
+
+    /**
+     * Get all orders in the system (admin view).
+     * Enriches orders with items_count and user contact info when available.
+     *
+     * @return array<int,array>
+     */
+    public function getAllOrders()
+    {
+        $out = [];
+        if (empty($_SESSION['fake_db']['orders'])) return $out;
+        foreach ($_SESSION['fake_db']['orders'] as $ord) {
+            $items = $this->getOrderItems($ord['order_id']);
+            $user = $this->getUserById($ord['user_id']);
+            $ordCopy = $ord;
+            $ordCopy['items_count'] = count($items);
+            $ordCopy['username'] = $user['username'] ?? ($ord['username'] ?? 'Guest');
+            $ordCopy['email'] = $user['email'] ?? ($ord['email'] ?? '');
+            $out[] = $ordCopy;
+        }
+        return $out;
+    }
+
+    /**
+     * Update an order's status.
+     *
+     * @param int|string $orderId
+     * @param string $newStatus
+     * @return bool
+     */
+    public function updateOrderStatus($orderId, $newStatus)
+    {
+        if (empty($_SESSION['fake_db']['orders'])) return false;
+        foreach ($_SESSION['fake_db']['orders'] as &$ord) {
+            if ((int)$ord['order_id'] === (int)$orderId) {
+                $ord['order_status'] = $newStatus;
+                if (function_exists('save_fake_db')) save_fake_db();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Update user fields.
+     *
+     * @param int|string $userId
+     * @param array $data
+     * @return bool
+     */
+    public function updateUser($userId, array $data)
+    {
+        if (!isset($_SESSION['fake_db'])) $_SESSION['fake_db'] = [];
+        if (!isset($_SESSION['fake_db']['users'])) $_SESSION['fake_db']['users'] = [];
+
+        foreach ($_SESSION['fake_db']['users'] as &$u) {
+            if ((int)$u['user_id'] === (int)$userId) {
+                foreach ($data as $k => $v) {
+                    $u[$k] = $v;
+                }
+                if (function_exists('save_fake_db')) save_fake_db();
+                return true;
+            }
+        }
+        // If user not found, optionally add
+        return false;
+    }
+
+    /**
+     * Find user by username.
+     *
+     * @param string $username
+     * @return array|null
+     */
+    public function findUserByUsername($username)
+    {
+        if (empty($_SESSION['fake_db']['users'])) return null;
+        foreach ($_SESSION['fake_db']['users'] as $u) {
+            if (strtolower($u['username']) === strtolower($username)) return $u;
+        }
+        return null;
+    }
+
+    /**
+     * Find user by email.
+     *
+     * @param string $email
+     * @return array|null
+     */
+    public function findUserByEmail($email)
+    {
+        if (empty($_SESSION['fake_db']['users'])) return null;
+        foreach ($_SESSION['fake_db']['users'] as $u) {
+            if (strtolower($u['email']) === strtolower($email)) return $u;
+        }
+        return null;
+    }
+
+    /**
+     * Create a new user record.
+     *
+     * @param string $username
+     * @param string $email
+     * @param string $password_hash
+     * @param string $role
+     * @return int New user id
+     */
+    public function createUser($username, $email, $password_hash, $role = 'customer')
+    {
+        if (!isset($_SESSION['fake_db'])) $_SESSION['fake_db'] = [];
+        if (!isset($_SESSION['fake_db']['users'])) $_SESSION['fake_db']['users'] = [];
+        if (!isset($_SESSION['fake_db']['next_user_id'])) $_SESSION['fake_db']['next_user_id'] = 1000;
+
+        $user_id = $_SESSION['fake_db']['next_user_id']++;
+        $userRecord = [
+            'user_id' => $user_id,
+            'username' => $username,
+            'email' => $email,
+            'password_hash' => $password_hash,
+            'role' => $role,
+            'first_name' => null,
+            'last_name' => null,
+            'profile_picture' => null,
+            'bio' => null,
+            'gender' => null,
+            'birthday' => null,
+            'phone' => null,
+        ];
+        $_SESSION['fake_db']['users'][] = $userRecord;
+        if (function_exists('save_fake_db')) save_fake_db();
+        return $user_id;
+    }
+
+    /**
+     * Retrieve a user by id.
+     *
+     * @param int|string $userId
+     * @return array|null
+     */
+    public function getUserById($userId)
+    {
+        if (empty($_SESSION['fake_db']['users'])) return null;
+        foreach ($_SESSION['fake_db']['users'] as $u) {
+            if ((int)$u['user_id'] === (int)$userId) return $u;
+        }
+        return null;
+    }
+
+    /**
+     * Toggle favorite for user and product.
+     *
+     * @param int|string $userId
+     * @param int|string $productId
+     * @return string 'added'|'removed'
+     */
+    public function toggleFavorite($userId, $productId)
+    {
+        if (!isset($_SESSION['fake_db'])) $_SESSION['fake_db'] = [];
+        if (!isset($_SESSION['fake_db']['favorites'])) $_SESSION['fake_db']['favorites'] = [];
+        if (!isset($_SESSION['fake_db']['favorites'][$userId])) $_SESSION['fake_db']['favorites'][$userId] = [];
+
+        $idx = array_search((int)$productId, $_SESSION['fake_db']['favorites'][$userId]);
+        if ($idx !== false && $idx !== null) {
+            array_splice($_SESSION['fake_db']['favorites'][$userId], $idx, 1);
+            if (function_exists('save_fake_db')) save_fake_db();
+            return 'removed';
+        }
+
+        $_SESSION['fake_db']['favorites'][$userId][] = (int)$productId;
+        if (function_exists('save_fake_db')) save_fake_db();
+        return 'added';
+    }
+
+    /**
+     * Get favorite product ids for a user.
+     *
+     * @param int|string $userId
+     * @return array<int>
+     */
+    public function getFavorites($userId)
+    {
+        if (empty($_SESSION['fake_db']['favorites'][$userId])) return [];
+        return $_SESSION['fake_db']['favorites'][$userId];
     }
 }

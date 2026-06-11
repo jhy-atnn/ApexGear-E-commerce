@@ -1,6 +1,6 @@
 <?php
-session_start();
-require_once '../database/db_connect.php';
+require_once __DIR__ . '/../includes/storage.php';
+require_once __DIR__ . '/../classes/Inventory.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: apex26admin.php");
@@ -35,20 +35,15 @@ if (isset($_FILES["product_image"]) && $_FILES["product_image"]["error"] == 0) {
     }
 }
 
-// Insert into Database WITH the `desc` column
-$sql = "INSERT INTO products_tbl (name, brand_id, category_id, price, stock, badge, badge_type, image, `desc`) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-$stmt = $conn->prepare($sql);
-// Note the added 's' at the end of the types for the new description string
-$stmt->bind_param("siidissss", $name, $brand_id, $category_id, $price, $stock, $badge, $badge_type, $db_image_path, $desc);
-
-if ($stmt->execute()) {
-    $_SESSION['admin_success'] = "Product successfully added!";
-} else {
-    $_SESSION['admin_error'] = "Error saving product: " . $conn->error;
+/** @var Inventory $inv */
+$inv = new Inventory();
+$newId = $inv->addProduct($name, null, null, $price, null, $stock, 0, $badge, $badge_type, $db_image_path, $desc);
+if ($newId === false || $newId === null) {
+    $_SESSION['admin_error'] = "Failed to add product.";
+    header("Location: apex26admin.php");
+    exit;
 }
 
-$stmt->close();
+$_SESSION['admin_success'] = "Product successfully added!";
 header("Location: apex26admin.php");
 exit;

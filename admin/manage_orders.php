@@ -1,6 +1,6 @@
 <?php
-session_start();
-require_once __DIR__ . '/../database/db_connect.php';
+require_once __DIR__ . '/../includes/storage.php';
+require_once __DIR__ . '/../classes/Inventory.php';
 
 $status_message = '';
 $status_class = 'alert-info';
@@ -11,35 +11,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $allowed_statuses = ['Delivered', 'Canceled', 'On Process', 'Shipped'];
 
     if ($order_id > 0 && in_array($order_status, $allowed_statuses, true)) {
-        $stmt = $conn->prepare("UPDATE orders_tbl SET order_status = ? WHERE order_id = ?");
-        $stmt->bind_param('si', $order_status, $order_id);
-
-        if ($stmt->execute()) {
+        /** @var Inventory $inv */
+        $inv = new Inventory();
+        $ok = $inv->updateOrderStatus($order_id, $order_status);
+        if ($ok) {
             $status_message = 'Order status successfully updated.';
             $status_class = 'alert-success';
         } else {
-            $status_message = 'Unable to update order status: ' . $conn->error;
+            $status_message = 'Order not found.';
             $status_class = 'alert-danger';
         }
-        $stmt->close();
     } else {
         $status_message = 'Invalid order data submitted.';
         $status_class = 'alert-danger';
     }
 }
 
-$sql = "SELECT o.*, u.username, u.email,
-               (SELECT COUNT(*) FROM order_items_tbl oi WHERE oi.order_id = o.order_id) AS items_count
-        FROM orders_tbl o
-        LEFT JOIN users_tbl u ON o.user_id = u.user_id
-        ORDER BY o.created_at DESC";
-$result = $conn->query($sql);
-$orders = [];
-if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $orders[] = $row;
-    }
-}
+/** @var Inventory $inv */
+$inv = new Inventory();
+$orders = $inv->getAllOrders();
 ?>
 <!DOCTYPE html>
 <html lang="en">

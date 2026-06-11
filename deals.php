@@ -1,8 +1,8 @@
 <?php
-session_start();
+require_once __DIR__ . '/includes/storage.php';
 require_once 'classes/Inventory.php';
 
-// Fetch inventory
+/** @var Inventory $inventoryManager */
 $inventoryManager = new Inventory();
 $all_products = $inventoryManager->getAllProducts();
 

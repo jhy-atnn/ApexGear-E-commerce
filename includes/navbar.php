@@ -50,7 +50,9 @@ $currentPage = $currentPage ?? '';
                         <div class="nav-search-results">
                             <?php
                             if (!isset($inventoryManager)) {
+                                require_once __DIR__ . '/../includes/storage.php';
                                 require_once __DIR__ . '/../classes/Inventory.php';
+                                /** @var Inventory $inventoryManager */
                                 $inventoryManager = new Inventory();
                             }
                             $navProducts = $inventoryManager->getAllProducts();

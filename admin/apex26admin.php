@@ -1,8 +1,8 @@
 <?php
-session_start();
-require_once __DIR__ . '/../database/db_connect.php';
+require_once __DIR__ . '/../includes/storage.php';
 require_once __DIR__ . '/../classes/Inventory.php';
 
+/** @var Inventory $inventoryManager */
 $inventoryManager = new Inventory();
 
 // Handle POST actions

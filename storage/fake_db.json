@@ -1,0 +1,48 @@
+{
+    "next_user_id": 1000,
+    "next_product_id": 100,
+    "users": [
+        {
+            "user_id": 1,
+            "username": "demo",
+            "email": "demo@apexgear.test",
+            "password_hash": "$2y$10$oYNg/3KDwr642ZjzaSzL/edkpbS3HUNKMC2iRh01bCmmbPwHC4cXC",
+            "role": "customer",
+            "first_name": "Demo",
+            "last_name": "User",
+            "profile_picture": null,
+            "bio": null,
+            "gender": null,
+            "birthday": null,
+            "phone": null
+        }
+    ],
+    "products": {
+        "1": {
+            "product_id": 1,
+            "name": "ApeX Starter Laptop",
+            "price": 25999,
+            "image": "assets/images/products/sample-laptop.png",
+            "stock": 10,
+            "desc": "A reliable starter laptop for students and casual gamers.",
+            "category": "Laptops",
+            "brand": "ApeX",
+            "is_archived": 0
+        },
+        "2": {
+            "product_id": 2,
+            "name": "ApeX Pro Headset",
+            "price": 3499,
+            "image": "assets/images/products/sample-headset.png",
+            "stock": 25,
+            "desc": "Comfortable headset with great audio clarity.",
+            "category": "Audio",
+            "brand": "ApeX",
+            "is_archived": 0
+        }
+    },
+    "orders": [],
+    "favorites": [],
+    "next_order_id": 1,
+    "order_items": []
+}

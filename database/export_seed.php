@@ -1,8 +1,8 @@
 <?php
 
-require_once __DIR__ . '/db_connect.php';
-require_once __DIR__ . '/db_seed_export.php';
+// Export script disabled — application now uses a session-backed fake DB.
+// The legacy export required a mysqli connection from db_connect.php.
+// To avoid IDE/runtime warnings, this script no longer attempts to call
+// `apexgear_export_seed_data()` or use a missing `$conn` variable.
 
-apexgear_export_seed_data($conn, __DIR__ . '/seed_data.sql');
-echo "Exported shared seed data to database/seed_data.sql\n";
-
+echo "Database export disabled. No database connection available.\n";

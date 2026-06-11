@@ -1,14 +1,11 @@
 <?php
-session_start();
-
-require_once 'database/db_connect.php';
-global $conn;
+require_once __DIR__ . '/includes/storage.php';
 
 class AuthD
 {
     private $label = 'auth-d';
 
-    private function format($text)
+    private function format(string $text): string
     {
         return '[AUTH] ' . $text;
     }
@@ -60,20 +57,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             exit;
         }
 
-        // Check existing users in DB
-        $stmt = $conn->prepare("SELECT user_id, username, email FROM users_tbl WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?)");
-        $stmt->bind_param("ss", $username, $email);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        while ($row = $res->fetch_assoc()) {
-            if (strtolower($row['username']) === strtolower($username)) {
-                echo json_encode(['success' => false, 'message' => 'Username already taken.']);
-                exit;
-            }
-            if (strtolower($row['email']) === strtolower($email)) {
-                echo json_encode(['success' => false, 'message' => 'Email already registered.']);
-                exit;
-            }
+        // Check existing users in session store
+        require_once __DIR__ . '/classes/Inventory.php';
+        /** @var Inventory $inv */
+        $inv = new Inventory();
+        if ($inv->findUserByUsername($username)) {
+            echo json_encode(['success' => false, 'message' => 'Username already taken.']);
+            exit;
+        }
+        if ($inv->findUserByEmail($email)) {
+            echo json_encode(['success' => false, 'message' => 'Email already registered.']);
+            exit;
         }
 
         // Generate 6-digit verification code
@@ -116,24 +110,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             exit;
         }
 
-        // Create account in DB
-        $stmt = $conn->prepare("INSERT INTO users_tbl (username, email, password_hash, role) VALUES (?, ?, ?, 'customer')");
-        $stmt->bind_param("sss", $pending['username'], $pending['email'], $pending['password']);
-        $stmt->execute();
-        $user_id = $stmt->insert_id;
-
-        $newUser = [
-            'id'       => $user_id,
-            'username' => $pending['username'],
-            'email'    => $pending['email'],
-            'role'     => 'customer',
-            'avatar'   => strtoupper(substr($pending['username'], 0, 1)),
-            'joined'   => date('F Y'),
-        ];
-        
+        // Create account in session store via Inventory
+        /** @var Inventory $inv */
+        $inv = new Inventory();
+        $user_id = $inv->createUser($pending['username'], $pending['email'], $pending['password'], 'customer');
         unset($_SESSION['pending_register']);
 
         // Log them in immediately
+        $newUser = [
+            'id' => $user_id,
+            'username' => $pending['username'],
+            'email' => $pending['email'],
+            'role' => 'customer',
+            'avatar' => strtoupper(substr($pending['username'], 0, 1)),
+            'joined' => date('F Y')
+        ];
         $_SESSION['user'] = $newUser;
 
         setcookie('apex_logged_in', time(), time() + 60, '/'); // cookie expires in 60 seconds
@@ -151,41 +142,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             exit;
         }
 
-        $stmt = $conn->prepare("SELECT user_id, username, email, password_hash, role, first_name, last_name, profile_picture, bio, gender, birthday, phone FROM users_tbl WHERE LOWER(username) = LOWER(?)");
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $res = $stmt->get_result();
-
-        if ($res->num_rows === 0) {
+        // Lookup user in session store
+        require_once __DIR__ . '/classes/Inventory.php';
+        /** @var Inventory $inv */
+        $inv = new Inventory();
+        $found = $inv->findUserByUsername($username);
+        if (!$found) {
             echo json_encode(['success' => false, 'message' => 'Username not found.']);
             exit;
         }
-
-        $row = $res->fetch_assoc();
-
-        if (!password_verify($password, $row['password_hash'])) {
+        if (!password_verify($password, $found['password_hash'])) {
             echo json_encode(['success' => false, 'message' => 'Incorrect password.']);
             exit;
         }
 
         $_SESSION['user'] = [
-            'id' => $row['user_id'],
-            'username' => $row['username'],
-            'email' => $row['email'],
-            'role' => $row['role'],
-            'avatar' => strtoupper(substr($row['username'], 0, 1)),
+            'id' => $found['user_id'],
+            'username' => $found['username'],
+            'email' => $found['email'],
+            'role' => $found['role'],
+            'avatar' => strtoupper(substr($found['username'], 0, 1)),
             'joined' => date('F Y'),
-            'first_name' => $row['first_name'],
-            'last_name' => $row['last_name'],
-            'profile_picture' => $row['profile_picture'],
-            'bio' => $row['bio'],
-            'gender' => $row['gender'],
-            'birthday' => $row['birthday'],
-            'phone' => $row['phone']
+            'first_name' => $found['first_name'] ?? null,
+            'last_name' => $found['last_name'] ?? null,
+            'profile_picture' => $found['profile_picture'] ?? null,
+            'bio' => $found['bio'] ?? null,
+            'gender' => $found['gender'] ?? null,
+            'birthday' => $found['birthday'] ?? null,
+            'phone' => $found['phone'] ?? null
         ];
-        
+
         setcookie('apex_logged_in', time(), time() + 60, '/'); // cookie expires in 60 seconds
-        echo json_encode(['success' => true, 'message' => 'Welcome back, ' . htmlspecialchars($row['username']) . '!']);
+        echo json_encode(['success' => true, 'message' => 'Welcome back, ' . htmlspecialchars($found['username']) . '!']);
         exit;
     }
 
@@ -195,28 +183,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         $fakeName = $provider === 'facebook' ? 'FBUser_' . rand(100, 999) : 'GUser_' . rand(100, 999);
         $fakeEmail = strtolower($fakeName) . '@' . strtolower($provider) . '.com';
 
-        // Insert into DB if simulating real creation
+        // Create fake user in session store via Inventory
         $password_hash = password_hash(bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
-        $stmt = $conn->prepare("INSERT INTO users_tbl (username, email, password_hash, role) VALUES (?, ?, ?, 'customer')");
-        $stmt->bind_param("sss", $fakeName, $fakeEmail, $password_hash);
-        $stmt->execute();
-        $user_id = $stmt->insert_id;
-
+        require_once __DIR__ . '/classes/Inventory.php';
+        /** @var Inventory $inv */
+        $inv = new Inventory();
+        $user_id = $inv->createUser($fakeName, $fakeEmail, $password_hash, 'customer');
         $newUser = [
-            'id'       => $user_id,
+            'id' => $user_id,
             'username' => $fakeName,
-            'email'    => $fakeEmail,
-            'role'     => 'customer',
-            'avatar'   => strtoupper(substr($fakeName, 0, 1)),
-            'joined'   => date('F Y'),
-            'provider' => $provider,
-            'first_name' => null,
-            'last_name' => null,
-            'bio' => null,
-            'gender' => null,
-            'birthday' => null,
-            'phone' => null,
-            'profile_picture' => null
+            'email' => $fakeEmail,
+            'role' => 'customer',
+            'avatar' => strtoupper(substr($fakeName, 0, 1)),
+            'joined' => date('F Y'),
+            'provider' => $provider
         ];
         $_SESSION['user'] = $newUser;
 

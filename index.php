@@ -1,7 +1,8 @@
 <?php
-session_start();
+require_once __DIR__ . '/includes/storage.php';
 
 require_once 'classes/Inventory.php';
+/** @var Inventory $inventoryManager */
 $inventoryManager = new Inventory();
 $products = $inventoryManager->getAllProducts();
 
@@ -78,13 +79,13 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
                     <div class="container">
                         <div class="row align-items-center">
                             <div class="col-lg-6 hero-content">
-                                <div class="hero-eyebrow">Gaming Equipments</div>
+                                <div class="hero-eyebrow">Gaming Accessories</div>
                                 <h1 class="hero-title">
                                     Keyboards<br>&amp; Mouse<br><em>Built to Win</em>
                                 </h1>
                                 <p class="hero-sub">Precision, speed, and feel — every keystroke counts. Dominate with ApeX Gear.</p>
                                 <div class="d-flex gap-3 flex-wrap">
-                                    <a href="#featured" class="btn-apex">Shop Equipments</a>
+                                    <a href="#featured" class="btn-apex">Shop Accessories</a>
                                     <a href="#" class="btn-apex-outline">See Brands</a>
                                 </div>
                             </div>

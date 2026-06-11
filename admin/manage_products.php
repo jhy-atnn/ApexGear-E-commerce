@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/storage.php';
 // Future: require_once __DIR__ .'/../database/db_connect.php';
 // Future: require_once __DIR__ .'/../classes/Inventory.php';
 ?>

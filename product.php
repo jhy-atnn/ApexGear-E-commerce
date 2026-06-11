@@ -1,6 +1,6 @@
 <?php
-session_start();
-require_once 'database/db_connect.php';
+require_once __DIR__ . '/includes/storage.php';
+require_once 'classes/Inventory.php';
 
 // 1. Get the ID from the URL securely
 $product_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -10,25 +10,16 @@ if ($product_id <= 0) {
     exit();
 }
 
-// 2. Fetch the specific product from products_tbl, joining brands and categories
-$sql = "SELECT p.*, b.brand_name as brand, c.category_name as category 
-        FROM products_tbl p
-        LEFT JOIN brands_tbl b ON p.brand_id = b.brand_id
-        LEFT JOIN categories_tbl c ON p.category_id = c.category_id
-        WHERE p.product_id = ?";
+// Use Inventory which will read from session fake DB (static mode)
+/** @var Inventory $inv */
+$inv = new Inventory();
+$product = $inv->findProductById($product_id);
 
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $product_id);
-$stmt->execute();
-$result = $stmt->get_result();
-
-// 3. If product doesn't exist, kick them back to the store
-if ($result->num_rows === 0) {
+// If product doesn't exist, redirect back to store
+if (!$product) {
     header("Location: store.php");
     exit();
 }
-
-$product = $result->fetch_assoc();
 
 // 4. Handle "Add to Cart" Submission
 $cartSuccess = false;
@@ -115,25 +106,24 @@ foreach ($reviews as $rev) {
 }
 $avg_rating = round($sum / $total_reviews, 1);
 
-// 6. Fetch "You Might Also Like" — all products, exclude current
+// 6. Fetch "You Might Also Like" — pick related products from Inventory
 $related_products = [];
-$rel_sql = "SELECT p.*, b.brand_name as brand
-            FROM products_tbl p
-            LEFT JOIN brands_tbl b ON p.brand_id = b.brand_id
-            WHERE p.product_id != ? AND p.is_archived = 0
-            ORDER BY RAND()
-            LIMIT 6";
-$rel_stmt = $conn->prepare($rel_sql);
-if ($rel_stmt) {
-    $rel_stmt->bind_param("i", $product_id);
-    $rel_stmt->execute();
-    $rel_result = $rel_stmt->get_result();
-    while ($row = $rel_result->fetch_assoc()) {
-        $related_products[] = $row;
-    }
+$all = $inv->getAllProducts();
+foreach ($all as $p) {
+    if ((int)$p['id'] === (int)$product_id) continue;
+    $related_products[] = $p;
 }
+shuffle($related_products);
+$related_products = array_slice($related_products, 0, 6);
 
 // Helper: render star icons
+/**
+ * Render star icons for a rating value.
+ *
+ * @param int|float $rating Numeric rating (can be fractional)
+ * @param int $max Maximum stars to render
+ * @return string HTML string containing star icons
+ */
 function renderStars($rating, $max = 5) {
     $html = '';
     for ($i = 1; $i <= $max; $i++) {

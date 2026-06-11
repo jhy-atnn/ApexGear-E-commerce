@@ -1,7 +1,5 @@
 <?php
-session_start();
-require_once '../database/db_connect.php';
-
+require_once __DIR__ . '/../includes/storage.php';
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -28,8 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $gender = $gender !== '' ? $gender : null;
     $birthday = $birthday !== '' ? $birthday : null;
 
-    global $conn;
-
     $profilePicturePath = null;
     if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === UPLOAD_ERR_OK) {
         $allowedTypes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
@@ -52,30 +48,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Update session user
+    $_SESSION['user']['first_name'] = $firstName;
+    $_SESSION['user']['last_name'] = $lastName;
+    $_SESSION['user']['bio'] = $bio;
+    $_SESSION['user']['phone'] = $phone;
+    $_SESSION['user']['gender'] = $gender;
+    $_SESSION['user']['birthday'] = $birthday;
     if ($profilePicturePath !== null) {
-        $stmt = $conn->prepare("UPDATE users_tbl SET first_name = ?, last_name = ?, bio = ?, phone = ?, gender = ?, birthday = ?, profile_picture = ? WHERE user_id = ?");
-        $stmt->bind_param("sssssssi", $firstName, $lastName, $bio, $phone, $gender, $birthday, $profilePicturePath, $userId);
-    } else {
-        $stmt = $conn->prepare("UPDATE users_tbl SET first_name = ?, last_name = ?, bio = ?, phone = ?, gender = ?, birthday = ? WHERE user_id = ?");
-        $stmt->bind_param("ssssssi", $firstName, $lastName, $bio, $phone, $gender, $birthday, $userId);
+        $_SESSION['user']['profile_picture'] = $profilePicturePath;
     }
 
-    if ($stmt->execute()) {
-        // Update session
-        $_SESSION['user']['first_name'] = $firstName;
-        $_SESSION['user']['last_name'] = $lastName;
-        $_SESSION['user']['bio'] = $bio;
-        $_SESSION['user']['phone'] = $phone;
-        $_SESSION['user']['gender'] = $gender;
-        $_SESSION['user']['birthday'] = $birthday;
-        if ($profilePicturePath !== null) {
-            $_SESSION['user']['profile_picture'] = $profilePicturePath;
-        }
+    // Also update in fake_db users via Inventory helper
+    require_once __DIR__ . '/../classes/Inventory.php';
+    /** @var Inventory $inv */
+    $inv = new Inventory();
+    $updateData = [
+        'first_name' => $firstName,
+        'last_name' => $lastName,
+        'bio' => $bio,
+        'phone' => $phone,
+        'gender' => $gender,
+        'birthday' => $birthday,
+    ];
+    if ($profilePicturePath !== null) $updateData['profile_picture'] = $profilePicturePath;
+    $inv->updateUser($userId, $updateData);
 
-        echo json_encode(['success' => true, 'message' => 'Profile updated successfully.']);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to update profile.']);
-    }
+    echo json_encode(['success' => true, 'message' => 'Profile updated successfully.']);
     exit;
 }
 

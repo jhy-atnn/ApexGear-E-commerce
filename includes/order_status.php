@@ -1,55 +1,28 @@
 ﻿<?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/storage.php';
 
 $orders = [];
 $order_items_map = [];
 $order_ids = [];
 
 if (isset($_SESSION['user']['id'])) {
-    require_once __DIR__ . '/../database/db_connect.php';
     require_once __DIR__ . '/../classes/Inventory.php';
     $userId = intval($_SESSION['user']['id']);
-
-    $stmt = $conn->prepare(
-        "SELECT o.*, u.username, u.email
-         FROM orders_tbl o
-         LEFT JOIN users_tbl u ON o.user_id = u.user_id
-         WHERE o.user_id = ?
-         ORDER BY o.created_at DESC"
-    );
-    $stmt->bind_param('i', $userId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result && $result->num_rows > 0) {
-        $order_ids = [];
-        while ($row = $result->fetch_assoc()) {
-            $orders[] = $row;
-            $order_ids[] = intval($row['order_id']);
-        }
-    }
-    $stmt->close();
-
-    if (!empty($order_ids)) {
-        $id_list = implode(',', array_map('intval', $order_ids));
-        $itemQuery = 
-            "SELECT oi.*, p.name, p.image 
-             FROM order_items_tbl oi 
-             LEFT JOIN products_tbl p ON oi.product_id = p.product_id 
-             WHERE oi.order_id IN ($id_list) 
-             ORDER BY oi.item_id ASC";
-        $itemResult = $conn->query($itemQuery);
-
-        if ($itemResult) {
-            while ($item = $itemResult->fetch_assoc()) {
-                $order_items_map[intval($item['order_id'])][] = $item;
-            }
-        }
+    /** @var Inventory $inv */
+    $inv = new Inventory();
+    $orders = $inv->getOrdersByUser($userId);
+    foreach ($orders as $ord) {
+        $order_ids[] = intval($ord['order_id']);
+        $order_items_map[intval($ord['order_id'])] = $inv->getOrderItems($ord['order_id']);
     }
 }
 
+/**
+ * Normalize a raw payment method string to a display-friendly label.
+ *
+ * @param string|null $raw
+ * @return string
+ */
 function formatPaymentMethod($raw)
 {
     $payment_raw = strtolower(trim($raw ?? ''));
@@ -71,12 +44,24 @@ function formatPaymentMethod($raw)
     return $raw ?: 'N/A';
 }
 
+/**
+ * Return a short payment status label for a given method.
+ *
+ * @param string|null $method
+ * @return string
+ */
 function paymentStatusLabel($method)
 {
     $payment_raw = strtolower(trim($method ?? ''));
     return (strpos($payment_raw, 'cod') !== false || strpos($payment_raw, 'cash on delivery') !== false) ? 'COD' : 'Paid';
 }
 
+/**
+ * Map an order status to a CSS class name.
+ *
+ * @param string|null $status
+ * @return string
+ */
 function statusClass($status)
 {
     $normalized = strtolower(trim($status ?? ''));
@@ -95,6 +80,12 @@ function statusClass($status)
     return 'pending';
 }
 
+/**
+ * Get a human-friendly summary title from an order status.
+ *
+ * @param string|null $status
+ * @return string
+ */
 function orderSummaryTitle($status)
 {
     $normalized = strtolower(trim($status ?? ''));
