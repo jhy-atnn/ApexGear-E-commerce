@@ -118,8 +118,7 @@ $userCount = count($users);
         </a>
         <a href="manage_products.php"><i class="fas fa-boxes"></i> Manage Products</a>
         <a href="manage_archives.php"><i class="fas fa-archive"></i> Archives</a>
-        <div class="sidebar-section-label">Users &amp; Deals</div>
-        <a href="manage_users.php" class="active"><i class="fas fa-users"></i> Users</a>
+        <a href="manage_users.php"><i class="fas fa-users"></i> Users</a>
         <a href="manage_deals.php"><i class="fas fa-percentage"></i> Deals &amp; Promos</a>
         <div class="sidebar-section-label">Store</div>
         <a href="../index.php" target="_blank"><i class="fas fa-store"></i> View Live Store</a>

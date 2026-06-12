@@ -220,6 +220,8 @@ usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percen
         <a href="manage_orders.php"><i class="fas fa-shopping-cart"></i> Orders</a>
         <a href="manage_products.php" class="active"><i class="fas fa-boxes"></i> Manage Products</a>
         <a href="manage_archives.php"><i class="fas fa-archive"></i> Archives</a>
+        <a href="manage_users.php"><i class="fas fa-users"></i> Users</a>
+        <a href="manage_deals.php"><i class="fas fa-percentage"></i> Deals &amp; Promos</a>
         <div class="sidebar-section-label">Store</div>
         <a href="../index.php" target="_blank"><i class="fas fa-store"></i> View Live Store</a>
         <a href="../index.php?page=products" target="_blank"><i class="fas fa-tags"></i> Product Catalog</a>
