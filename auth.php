@@ -249,19 +249,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
     </a>
 
     <div class="auth-wrapper">
-        <!-- Left panel – branding -->
+        <!-- Left panel – branding + trusted brand carousel -->
         <div class="auth-panel-left d-none d-lg-flex">
             <div class="auth-brand-block">
-                <div class="auth-logo">ApeX<span>Gear</span></div>
+                <div class="auth-logo-wrap" style="display:flex;align-items:center;gap:2px;">
+                    <img src="assets/images/ApeX Logo.png" alt="ApeX Logo" style="height:70px;width:auto;">
+                    <div class="auth-logo">ApeX<span>Gear</span></div>
+                </div>
+                <div class="auth-tagline">Trusted Tech Marketplace</div>
 
-                <p class="auth-pitch">Join thousands of gamers and tech enthusiasts who trust ApeX Gear for the best in laptops, desktops, phones, and peripherals.</p>
-                <div class="auth-perks">
-                    <div class="auth-perk"><i class="fas fa-bolt"></i><span>Exclusive member deals</span></div>
-                    <div class="auth-perk"><i class="fas fa-heart"></i><span>Save your favorites</span></div>
-                    <div class="auth-perk"><i class="fas fa-truck"></i><span>Fast delivery tracking</span></div>
-                    <div class="auth-perk"><i class="fas fa-shield-alt"></i><span>Secure &amp; private</span></div>
+                <h1 class="auth-hero-title">Your Ultimate<br><span>Gear Finder</span></h1>
+                <p class="auth-pitch">Login or create an account to unlock member deals, track orders, save favorites, and shop from the tech brands you trust.</p>
+
+                <div class="auth-mini-badges">
+                    <span><i class="fas fa-bolt"></i> Member Deals</span>
+                    <span><i class="fas fa-shield-halved"></i> Secure Checkout</span>
                 </div>
             </div>
+
+            <div class="auth-logo-showcase" aria-label="Trusted brands carousel">
+                <div class="auth-logo-row auth-logo-row-top">
+                    <div class="auth-brand-tile"><img src="assets/images/lenovo.png" alt="Lenovo"></div>
+                    <div class="auth-brand-tile"><img src="assets/images/asus.png" alt="Asus"></div>
+                    <div class="auth-brand-tile"><img src="assets/images/dell.png" alt="Dell"></div>
+                    <div class="auth-brand-tile"><img src="assets/images/hp.png" alt="HP"></div>
+                    <div class="auth-brand-tile"><img src="assets/images/apple.png" alt="Apple"></div>
+                    <div class="auth-brand-tile"><img src="assets/images/samsung.png" alt="Samsung"></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/lenovo.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/asus.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/dell.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/hp.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/apple.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/samsung.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/lenovo.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/asus.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/dell.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/hp.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/apple.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/samsung.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/lenovo.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/asus.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/dell.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/hp.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/apple.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/samsung.png" alt=""></div>
+                </div>
+                <div class="auth-logo-row auth-logo-row-bottom">
+                    <div class="auth-brand-tile"><img src="assets/images/razer.png" alt="Razer"></div>
+                    <div class="auth-brand-tile"><img src="assets/images/logitech.png" alt="Logitech"></div>
+                    <div class="auth-brand-tile"><img src="assets/images/sony.png" alt="Sony"></div>
+                    <div class="auth-brand-tile"><img src="assets/images/nvidia.png" alt="NVIDIA"></div>
+                    <div class="auth-brand-tile"><img src="assets/images/corsair.png" alt="Corsair"></div>
+                    <div class="auth-brand-tile"><img src="assets/images/intel.png" alt="Intel"></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/razer.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/logitech.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/sony.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/nvidia.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/corsair.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/intel.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/razer.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/logitech.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/sony.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/nvidia.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/corsair.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/intel.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/razer.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/logitech.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/sony.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/nvidia.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/corsair.png" alt=""></div>
+                    <div class="auth-brand-tile" aria-hidden="true"><img src="assets/images/intel.png" alt=""></div>
+                </div>
+            </div>
+
             <div class="auth-glow g1"></div>
             <div class="auth-glow g2"></div>
         </div>
@@ -269,6 +329,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         <!-- Right panel – forms -->
         <div class="auth-panel-right">
             <div class="auth-form-wrap">
+
+                <!-- ── RIGHT PANEL LOGO ── -->
+                <div class="auth-right-logo" style="display:flex;align-items:center;gap:3px;">
+                    <img src="assets/images/ApeX Logo.png" alt="ApeX Logo" style="height:55px;width:auto;margin-bottom:-3px;">
+                    <div class="auth-right-logo-text">ApeX<span>Gear</span></div>
+                </div>
 
                 <!-- ── TABS ── -->
                 <div class="auth-tabs">
@@ -321,55 +387,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
 
                     <div id="registerAlert" class="auth-alert d-none"></div>
 
-                    <div class="auth-field">
-                        <label>Username</label>
-                        <div class="auth-input-wrap">
-                            <i class="fas fa-user"></i>
-                            <input type="text" id="regUsername" placeholder="Choose a username" autocomplete="username" required />
+                    <!-- Row 1: Username + Email -->
+                    <div class="auth-field-row">
+                        <div class="auth-field">
+                            <label>Username</label>
+                            <div class="auth-input-wrap">
+                                <i class="fas fa-user"></i>
+                                <input type="text" id="regUsername" placeholder="Username" autocomplete="username" required />
+                            </div>
+                        </div>
+                        <div class="auth-field">
+                            <label>Email</label>
+                            <div class="auth-input-wrap">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" id="regEmail" placeholder="your@email.com" autocomplete="email" required />
+                            </div>
                         </div>
                     </div>
-                    <div class="auth-field">
-                        <label>Last Name</label>
-                        <div class="auth-input-wrap">
-                            <i class="fas fa-id-badge"></i>
-                            <input type="text" id="regLname" placeholder="Last name" autocomplete="family-name" required />
+
+                    <!-- Row 2: First Name + Middle Name + Last Name -->
+                    <div class="auth-field-row auth-field-row-3">
+                        <div class="auth-field">
+                            <label>First Name</label>
+                            <div class="auth-input-wrap">
+                                <input type="text" id="regFname" placeholder="First" autocomplete="given-name" required />
+                            </div>
+                        </div>
+                        <div class="auth-field">
+                            <label>Middle <span class="auth-opt">(opt.)</span></label>
+                            <div class="auth-input-wrap">
+                                <input type="text" id="regMname" placeholder="M.I." autocomplete="additional-name" />
+                            </div>
+                        </div>
+                        <div class="auth-field">
+                            <label>Last Name</label>
+                            <div class="auth-input-wrap">
+                                <input type="text" id="regLname" placeholder="Last" autocomplete="family-name" required />
+                            </div>
                         </div>
                     </div>
-                    <div class="auth-field">
-                        <label>First Name</label>
-                        <div class="auth-input-wrap">
-                            <i class="fas fa-user"></i>
-                            <input type="text" id="regFname" placeholder="First name" autocomplete="given-name" required />
-                        </div>
-                    </div>
-                    <div class="auth-field">
-                        <label>Middle Name <span class="text-muted">(optional)</span></label>
-                        <div class="auth-input-wrap">
-                            <i class="fas fa-user-edit"></i>
-                            <input type="text" id="regMname" placeholder="Middle name" autocomplete="additional-name" />
-                        </div>
-                    </div>
+
+                    <!-- Row 3: Gender custom dropdown -->
                     <div class="auth-field">
                         <label>Gender</label>
-                        <div class="auth-input-wrap auth-select-wrap">
-                            <i class="fas fa-venus-mars"></i>
-                            <select id="regGender" required>
-                                <option value="">Choose gender</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Prefer not to say">Prefer not to say</option>
-                                <option value="Others">Others</option>
-                            </select>
+                        <div class="auth-custom-select" id="genderDropdown">
+                            <button type="button" class="auth-custom-select__trigger" onclick="toggleGenderDropdown()" id="genderTrigger">
+                                <span class="auth-custom-select__icon"><i class="fas fa-venus-mars"></i></span>
+                                <span class="auth-custom-select__value" id="genderDisplay">Select gender</span>
+                                <span class="auth-custom-select__arrow"><i class="fas fa-chevron-down"></i></span>
+                            </button>
+                            <ul class="auth-custom-select__menu" id="genderMenu" role="listbox">
+                                <li class="auth-custom-select__option" data-value="Male" onclick="selectGenderOption(this)"><i class="fas fa-mars"></i> Male</li>
+                                <li class="auth-custom-select__option" data-value="Female" onclick="selectGenderOption(this)"><i class="fas fa-venus"></i> Female</li>
+                                <li class="auth-custom-select__option" data-value="Others" onclick="selectGenderOption(this)"><i class="fas fa-circle-dot"></i> Others</li>
+                                <li class="auth-custom-select__option" data-value="Prefer not to say" onclick="selectGenderOption(this)"><i class="fas fa-user-secret"></i> Prefer not to say</li>
+                            </ul>
                         </div>
+                        <input type="hidden" id="regGender" />
                     </div>
-                    <div class="auth-field">
-                        <label>Email Address</label>
-                        <div class="auth-input-wrap">
-                            <i class="fas fa-envelope"></i>
-                            <input type="email" id="regEmail" placeholder="your@email.com" autocomplete="email" required />
-                        </div>
-                        <div class="auth-hint">We'll send a 6-digit verification code here.</div>
-                    </div>
+
+                    <!-- Row 4: Password -->
                     <div class="auth-field">
                         <label>Password</label>
                         <div class="auth-input-wrap">
@@ -379,14 +456,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                                 <i class="far fa-eye"></i>
                             </button>
                         </div>
-                        <!-- Password strength bar -->
                         <div class="pw-strength-bar">
                             <div id="pwBar"></div>
                         </div>
                         <div class="pw-rules" id="pwRules">
-                            <span id="pr-len"><i class="fas fa-circle"></i> 8+ characters</span>
+                            <span id="pr-len"><i class="fas fa-circle"></i> 8+ chars</span>
                             <span id="pr-upper"><i class="fas fa-circle"></i> Uppercase</span>
-                            <span id="pr-special"><i class="fas fa-circle"></i> Special character</span>
+                            <span id="pr-special"><i class="fas fa-circle"></i> Special char</span>
                         </div>
                     </div>
 
@@ -638,6 +714,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                 icon.className = 'far fa-eye';
             }
         }
+
+        // ── Custom gender dropdown ────────────────────────────────────────────────
+        function toggleGenderDropdown() {
+            const dd = document.getElementById('genderDropdown');
+            dd.classList.toggle('open');
+        }
+
+        function selectGenderOption(li) {
+            const value = li.dataset.value;
+            document.getElementById('regGender').value = value;
+            document.getElementById('genderDisplay').textContent = value;
+            document.getElementById('genderDisplay').classList.add('selected');
+            document.getElementById('genderDropdown').classList.remove('open');
+            // mark active option
+            document.querySelectorAll('.auth-custom-select__option').forEach(o => o.classList.remove('active'));
+            li.classList.add('active');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', e => {
+            const dd = document.getElementById('genderDropdown');
+            if (dd && !dd.contains(e.target)) dd.classList.remove('open');
+        });
 
         // ── Enter key submit ──────────────────────────────────────────────────────────
         document.addEventListener('keydown', e => {
