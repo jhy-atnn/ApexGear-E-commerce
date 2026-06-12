@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 12, 2026 at 02:28 PM
+-- Generation Time: Jun 12, 2026 at 05:15 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -167,6 +167,13 @@ CREATE TABLE `coupon_code` (
   `valid_until` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `coupon_code`
+--
+
+INSERT INTO `coupon_code` (`coupon_id`, `code_name`, `discount_percentage`, `valid_until`) VALUES
+(1, 'LAUNCHAPX26', 15, '2026-06-30 20:34:00');
+
 -- --------------------------------------------------------
 
 --
@@ -226,6 +233,17 @@ CREATE TABLE `orders_tbl` (
   `order_status` varchar(50) NOT NULL DEFAULT 'Pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `orders_tbl`
+--
+
+INSERT INTO `orders_tbl` (`order_id`, `user_id`, `order_ref_code`, `coupon_id`, `subtotal`, `tax`, `shipping_fee`, `total_amount`, `order_status`) VALUES
+(1, 1, 'APX-6A2C1F911BAD4', NULL, 51998.00, 4159.84, 0.00, 56157.84, 'Pending'),
+(2, 1, 'APX-6A2C20A0D0FFC', NULL, 51998.00, 4159.84, 0.00, 56157.84, 'Pending'),
+(3, 1, 'APX-6A2C21BED5C1E', NULL, 51998.00, 4159.84, 0.00, 56157.84, 'Pending'),
+(4, 1, 'APX-6A2C21EF0B3A3', NULL, 0.00, 0.00, 0.00, 0.00, 'Pending'),
+(5, 1, 'APX-6A2C21F0A8054', NULL, 0.00, 0.00, 0.00, 0.00, 'Pending');
+
 -- --------------------------------------------------------
 
 --
@@ -241,6 +259,13 @@ CREATE TABLE `order_items_tbl` (
   `price_at_checkout` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `order_items_tbl`
+--
+
+INSERT INTO `order_items_tbl` (`order_item_id`, `order_id`, `product_id`, `quantity`, `price_at_checkout`) VALUES
+(3, 3, 1, 2, 25999.00);
+
 -- --------------------------------------------------------
 
 --
@@ -255,6 +280,17 @@ CREATE TABLE `order_status_tbl` (
   `payment_remarks` text DEFAULT NULL,
   `updated_by_admin` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `order_status_tbl`
+--
+
+INSERT INTO `order_status_tbl` (`status_log_id`, `order_id`, `order_status`, `payment_remarks`, `updated_by_admin`) VALUES
+(1, 1, 'Pending', NULL, NULL),
+(2, 2, 'Pending', NULL, NULL),
+(3, 3, 'Pending', NULL, NULL),
+(4, 4, 'Pending', NULL, NULL),
+(5, 5, 'Pending', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -272,6 +308,15 @@ CREATE TABLE `payments_tbl` (
   `card_last_four` varchar(4) DEFAULT NULL,
   `transaction_id` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `payments_tbl`
+--
+
+INSERT INTO `payments_tbl` (`payment_id`, `order_id`, `method`, `status`, `qr_screenshot_path`, `card_last_four`, `transaction_id`) VALUES
+(1, 3, 'Cash on Delivery', 'Pending', NULL, NULL, NULL),
+(2, 4, 'Cash on Delivery', 'Pending', NULL, NULL, NULL),
+(3, 5, 'Cash on Delivery', 'Pending', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -343,6 +388,15 @@ CREATE TABLE `shipping_address_tbl` (
   `zip_code` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `shipping_address_tbl`
+--
+
+INSERT INTO `shipping_address_tbl` (`address_id`, `user_id`, `order_ref_code`, `first_name`, `last_name`, `phone_number`, `street_address`, `city`, `zip_code`) VALUES
+(1, 1, 'APX-6A2C21BED5C1E', 'Jhody', 'Atinon', '09976829526', '0616 Purok 2 Turbina, Laguna', 'Calamba City', '4027'),
+(2, 1, 'APX-6A2C21EF0B3A3', 'Jhody', 'Atinon', '09976829526', '0616 Purok 2 Turbina, Laguna', 'Calamba City', '4027'),
+(3, 1, 'APX-6A2C21F0A8054', 'Jhody', 'Atinon', '09976829526', '0616 Purok 2 Turbina, Laguna', 'Calamba City', '4027');
+
 -- --------------------------------------------------------
 
 --
@@ -360,6 +414,13 @@ CREATE TABLE `users_profiles_tbl` (
   `phone_number` varchar(20) DEFAULT NULL,
   `image_path` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `users_profiles_tbl`
+--
+
+INSERT INTO `users_profiles_tbl` (`profile_id`, `user_id`, `bio`, `street_address`, `city`, `zip_code`, `phone_number`, `image_path`) VALUES
+(1, 1, 'hello its me test', '0616 Purok 2 Turbina, Laguna', 'Calamba City', '4027', '09976829526', 'assets/images/profiles/profile_1_1781275585.png');
 
 -- --------------------------------------------------------
 
@@ -608,7 +669,7 @@ ALTER TABLE `category_tbl`
 -- AUTO_INCREMENT for table `coupon_code`
 --
 ALTER TABLE `coupon_code`
-  MODIFY `coupon_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `coupon_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `coupon_usage_tbl`
@@ -632,25 +693,25 @@ ALTER TABLE `notifications_tbl`
 -- AUTO_INCREMENT for table `orders_tbl`
 --
 ALTER TABLE `orders_tbl`
-  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `order_items_tbl`
 --
 ALTER TABLE `order_items_tbl`
-  MODIFY `order_item_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `order_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `order_status_tbl`
 --
 ALTER TABLE `order_status_tbl`
-  MODIFY `status_log_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `status_log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `payments_tbl`
 --
 ALTER TABLE `payments_tbl`
-  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `products_tbl`
@@ -674,13 +735,13 @@ ALTER TABLE `reviews_tbl`
 -- AUTO_INCREMENT for table `shipping_address_tbl`
 --
 ALTER TABLE `shipping_address_tbl`
-  MODIFY `address_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `address_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `users_profiles_tbl`
 --
 ALTER TABLE `users_profiles_tbl`
-  MODIFY `profile_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `profile_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `users_tbl`
