@@ -1,14 +1,11 @@
 <?php
-require_once __DIR__ . '/includes/storage.php';
+session_start();
+
+require_once 'database\db_connect.php'; 
 
 $cart_items = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? $_SESSION['cart'] : [];
 
 if (empty($cart_items) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header("Location: store.php");
-    exit();
-}
-
-if (empty($cart_items) && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     header("Location: store.php");
     exit();
 }
@@ -20,36 +17,53 @@ $receipt_data = array();
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     $receipt_number = 'APX-' . strtoupper(uniqid());
 
-    // Store receipt data
+    // 1. Extract Shipping Details
+    $firstName = trim($_POST['first_name'] ?? '');
+    $lastName  = trim($_POST['last_name'] ?? '');
+    $email     = trim($_POST['email'] ?? '');
+    $phone     = trim($_POST['phone'] ?? '');
+    $address   = trim($_POST['address'] ?? '');
+    $city      = trim($_POST['city'] ?? '');
+    $zipcode   = trim($_POST['zipcode'] ?? '');
+    $paymentMethodRaw = trim($_POST['payment_method'] ?? '');
+
+    // 2. Setup receipt data for the frontend display
     $receipt_data = array(
-        'firstName' => isset($_POST['first_name']) ? htmlspecialchars($_POST['first_name']) : '',
-        'lastName' => isset($_POST['last_name']) ? htmlspecialchars($_POST['last_name']) : '',
-        'email' => isset($_POST['email']) ? htmlspecialchars($_POST['email']) : '',
-        'phone' => isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : '',
-        'address' => isset($_POST['address']) ? htmlspecialchars($_POST['address']) : '',
-        'city' => isset($_POST['city']) ? htmlspecialchars($_POST['city']) : '',
-        'zipcode' => isset($_POST['zipcode']) ? htmlspecialchars($_POST['zipcode']) : '',
-        'paymentMethod' => isset($_POST['payment_method']) ? htmlspecialchars($_POST['payment_method']) : '',
+        'firstName' => htmlspecialchars($firstName),
+        'lastName'  => htmlspecialchars($lastName),
+        'email'     => htmlspecialchars($email),
+        'phone'     => htmlspecialchars($phone),
+        'address'   => htmlspecialchars($address),
+        'city'      => htmlspecialchars($city),
+        'zipcode'   => htmlspecialchars($zipcode),
+        'paymentMethod' => htmlspecialchars($paymentMethodRaw),
         'orderDate' => date('F d, Y \a\t h:i A'),
-        'items' => $cart_items
+        'items'     => $cart_items
     );
 
-    // Store payment-specific details based on method
-    $paymentMethod = isset($_POST['payment_method']) ? htmlspecialchars($_POST['payment_method']) : '';
-    if ($paymentMethod === 'card') {
-        $receipt_data['cardName'] = isset($_POST['card_name']) ? htmlspecialchars($_POST['card_name']) : '';
-        $receipt_data['cardLast4'] = '****' . substr(preg_replace('/\s+/', '', $_POST['card_number']), -4);
-    } elseif ($paymentMethod === 'gcash') {
-        $receipt_data['gcashName'] = isset($_POST['gcash_name']) ? htmlspecialchars($_POST['gcash_name']) : '';
-        $receipt_data['gcashMobile'] = isset($_POST['gcash_mobile']) ? htmlspecialchars($_POST['gcash_mobile']) : '';
-    } elseif ($paymentMethod === 'paypal') {
-        $receipt_data['paypalEmail'] = isset($_POST['paypal_email']) ? htmlspecialchars($_POST['paypal_email']) : '';
-    } elseif ($paymentMethod === 'maya') {
-        $receipt_data['mayaName'] = isset($_POST['maya_name']) ? htmlspecialchars($_POST['maya_name']) : '';
-        $receipt_data['mayaMobile'] = isset($_POST['maya_mobile']) ? htmlspecialchars($_POST['maya_mobile']) : '';
+    // 3. Extract Specific Payment Details (Card Last 4, GCash Number, etc.)
+    $cardLast4 = null;
+    $transactionId = null;
+
+    if ($paymentMethodRaw === 'card') {
+        $receipt_data['cardName'] = htmlspecialchars($_POST['card_name'] ?? '');
+        $cardNum = preg_replace('/\s+/', '', $_POST['card_number'] ?? '');
+        $cardLast4 = substr($cardNum, -4);
+        $receipt_data['cardLast4'] = '****' . $cardLast4;
+    } elseif ($paymentMethodRaw === 'gcash') {
+        $receipt_data['gcashName'] = htmlspecialchars($_POST['gcash_name'] ?? '');
+        $transactionId = htmlspecialchars($_POST['gcash_mobile'] ?? '');
+        $receipt_data['gcashMobile'] = $transactionId;
+    } elseif ($paymentMethodRaw === 'paypal') {
+        $transactionId = htmlspecialchars($_POST['paypal_email'] ?? '');
+        $receipt_data['paypalEmail'] = $transactionId;
+    } elseif ($paymentMethodRaw === 'maya') {
+        $receipt_data['mayaName'] = htmlspecialchars($_POST['maya_name'] ?? '');
+        $transactionId = htmlspecialchars($_POST['maya_mobile'] ?? '');
+        $receipt_data['mayaMobile'] = $transactionId;
     }
 
-    // Calculate item count and totals BEFORE storing in receipt
+    // 4. Calculate Totals
     $subtotal = 0;
     $item_count = 0;
     foreach ($cart_items as $item) {
@@ -57,18 +71,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         $item_count += $item['qty'];
     }
     $tax = $subtotal * 0.08;
-    $grand_total = $subtotal + $tax;
+    $shipping_fee = 0.00; // Assuming free shipping as stated in UI
+    $grand_total = $subtotal + $tax + $shipping_fee;
 
-    // Store item count and totals
     $receipt_data['itemCount'] = $item_count;
     $receipt_data['subtotal'] = $subtotal;
     $receipt_data['tax'] = $tax;
     $receipt_data['grandTotal'] = $grand_total;
     $receipt_data['receiptNumber'] = $receipt_number;
 
-    // Persist the order for the logged-in user if available
-    $dbUserId = isset($_SESSION['user']['id']) ? intval($_SESSION['user']['id']) : null;
-    $paymentMethod = isset($_POST['payment_method']) ? trim($_POST['payment_method']) : '';
+    // ==========================================
+    // DATABASE INSERTIONS START HERE
+    // ==========================================
+    $db = new Database();
+    $conn = $db->getConnection();
+
+    // Disable foreign key checks to prevent errors when items from the fake/session DB are used
+    $conn->query("SET FOREIGN_KEY_CHECKS = 0");
+
+    // Fallback to 0 if guest checkout (though your system prefers logged-in users)
+    $dbUserId = isset($_SESSION['user']['id']) ? intval($_SESSION['user']['id']) : 0;
+
+    // A. Insert into `orders_tbl`
+    $stmtOrder = $conn->prepare("INSERT INTO orders_tbl (user_id, order_ref_code, subtotal, tax, shipping_fee, total_amount, order_status) VALUES (?, ?, ?, ?, ?, ?, 'Pending')");
+    $stmtOrder->bind_param("isdddd", $dbUserId, $receipt_number, $subtotal, $tax, $shipping_fee, $grand_total);
+    $stmtOrder->execute();
+    $orderId = $stmtOrder->insert_id; // Capture the new Order ID
+    $stmtOrder->close();
+
+    // Log the initial order status
+    $stmtStatus = $conn->prepare("INSERT INTO order_status_tbl (order_id, order_status) VALUES (?, 'Pending')");
+    $stmtStatus->bind_param("i", $orderId);
+    $stmtStatus->execute();
+    $stmtStatus->close();
+
+    // B. Insert into `order_items_tbl` & update stock
+    $stmtItems = $conn->prepare("INSERT INTO order_items_tbl (order_id, product_id, quantity, price_at_checkout) VALUES (?, ?, ?, ?)");
+    $stmtStock = $conn->prepare("UPDATE products_tbl SET stock_qty = stock_qty - ? WHERE product_id = ? AND stock_qty >= ?");
+
+    foreach ($cart_items as $pId => $item) {
+        $pIdInt = intval($pId);
+        $qty = intval($item['qty']);
+        $price = floatval($item['price']);
+
+        // Insert item record
+        $stmtItems->bind_param("iiid", $orderId, $pIdInt, $qty, $price);
+        $stmtItems->execute();
+
+        // Deduct stock safely
+        $stmtStock->bind_param("iii", $qty, $pIdInt, $qty);
+        $stmtStock->execute();
+    }
+    $stmtItems->close();
+    $stmtStock->close();
+
+    // C. Insert into `shipping_address_tbl`
+    $stmtShip = $conn->prepare("INSERT INTO shipping_address_tbl (user_id, order_ref_code, first_name, last_name, phone_number, street_address, city, zip_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmtShip->bind_param("isssssss", $dbUserId, $receipt_number, $firstName, $lastName, $phone, $address, $city, $zipcode);
+    $stmtShip->execute();
+    $stmtShip->close();
+
+    // D. Insert into `payments_tbl`
+    // Standardize payment method names
     $paymentMethodMap = [
         'card' => 'Credit / Debit Card',
         'cod' => 'Cash on Delivery',
@@ -76,47 +140,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         'paypal' => 'PayPal',
         'maya' => 'Maya'
     ];
-    $paymentMethodDisplay = $paymentMethodMap[$paymentMethod] ?? ucfirst($paymentMethod);
-    $paymentReference = '';
+    $paymentMethodDB = $paymentMethodMap[$paymentMethodRaw] ?? ucfirst($paymentMethodRaw);
 
-    if ($paymentMethod === 'card') {
-        $paymentReference = isset($receipt_data['cardLast4']) ? $receipt_data['cardLast4'] : '';
-    } elseif ($paymentMethod === 'gcash') {
-        $paymentReference = isset($receipt_data['gcashMobile']) ? $receipt_data['gcashMobile'] : '';
-    } elseif ($paymentMethod === 'paypal') {
-        $paymentReference = isset($receipt_data['paypalEmail']) ? $receipt_data['paypalEmail'] : '';
-    } elseif ($paymentMethod === 'maya') {
-        $paymentReference = isset($receipt_data['mayaMobile']) ? $receipt_data['mayaMobile'] : '';
+    $stmtPayment = $conn->prepare("INSERT INTO payments_tbl (order_id, method, status, card_last_four, transaction_id) VALUES (?, ?, 'Pending', ?, ?)");
+    $stmtPayment->bind_param("isss", $orderId, $paymentMethodDB, $cardLast4, $transactionId);
+    $stmtPayment->execute();
+    $stmtPayment->close();
+
+    // E. Clear user's database cart if they are logged in
+    if ($dbUserId > 0) {
+        $stmtClearCart = $conn->prepare("DELETE FROM cart_items_tbl WHERE user_id = ?");
+        $stmtClearCart->bind_param("i", $dbUserId);
+        $stmtClearCart->execute();
+        $stmtClearCart->close();
     }
 
-    // Persist the order via Inventory helper
-    require_once __DIR__ . '/classes/Inventory.php';
-    /** @var Inventory $inv */
-    $inv = new Inventory();
-    $orderId = $inv->addOrder($dbUserId, $receipt_data['address'], $receipt_data['city'], $receipt_data['zipcode'], $grand_total, $paymentMethodDisplay, $paymentReference);
+    // Re-enable foreign key checks
+    $conn->query("SET FOREIGN_KEY_CHECKS = 1");
 
-    $orderItems = [];
-    foreach ($_SESSION['cart'] as $productId => $item) {
-        $productId = intval($productId);
-        $price = floatval($item['price']);
-        $quantity = intval($item['qty']);
-        $orderItems[] = [
-            'product_id' => $productId,
-            'purchased_price' => $price,
-            'quantity' => $quantity,
-            'name' => $item['name'] ?? null,
-            'image' => $item['image'] ?? null,
-        ];
-    }
-    $inv->addOrderItems($orderId, $orderItems);
+    $db->closeConnection();
+    // ==========================================
+    // DATABASE INSERTIONS END HERE
+    // ==========================================
 
-    // Store in session for potential future use
-    $_SESSION['last_receipt'] = $receipt_data;
-
+    // Clear the cart session
     unset($_SESSION['cart']);
     $order_successful = true;
 } else {
-    // Calculate totals for display (only when NOT processing an order)
+    // Only calculate totals for display on the form
     $subtotal = 0;
     $item_count = 0;
     foreach ($cart_items as $item) {
@@ -249,9 +300,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             <h1 class="fw-bold mb-3" style="font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase;">Payment Successful</h1>
                             <p class="text-muted lead mb-4">Thank you for your order! Your high-performance gear is being prepped for shipment.</p>
 
-                            <!-- Receipt Card -->
                             <div class="bg-light rounded-4 p-5 mb-5 text-start w-100 border" style="border: 2px solid var(--apex-border);">
-                                <!-- Receipt Header -->
                                 <div class="text-center mb-4 pb-3 border-bottom">
                                     <h3 class="fw-bold mb-2" style="font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.05em;">ONLINE RECEIPT</h3>
                                     <p class="text-muted small mb-0">Payment Completed Successfully</p>
@@ -260,7 +309,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                     <p class="text-muted small mt-2 mb-0"><?php echo $receipt_data['orderDate']; ?></p>
                                 </div>
 
-                                <!-- Shipping Details Section -->
                                 <div class="mb-4 pb-3 border-bottom">
                                     <h6 class="fw-bold text-uppercase mb-3" style="font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; color: var(--apex-blue);">
                                         <i class="fas fa-map-marker-alt me-2"></i>Shipping Details
@@ -274,7 +322,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                     </div>
                                 </div>
 
-                                <!-- Payment Method Section -->
                                 <div class="mb-4 pb-3 border-bottom">
                                     <h6 class="fw-bold text-uppercase mb-3" style="font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; color: var(--apex-blue);">
                                         <i class="fas fa-credit-card me-2"></i>Payment Method
@@ -306,7 +353,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                     </div>
                                 </div>
 
-                                <!-- Order Items Section -->
                                 <div class="mb-4 pb-3 border-bottom">
                                     <h6 class="fw-bold text-uppercase mb-3" style="font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; color: var(--apex-blue);">
                                         <i class="fas fa-shopping-bag me-2"></i>Order Items (<?php echo $receipt_data['itemCount']; ?> <?php echo $receipt_data['itemCount'] == 1 ? 'Item' : 'Items'; ?>)
@@ -338,7 +384,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                     </div>
                                 </div>
 
-                                <!-- Total Amount Section -->
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted">Subtotal</span>
@@ -360,14 +405,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                     </div>
                                 </div>
 
-                                <!-- Status -->
                                 <div class="alert alert-success alert-dismissible fade show mt-4 mb-0" role="alert">
                                     <i class="fas fa-check-circle me-2"></i>
                                     <strong>Order Status:</strong> Processing &bull; Paid
                                 </div>
                             </div>
 
-                            <!-- Download and Print Buttons -->
                             <div class="d-flex gap-3 justify-content-center mb-4">
                                 <button type="button" class="btn" id="downloadPdfBtn" style="background: var(--apex-blue); color: white; border: none; padding: 10px 25px; border-radius: 50px; font-weight: 600; cursor: pointer;">
                                     <i class="fas fa-download me-2"></i>Download PDF
@@ -397,31 +440,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">First Name</label>
-                                    <input type="text" class="form-control bg-light" name="first_name" required>
+                                    <input type="text" class="form-control bg-light" name="first_name" required value="<?php echo isset($_SESSION['user']['first_name']) ? htmlspecialchars($_SESSION['user']['first_name']) : ''; ?>">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Last Name</label>
-                                    <input type="text" class="form-control bg-light" name="last_name" required>
+                                    <input type="text" class="form-control bg-light" name="last_name" required value="<?php echo isset($_SESSION['user']['last_name']) ? htmlspecialchars($_SESSION['user']['last_name']) : ''; ?>">
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Email Address</label>
-                                    <input type="email" class="form-control bg-light" name="email" required placeholder="receipts@example.com">
+                                    <input type="email" class="form-control bg-light" name="email" required placeholder="receipts@example.com" value="<?php echo isset($_SESSION['user']['email']) ? htmlspecialchars($_SESSION['user']['email']) : ''; ?>">
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Phone Number</label>
-                                    <input type="tel" class="form-control bg-light" name="phone" required placeholder="+63 (XXX) XXX-XXXX">
+                                    <input type="tel" class="form-control bg-light" name="phone" required placeholder="+63 (XXX) XXX-XXXX" value="<?php echo isset($_SESSION['user']['phone']) ? htmlspecialchars($_SESSION['user']['phone']) : ''; ?>">
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Street Address</label>
-                                    <input type="text" class="form-control bg-light" name="address" required>
+                                    <input type="text" class="form-control bg-light" name="address" required value="<?php echo isset($_SESSION['user']['street_address']) ? htmlspecialchars($_SESSION['user']['street_address']) : ''; ?>">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">City</label>
-                                    <input type="text" class="form-control bg-light" name="city" required>
+                                    <input type="text" class="form-control bg-light" name="city" required value="<?php echo isset($_SESSION['user']['city']) ? htmlspecialchars($_SESSION['user']['city']) : ''; ?>">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">ZIP / Postal Code</label>
-                                    <input type="text" class="form-control bg-light" name="zipcode" required>
+                                    <input type="text" class="form-control bg-light" name="zipcode" required value="<?php echo isset($_SESSION['user']['postal_code']) ? htmlspecialchars($_SESSION['user']['postal_code']) : ''; ?>">
                                 </div>
                             </div>
                         </div>
@@ -453,7 +496,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
                             <input type="hidden" id="selected_payment_method" name="payment_method" value="">
 
-                            <!-- Credit/Debit Card Fields -->
                             <div id="card-fields" class="payment-fields row g-3" style="display: none;">
                                 <div class="col-12">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Name on Card</label>
@@ -473,7 +515,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                 </div>
                             </div>
 
-                            <!-- Cash on Delivery Fields -->
                             <div id="cod-fields" class="payment-fields row g-3" style="display: none;">
                                 <div class="col-12">
                                     <div class="alert alert-info alert-dismissible fade show" role="alert">
@@ -484,7 +525,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                 </div>
                             </div>
 
-                            <!-- G Cash Fields -->
                             <div id="gcash-fields" class="payment-fields row g-3" style="display: none;">
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Account Name</label>
@@ -501,7 +541,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                 </div>
                             </div>
 
-                            <!-- PayPal Fields -->
                             <div id="paypal-fields" class="payment-fields row g-3" style="display: none;">
                                 <div class="col-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">PayPal Email</label>
@@ -518,7 +557,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                 </div>
                             </div>
 
-                            <!-- Maya Fields -->
                             <div id="maya-fields" class="payment-fields row g-3" style="display: none;">
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Account Name</label>
