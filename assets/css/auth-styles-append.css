@@ -672,8 +672,8 @@
 .profile-modal-header {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 20px 24px 18px;
+    gap: 16px;
+    padding: 24px 28px 22px;
     background: #fff;
     border-bottom: 1px solid #e8edf5;
     position: relative;
@@ -685,10 +685,10 @@
     background: #f0f2f7;
     border: 1px solid #dde3ef;
     color: #666;
-    font-size: .9rem;
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
+    font-size: .95rem;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -714,7 +714,7 @@
 
 /* ── Body — WHITE background like cart offcanvas ── */
 .profile-modal-body {
-    padding: 28px 24px 16px;
+    padding: 32px 28px 24px;
     overflow-y: auto;
     flex: 1;
     position: relative;
@@ -722,6 +722,18 @@
     background: #fff;
     scrollbar-width: thin;
     scrollbar-color: rgba(11,47,168,.2) transparent;
+}
+.profile-modal-body .row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -0.75rem;
+}
+.profile-modal-body .row > [class*='col-'] {
+    padding: 0 0.75rem;
+}
+
+.profile-modal-body .form-group {
+    margin-bottom: 18px;
 }
 .profile-modal-body::-webkit-scrollbar { width: 4px; }
 .profile-modal-body::-webkit-scrollbar-track { background: transparent; }
@@ -915,7 +927,7 @@
 
 /* ── Footer — white strip matching header ── */
 .profile-modal-footer {
-    padding: 16px 24px;
+    padding: 18px 28px;
     border-top: 1px solid #e8edf5;
     display: flex;
     justify-content: flex-end;
