@@ -2,6 +2,8 @@
 // Default to empty if the variable isn't set on the main page
 $currentPage = $currentPage ?? '';
 ?>
+<?php include_once __DIR__ . '/order_status.php'; ?>
+<?php include_once __DIR__ . '/user_profile_modal.php'; ?>
 
 <!-- ── Topbar ── -->
 <div class="topbar">
@@ -100,3 +102,6 @@ $currentPage = $currentPage ?? '';
         </div>
     </div>
 </nav>
+
+<?php include_once __DIR__ . '/cart_modal.php'; ?>
+<?php include_once __DIR__ . '/favorites_modal.php'; ?>

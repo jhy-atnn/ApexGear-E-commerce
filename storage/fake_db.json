@@ -84,7 +84,12 @@
             "created_at": "2026-06-12 13:02:59"
         }
     ],
-    "favorites": [],
+    "favorites": {
+        "1": [
+            2,
+            1
+        ]
+    },
     "next_order_id": 3,
     "order_items": [
         {

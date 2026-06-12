@@ -319,3 +319,111 @@ function orderSummaryTitle($status)
     }
 </style>
 
+<div id="orderStatusModal" class="profile-modal-container">
+    <div class="profile-modal-content">
+        <div class="profile-modal-header">
+            <button type="button" class="btn-close-modal"><i class="fas fa-times"></i></button>
+            <h5 class="profile-modal-title">Order Status</h5>
+        </div>
+        <div class="profile-modal-body">
+            <?php if (empty($orders)): ?>
+                <div class="empty-state">
+                    <i class="fas fa-box-open"></i>
+                    <h5>No orders yet</h5>
+                    <p>You don't have any orders yet. Start shopping and check back here for order updates.</p>
+                </div>
+            <?php else: ?>
+                <?php foreach ($orders as $order): ?>
+                    <?php $orderId = intval($order['order_id']); ?>
+                    <div class="order-card">
+                        <div class="order-card-header">
+                            <div>
+                                <h6><?php echo htmlspecialchars(orderSummaryTitle($order['order_status'])); ?></h6>
+                                <div class="order-meta">
+                                    Order #<?php echo $orderId; ?> · <?php echo htmlspecialchars(date('F j, Y', strtotime($order['order_date'] ?? ''))); ?>
+                                </div>
+                            </div>
+                            <span class="order-status-pill <?php echo statusClass($order['order_status']); ?>">
+                                <?php echo htmlspecialchars($order['order_status'] ?? 'Pending'); ?>
+                            </span>
+                        </div>
+
+                        <div class="order-item-summary">
+                            <div>
+                                <div class="summary-label">Payment</div>
+                                <div class="summary-value"><?php echo htmlspecialchars(formatPaymentMethod($order['payment_method'] ?? '')); ?></div>
+                            </div>
+                            <div>
+                                <div class="summary-label">Total Items</div>
+                                <div class="summary-value"><?php echo count($order_items_map[$orderId] ?? []); ?></div>
+                            </div>
+                            <div>
+                                <div class="summary-label">Total Amount</div>
+                                <div class="summary-value">₱<?php echo number_format((float)($order['total_amount'] ?? 0), 2); ?></div>
+                            </div>
+                        </div>
+
+                        <ul class="order-items-list">
+                            <?php foreach ($order_items_map[$orderId] ?? [] as $item): ?>
+                                <li>
+                                    <div class="order-item-preview">
+                                        <div class="order-item-image">
+                                            <?php if (!empty($item['image']) && strpos($item['image'], '<svg') === false): ?>
+                                                <img src="<?php echo htmlspecialchars($item['image']); ?>" alt="<?php echo htmlspecialchars($item['name'] ?? 'Product'); ?>">
+                                            <?php elseif (!empty($item['image'])): ?>
+                                                <?php echo $item['image']; ?>
+                                            <?php else: ?>
+                                                <span style="color:rgba(255,255,255,.55);">No image</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div>
+                                            <strong><?php echo htmlspecialchars($item['name'] ?? 'Product'); ?></strong>
+                                            <span class="text-muted small"><?php echo htmlspecialchars($item['brand'] ?? 'ApeX'); ?> · x<?php echo intval($item['qty']); ?></span>
+                                        </div>
+                                    </div>
+                                    <div><strong>₱<?php echo number_format((float)($item['price'] ?? 0), 2); ?></strong></div>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const orderStatusModal = document.getElementById('orderStatusModal');
+        const orderStatusLinks = document.querySelectorAll('.order-status-link');
+        const closeButtons = orderStatusModal ? orderStatusModal.querySelectorAll('.btn-close-modal') : [];
+
+        if (!orderStatusModal || orderStatusLinks.length === 0) {
+            return;
+        }
+
+        orderStatusLinks.forEach(link => {
+            link.addEventListener('click', function (event) {
+                event.preventDefault();
+                orderStatusModal.classList.add('open');
+                const profilePanel = document.getElementById('profilePanel');
+                if (profilePanel) {
+                    profilePanel.classList.remove('open');
+                }
+            });
+        });
+
+        closeButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                orderStatusModal.classList.remove('open');
+            });
+        });
+
+        orderStatusModal.addEventListener('click', function (event) {
+            if (event.target === orderStatusModal) {
+                orderStatusModal.classList.remove('open');
+            }
+        });
+    });
+</script>
+
