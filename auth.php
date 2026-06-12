@@ -182,10 +182,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             'avatar' => strtoupper(substr($found['username'], 0, 1)),
             'first_name' => $found['first_name'],
             'last_name' => $found['last_name'],
+            'gender' => $found['gender'],
             'bio' => $found['bio'] ?? null,
             'phone' => $found['phone_number'] ?? null,
-            'address' => $found['street_address'] ?? null,
-            'city' => $found['city'] ?? null
+            'street_address' => $found['street_address'] ?? null,
+            'city' => $found['city'] ?? null,
+            'postal_code' => $found['zip_code'] ?? null,
+            'profile_picture' => $found['image_path'] ?? null
         ];
 
         setcookie('apex_logged_in', (string)time(), time() + 60, '/');
