@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 12, 2026 at 11:16 AM
+-- Generation Time: Jun 12, 2026 at 02:28 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -41,9 +41,9 @@ CREATE TABLE `admin_users_tbl` (
 --
 
 INSERT INTO `admin_users_tbl` (`admin_id`, `username`, `password`) VALUES
-(1, 'luige_admin', 'admin 123'),
-(2, 'jhody_admin', 'admin 123'),
-(3, 'luis_admin', 'admin 123');
+(1, 'luige_admin', 'admin123'),
+(2, 'jhody_admin', 'admin123'),
+(3, 'luis_admin', 'admin123');
 
 -- --------------------------------------------------------
 
@@ -357,7 +357,8 @@ CREATE TABLE `users_profiles_tbl` (
   `street_address` varchar(255) DEFAULT NULL,
   `city` varchar(100) DEFAULT NULL,
   `zip_code` varchar(20) DEFAULT NULL,
-  `phone_number` varchar(20) DEFAULT NULL
+  `phone_number` varchar(20) DEFAULT NULL,
+  `image_path` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
