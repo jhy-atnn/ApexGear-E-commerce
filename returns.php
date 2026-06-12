@@ -27,12 +27,12 @@ require_once __DIR__ . '/includes/storage.php';
         <div class="container">
             <div class="row align-items-center gy-4">
                 <div class="col-lg-8">
-                    <h1 class="display-6 fw-bold">Returns Policy</h1>
+                    <h1 class="display-6 fw-bold">Return Policy</h1>
                     <p class="lead text-muted">Learn how to return an item, what conditions apply, and how to get a refund or replacement.</p>
                 </div>
                 <div class="col-lg-4 text-lg-end d-flex flex-column align-items-lg-end gap-3">
                     <a href="index.php" class="btn btn-outline-light btn-lg">Back to Home</a>
-                    <a href="cart.php" class="btn btn-light btn-sm">View Your Cart</a>
+                   
                 </div>
             </div>
         </div>

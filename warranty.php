@@ -32,7 +32,7 @@ require_once __DIR__ . '/includes/storage.php';
                 </div>
                 <div class="col-lg-4 text-lg-end d-flex flex-column align-items-lg-end gap-3">
                     <a href="index.php" class="btn btn-outline-light btn-lg">Back to Home</a>
-                    <a href="store.php" class="btn btn-light btn-sm">Browse Products</a>
+                   
                 </div>
             </div>
         </div>
