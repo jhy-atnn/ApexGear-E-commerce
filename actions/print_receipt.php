@@ -7,9 +7,9 @@ session_start();
 //     exit();
 // }
 
-require_once __DIR__ . '/../includes/db_connect.php';
+require_once __DIR__ . '/../database/db_connect.php';
 
-if (!isset($_GET['order_id'])) {
+if (!isset($_GET['order_id'])) {    
     die("Error: No order ID specified.");
 }
 
