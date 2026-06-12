@@ -1,10 +1,11 @@
 <?php
 session_start();
+// Pointing to the database folder from the main root
 require_once __DIR__ . '/database/db_connect.php';
 
-// If admin already logged in, redirect to admin panel
+// Redirect into the admin folder if already logged in
 if (isset($_SESSION['admin'])) {
-    header('Location: /admin/apex26admin.php');
+    header('Location: admin/apex26admin.php');
     exit;
 }
 
@@ -23,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
     $db   = new Database();
     $conn = $db->getConnection();
 
-    $stmt = $conn->prepare("SELECT * FROM admins_tbl WHERE username = ?");
+    $stmt = $conn->prepare("SELECT * FROM admin_users_tbl WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -50,8 +51,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
     exit;
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -110,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         .admin-divider {
             width: 40px;
             height: 3px;
-            background: linear-gradient(90deg, #00c2ff, rgba(0,194,255,0));
+            background: linear-gradient(90deg, #00c2ff, rgba(0, 194, 255, 0));
             border-radius: 2px;
             margin: 20px 0 24px;
         }
@@ -144,13 +147,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: .05em;
-            color: rgba(255,255,255,.85);
+            color: rgba(255, 255, 255, .85);
             margin-bottom: 2px;
         }
 
         .admin-feature-text span {
             font-size: .8rem;
-            color: rgba(255,255,255,.42);
+            color: rgba(255, 255, 255, .42);
             line-height: 1.5;
         }
 
@@ -181,7 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             width: 34px;
             height: 34px;
             background: linear-gradient(135deg, #0b2fa8, #0a2260);
-            border: 1px solid rgba(0,194,255,.2);
+            border: 1px solid rgba(0, 194, 255, .2);
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -336,58 +339,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
 
         // ── Login ─────────────────────────────────────────────────────────────
         async function doAdminLogin() {
-            const u = document.getElementById('adminUsername').value.trim();
-            const p = document.getElementById('adminPassword').value;
+                const u = document.getElementById('adminUsername').value.trim();
+                const p = document.getElementById('adminPassword').value;
 
-            if (!u || !p) {
-                showAlert('Both fields are required.');
-                return;
-            }
+                if (!u || !p) {
+                    showAlert('Both fields are required.');
+                    return;
+                }
 
-            hideAlert();
-            setLoading(true);
+                hideAlert();
+                setLoading(true);
 
-            const fd = new FormData();
-            fd.append('ajax', '1');
-            fd.append('username', u);
-            fd.append('password', p);
+                const fd = new FormData();
+                fd.append('ajax', '1');
+                fd.append('username', u);
+                fd.append('password', p);
 
-            try {
-                const res  = await fetch('admingear.php', { method: 'POST', body: fd });
-                const data = await res.json();
+                try {
+                    const res = await fetch('admingear.php', {
+                        method: 'POST',
+                        body: fd
+                    });
+                    const data = await res.json();
 
-                if (data.success) {
-                    showAlert(data.message, 'success');
-                    setTimeout(() => {
-                        window.location.href = '/admin/apex26admin.php';
-                    }, 800);
-                } else {
-                    showAlert(data.message);
+                    if (data.success) {
+                        showAlert(data.message, 'success');
+                        setTimeout(() => {
+                            // Redirect INTO the admin folder
+                            window.location.href = 'admin/apex26admin.php';
+                        }, 800);
+                    } else {
+                        showAlert(data.message);
+                    }
+                } catch (err) {
+                    showAlert('Connection error. Please try again.');
                     setLoading(false);
                 }
-            } catch (err) {
-                showAlert('Connection error. Please try again.');
-                setLoading(false);
             }
-        }
 
-        // ── Toggle password visibility ────────────────────────────────────────
-        function togglePw(inputId, btn) {
-            const inp  = document.getElementById(inputId);
-            const icon = btn.querySelector('i');
-            if (inp.type === 'password') {
-                inp.type       = 'text';
-                icon.className = 'far fa-eye-slash';
-            } else {
-                inp.type       = 'password';
-                icon.className = 'far fa-eye';
-            }
-        }
+                // ── Toggle password visibility ────────────────────────────────────────
+                function togglePw(inputId, btn) {
+                    const inp = document.getElementById(inputId);
+                    const icon = btn.querySelector('i');
+                    if (inp.type === 'password') {
+                        inp.type = 'text';
+                        icon.className = 'far fa-eye-slash';
+                    } else {
+                        inp.type = 'password';
+                        icon.className = 'far fa-eye';
+                    }
+                }
 
-        // ── Enter key ─────────────────────────────────────────────────────────
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Enter') doAdminLogin();
-        });
+                // ── Enter key ─────────────────────────────────────────────────────────
+                document.addEventListener('keydown', e => {
+                    if (e.key === 'Enter') doAdminLogin();
+                });
     </script>
 </body>
+
 </html>
