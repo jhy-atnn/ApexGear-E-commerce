@@ -383,6 +383,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                 </div>
 
             <?php else: ?>
+                <div class="mb-3">
+                    <a href="#" class="btn btn-outline-secondary" onclick="(function(e){ e.preventDefault(); if(document.referrer){ history.back(); } else { window.location.href='store.php'; } })(event);">&larr; Back</a>
+                </div>
+
                 <h2 class="sec-title mb-4">Complete <span>Your Order</span></h2>
 
                 <form method="POST" action="checkout.php" class="row g-5">
@@ -584,11 +588,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         </div>
     </section>
 
-    <footer>
-        <div class="footer-bottom mt-0 border-0 pt-4 pb-4 bg-apex-dark text-center">
-            <p>© 2026 ApeX Gear. All rights reserved. | High-Performance Tech</p>
-        </div>
-    </footer>
+    <?php include 'includes/footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/navbar.js"></script>

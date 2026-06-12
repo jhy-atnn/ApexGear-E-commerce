@@ -69,10 +69,23 @@
             "payment_method": "Cash on Delivery",
             "payment_reference": "",
             "created_at": "2026-06-12 10:14:53"
+        },
+        {
+            "order_id": 2,
+            "user_id": 2,
+            "shipping_address": "qwqwqw",
+            "shipping_city": "qwqwq",
+            "shipping_zip": "1234",
+            "reference_number": "APX-6A2BE7633F668",
+            "total_amount": 3778.92,
+            "order_status": "On Process",
+            "payment_method": "Cash on Delivery",
+            "payment_reference": "",
+            "created_at": "2026-06-12 13:02:59"
         }
     ],
     "favorites": [],
-    "next_order_id": 2,
+    "next_order_id": 3,
     "order_items": [
         {
             "order_id": 1,
@@ -81,6 +94,14 @@
             "quantity": 1,
             "name": "ApeX Starter Laptop",
             "image": "assets/images/products/1781237139_feature_laptop.png"
+        },
+        {
+            "order_id": 2,
+            "product_id": 2,
+            "purchased_price": 3499,
+            "quantity": 1,
+            "name": "ApeX Pro Headset",
+            "image": "assets/images/products/sample-headset.png"
         }
     ]
 }

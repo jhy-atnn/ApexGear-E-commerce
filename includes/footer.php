@@ -32,12 +32,12 @@
             <div class="col-6 col-md-3 col-lg-2">
                 <div class="footer-heading">Support</div>
                 <ul>
-                    <li><a href="#">FAQ</a></li>
-                    <li><a href="#">Shipping Policy</a></li>
-                    <li><a href="#">Returns</a></li>
-                    <li><a href="#">Order Tracking</a></li>
-                    <li><a href="#">Warranty</a></li>
-                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="faq.php">FAQ</a></li>
+                    <li><a href="shipping_policy.php">Shipping Policy</a></li>
+                    <li><a href="returns.php">Returns</a></li>
+                    <li><a href="order_tracking.php">Order Tracking</a></li>
+                    <li><a href="warranty.php">Warranty</a></li>
+                    <li><a href="privacy_policy.php">Privacy Policy</a></li>
                 </ul>
             </div>
             <div class="col-md-6 col-lg-3">
@@ -189,5 +189,3 @@
         <?php endif; ?>
     </div>
 </div>
-
-<?php include_once __DIR__ . '/user_profile_modal.php'; ?>
