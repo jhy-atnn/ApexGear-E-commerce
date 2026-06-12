@@ -1,20 +1,6 @@
 <?php
-require_once __DIR__ . '/includes/storage.php';
-
-class AuthD
-{
-    private $label = 'auth-d';
-
-    private function format(string $text): string
-    {
-        return '[AUTH] ' . $text;
-    }
-
-    public function getLabel()
-    {
-        return $this->label;
-    }
-}
+session_start();
+require_once __DIR__ . '\database\db_connect.php';
 
 // If already logged in, redirect home
 if (isset($_SESSION['user'])) {
@@ -26,8 +12,11 @@ if (isset($_SESSION['user'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
 
     header('Content-Type: application/json');
-
     $action = $_POST['action'] ?? '';
+
+    // Instantiate the OOP Database connection
+    $db = new Database();
+    $conn = $db->getConnection();
 
     // ── REGISTER ──
     if ($action === 'register') {
@@ -48,40 +37,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             echo json_encode(['success' => false, 'message' => 'Please enter a valid email address.']);
             exit;
         }
-        if (strlen($password) < 8) {
-            echo json_encode(['success' => false, 'message' => 'Password must be at least 8 characters.']);
-            exit;
-        }
-        if (!preg_match('/[A-Z]/', $password)) {
-            echo json_encode(['success' => false, 'message' => 'Password must contain at least one uppercase letter.']);
-            exit;
-        }
-        if (!preg_match('/[^a-zA-Z0-9]/', $password)) {
-            echo json_encode(['success' => false, 'message' => 'Password must contain at least one special character.']);
-            exit;
-        }
 
-        // Check existing users in session store
-        require_once __DIR__ . '/classes/Inventory.php';
-        /** @var Inventory $inv */
-        $inv = new Inventory();
-        if ($inv->findUserByUsername($username)) {
+        // Check existing username in Database
+        $stmt = $conn->prepare("SELECT user_id FROM users_tbl WHERE username = ?");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        if ($stmt->get_result()->num_rows > 0) {
             echo json_encode(['success' => false, 'message' => 'Username already taken.']);
             exit;
         }
-        if ($inv->findUserByEmail($email)) {
+
+        // Check existing email in Database
+        $stmt = $conn->prepare("SELECT user_id FROM users_tbl WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        if ($stmt->get_result()->num_rows > 0) {
             echo json_encode(['success' => false, 'message' => 'Email already registered.']);
             exit;
         }
 
         // Generate 6-digit verification code
-        $code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        $code = str_pad((string)rand(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        // Store pending registration
+        // Store pending registration in session (Plain text password for presentation)
         $_SESSION['pending_register'] = [
             'username'     => $username,
             'email'        => $email,
-            'password'     => password_hash($password, PASSWORD_DEFAULT),
+            'password'     => $password,
             'last_name'    => $lastName,
             'first_name'   => $firstName,
             'middle_name'  => $middleName,
@@ -90,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             'expires'      => time() + 600, // 10 min
         ];
 
-        // In a real app you'd email $code. We expose it for demo:
         echo json_encode([
             'success'  => true,
             'message'  => 'Verification code sent to ' . htmlspecialchars($email),
@@ -107,7 +88,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             echo json_encode(['success' => false, 'message' => 'No pending registration. Please register first.']);
             exit;
         }
+
         $pending = $_SESSION['pending_register'];
+
         if (time() > $pending['expires']) {
             unset($_SESSION['pending_register']);
             echo json_encode(['success' => false, 'message' => 'Code expired. Please register again.']);
@@ -118,42 +101,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             exit;
         }
 
-        // Create account in session store via Inventory
-        /** @var Inventory $inv */
-        $inv = new Inventory();
-        $user_id = $inv->createUser(
-            $pending['username'],
-            $pending['email'],
-            $pending['password'],
-            'customer',
+        // Insert new user into Database
+        $stmt = $conn->prepare("INSERT INTO users_tbl (first_name, last_name, m_name, gender, username, email, password) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param(
+            "sssssss",
             $pending['first_name'],
             $pending['last_name'],
             $pending['middle_name'],
-            $pending['gender']
+            $pending['gender'],
+            $pending['username'],
+            $pending['email'],
+            $pending['password']
         );
-        unset($_SESSION['pending_register']);
 
-        // Log them in immediately
-        $newUser = [
-            'id' => $user_id,
-            'username' => $pending['username'],
-            'email' => $pending['email'],
-            'role' => 'customer',
-            'avatar' => strtoupper(substr($pending['username'], 0, 1)),
-            'joined' => date('F Y')
-        ];
-        $newUser['first_name'] = $pending['first_name'];
-        $newUser['last_name'] = $pending['last_name'];
-        $newUser['middle_name'] = $pending['middle_name'];
-        $newUser['gender'] = $pending['gender'];
-        $_SESSION['user'] = $newUser;
+        if ($stmt->execute()) {
+            $user_id = $stmt->insert_id;
 
-        setcookie('apex_logged_in', time(), time() + 60, '/'); // cookie expires in 60 seconds
-        echo json_encode(['success' => true, 'message' => 'Account created! Welcome to ApeX Gear.']);
+            // Initialize an empty profile in the dependent table
+            $profStmt = $conn->prepare("INSERT INTO users_profiles_tbl (user_id) VALUES (?)");
+            $profStmt->bind_param("i", $user_id);
+            $profStmt->execute();
+
+            unset($_SESSION['pending_register']);
+
+            // Log them in immediately
+            $_SESSION['user'] = [
+                'id' => $user_id,
+                'username' => $pending['username'],
+                'email' => $pending['email'],
+                'role' => 'customer',
+                'avatar' => strtoupper(substr($pending['username'], 0, 1)),
+                'first_name' => $pending['first_name'],
+                'last_name' => $pending['last_name']
+            ];
+
+            setcookie('apex_logged_in', (string)time(), time() + 60, '/');
+            echo json_encode(['success' => true, 'message' => 'Account created! Welcome to ApeX Gear.']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Database error during registration.']);
+        }
         exit;
     }
 
-    // ── LOGIN ──
     if ($action === 'login') {
         $username = trim($_POST['username'] ?? '');
         $password = $_POST['password'] ?? '';
@@ -163,16 +152,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             exit;
         }
 
-        // Lookup user in session store
-        require_once __DIR__ . '/classes/Inventory.php';
-        /** @var Inventory $inv */
-        $inv = new Inventory();
-        $found = $inv->findUserByUsername($username);
-        if (!$found) {
+        $query = "SELECT u.*, p.bio, p.street_address, p.city, p.phone_number 
+                  FROM users_tbl u 
+                  LEFT JOIN users_profiles_tbl p ON u.user_id = p.user_id 
+                  WHERE u.username = ?";
+
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 0) {
             echo json_encode(['success' => false, 'message' => 'Username not found.']);
             exit;
         }
-        if (!password_verify($password, $found['password_hash'])) {
+
+        $found = $result->fetch_assoc();
+
+        if ($password !== $found['password']) {
             echo json_encode(['success' => false, 'message' => 'Incorrect password.']);
             exit;
         }
@@ -181,47 +178,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             'id' => $found['user_id'],
             'username' => $found['username'],
             'email' => $found['email'],
-            'role' => $found['role'],
+            'role' => 'customer',
             'avatar' => strtoupper(substr($found['username'], 0, 1)),
-            'joined' => date('F Y'),
-            'first_name' => $found['first_name'] ?? null,
-            'last_name' => $found['last_name'] ?? null,
-            'profile_picture' => $found['profile_picture'] ?? null,
+            'first_name' => $found['first_name'],
+            'last_name' => $found['last_name'],
             'bio' => $found['bio'] ?? null,
-            'gender' => $found['gender'] ?? null,
-            'birthday' => $found['birthday'] ?? null,
-            'phone' => $found['phone'] ?? null
+            'phone' => $found['phone_number'] ?? null,
+            'address' => $found['street_address'] ?? null,
+            'city' => $found['city'] ?? null
         ];
 
-        setcookie('apex_logged_in', time(), time() + 60, '/'); // cookie expires in 60 seconds
+        setcookie('apex_logged_in', (string)time(), time() + 60, '/');
         echo json_encode(['success' => true, 'message' => 'Welcome back, ' . htmlspecialchars($found['username']) . '!']);
         exit;
     }
 
-    // ── SOCIAL LOGIN (simulated) ──
+    // ── SOCIAL LOGIN (Simulated DB entry) ──
     if ($action === 'social') {
         $provider = $_POST['provider'] ?? 'Google';
         $fakeName = $provider === 'facebook' ? 'FBUser_' . rand(100, 999) : 'GUser_' . rand(100, 999);
         $fakeEmail = strtolower($fakeName) . '@' . strtolower($provider) . '.com';
+        $fakePassword = 'social_login_dummy';
 
-        // Create fake user in session store via Inventory
-        $password_hash = password_hash(bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
-        require_once __DIR__ . '/classes/Inventory.php';
-        /** @var Inventory $inv */
-        $inv = new Inventory();
-        $user_id = $inv->createUser($fakeName, $fakeEmail, $password_hash, 'customer');
-        $newUser = [
+        // Insert mock social user
+        $stmt = $conn->prepare("INSERT INTO users_tbl (first_name, last_name, username, email, password) VALUES ('Social', 'User', ?, ?, ?)");
+        $stmt->bind_param("sss", $fakeName, $fakeEmail, $fakePassword);
+        $stmt->execute();
+        $user_id = $stmt->insert_id;
+
+        $_SESSION['user'] = [
             'id' => $user_id,
             'username' => $fakeName,
             'email' => $fakeEmail,
             'role' => 'customer',
             'avatar' => strtoupper(substr($fakeName, 0, 1)),
-            'joined' => date('F Y'),
             'provider' => $provider
         ];
-        $_SESSION['user'] = $newUser;
 
-        setcookie('apex_logged_in', time(), time() + 60, '/'); // cookie expires in 60 seconds
+        setcookie('apex_logged_in', (string)time(), time() + 60, '/');
         echo json_encode(['success' => true, 'message' => 'Signed in with ' . ucfirst($provider) . '!']);
         exit;
     }
@@ -230,6 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
     exit;
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
