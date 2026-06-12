@@ -104,7 +104,7 @@ function orderSummaryTitle($status)
 
 <style>
     #orderStatusModal .profile-modal-content {
-        max-width: 760px;
+        max-width: 400px;
         width: 100%;
     }
 
