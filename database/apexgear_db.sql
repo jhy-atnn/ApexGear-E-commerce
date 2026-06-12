@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 12, 2026 at 05:15 PM
+-- Generation Time: Jun 12, 2026 at 07:12 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -127,6 +127,24 @@ CREATE TABLE `brand_tbl` (
   `brand_name` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `brand_tbl`
+--
+
+INSERT INTO `brand_tbl` (`brand_id`, `brand_name`) VALUES
+(1, 'Apple'),
+(2, 'ASUS'),
+(3, 'Corsair'),
+(4, 'Dell'),
+(5, 'HP'),
+(6, 'Lenovo'),
+(7, 'Intel'),
+(8, 'Logitech'),
+(9, 'NVIDIA'),
+(10, 'Samsung'),
+(11, 'Sony'),
+(12, 'Razer');
+
 -- --------------------------------------------------------
 
 --
@@ -152,6 +170,20 @@ CREATE TABLE `category_tbl` (
   `category_id` int(11) NOT NULL,
   `category_name` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `category_tbl`
+--
+
+INSERT INTO `category_tbl` (`category_id`, `category_name`) VALUES
+(1, 'Laptop'),
+(2, 'Desktop / PC'),
+(3, 'Tablet'),
+(4, 'Phone'),
+(5, 'Headphones / Audio'),
+(6, 'Accessories / Peripherals'),
+(7, 'CPU'),
+(8, 'GPU');
 
 -- --------------------------------------------------------
 
@@ -230,19 +262,20 @@ CREATE TABLE `orders_tbl` (
   `tax` decimal(10,2) NOT NULL,
   `shipping_fee` decimal(10,2) NOT NULL,
   `total_amount` decimal(10,2) NOT NULL,
-  `order_status` varchar(50) NOT NULL DEFAULT 'Pending'
+  `order_status` varchar(50) NOT NULL DEFAULT 'Pending',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `orders_tbl`
 --
 
-INSERT INTO `orders_tbl` (`order_id`, `user_id`, `order_ref_code`, `coupon_id`, `subtotal`, `tax`, `shipping_fee`, `total_amount`, `order_status`) VALUES
-(1, 1, 'APX-6A2C1F911BAD4', NULL, 51998.00, 4159.84, 0.00, 56157.84, 'Pending'),
-(2, 1, 'APX-6A2C20A0D0FFC', NULL, 51998.00, 4159.84, 0.00, 56157.84, 'Pending'),
-(3, 1, 'APX-6A2C21BED5C1E', NULL, 51998.00, 4159.84, 0.00, 56157.84, 'Pending'),
-(4, 1, 'APX-6A2C21EF0B3A3', NULL, 0.00, 0.00, 0.00, 0.00, 'Pending'),
-(5, 1, 'APX-6A2C21F0A8054', NULL, 0.00, 0.00, 0.00, 0.00, 'Pending');
+INSERT INTO `orders_tbl` (`order_id`, `user_id`, `order_ref_code`, `coupon_id`, `subtotal`, `tax`, `shipping_fee`, `total_amount`, `order_status`, `created_at`) VALUES
+(1, 1, 'APX-6A2C1F911BAD4', NULL, 51998.00, 4159.84, 0.00, 56157.84, 'Pending', '2026-06-12 15:56:35'),
+(2, 1, 'APX-6A2C20A0D0FFC', NULL, 51998.00, 4159.84, 0.00, 56157.84, 'Pending', '2026-06-12 15:56:35'),
+(3, 1, 'APX-6A2C21BED5C1E', NULL, 51998.00, 4159.84, 0.00, 56157.84, 'Pending', '2026-06-12 15:56:35'),
+(4, 1, 'APX-6A2C21EF0B3A3', NULL, 0.00, 0.00, 0.00, 0.00, 'Pending', '2026-06-12 15:56:35'),
+(5, 1, 'APX-6A2C21F0A8054', NULL, 0.00, 0.00, 0.00, 0.00, 'Pending', '2026-06-12 15:56:35');
 
 -- --------------------------------------------------------
 
@@ -341,6 +374,13 @@ CREATE TABLE `products_tbl` (
   `archived_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `products_tbl`
+--
+
+INSERT INTO `products_tbl` (`product_id`, `brand_id`, `category_id`, `name`, `desc`, `price`, `sale_percent`, `sale_valid_until`, `stock_qty`, `badge`, `badge_type`, `est_shipping_time`, `archived_at`) VALUES
+(1, 1, 4, 'iPhone 17 Pro Max Cosmic Orange', 'Apple’s latest flagship smartphone featuring the A19 Bionic chip, 6.9-inch Super Retina XDR display, titanium frame, and exclusive Copper Orange finish. Includes advanced triple-lens camera system, MagSafe support, and up to 1TB storage.', 89999.00, 10, '2026-07-31 00:00:00', 25, 'New Arrival', 'highlight', '3–5 business days', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -353,6 +393,13 @@ CREATE TABLE `product_images_tbl` (
   `product_id` int(11) NOT NULL,
   `image_path` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `product_images_tbl`
+--
+
+INSERT INTO `product_images_tbl` (`image_id`, `product_id`, `image_path`) VALUES
+(1, 1, 'C:xampphtdocsapexgearassetsimagesproductsiphone17pro.png');
 
 -- --------------------------------------------------------
 
@@ -651,7 +698,7 @@ ALTER TABLE `archived_users_tbl`
 -- AUTO_INCREMENT for table `brand_tbl`
 --
 ALTER TABLE `brand_tbl`
-  MODIFY `brand_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `brand_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `cart_items_tbl`
@@ -663,7 +710,7 @@ ALTER TABLE `cart_items_tbl`
 -- AUTO_INCREMENT for table `category_tbl`
 --
 ALTER TABLE `category_tbl`
-  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `coupon_code`
@@ -717,13 +764,13 @@ ALTER TABLE `payments_tbl`
 -- AUTO_INCREMENT for table `products_tbl`
 --
 ALTER TABLE `products_tbl`
-  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `product_images_tbl`
 --
 ALTER TABLE `product_images_tbl`
-  MODIFY `image_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `image_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `reviews_tbl`
@@ -794,56 +841,11 @@ ALTER TABLE `orders_tbl`
   ADD CONSTRAINT `orders_tbl_ibfk_2` FOREIGN KEY (`coupon_id`) REFERENCES `coupon_code` (`coupon_id`);
 
 --
--- Constraints for table `order_items_tbl`
---
-ALTER TABLE `order_items_tbl`
-  ADD CONSTRAINT `order_items_tbl_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders_tbl` (`order_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `order_items_tbl_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products_tbl` (`product_id`);
-
---
 -- Constraints for table `order_status_tbl`
 --
 ALTER TABLE `order_status_tbl`
   ADD CONSTRAINT `order_status_tbl_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders_tbl` (`order_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `order_status_tbl_ibfk_2` FOREIGN KEY (`updated_by_admin`) REFERENCES `admin_users_tbl` (`admin_id`);
-
---
--- Constraints for table `payments_tbl`
---
-ALTER TABLE `payments_tbl`
-  ADD CONSTRAINT `payments_tbl_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders_tbl` (`order_id`) ON DELETE CASCADE;
-
---
--- Constraints for table `products_tbl`
---
-ALTER TABLE `products_tbl`
-  ADD CONSTRAINT `products_tbl_ibfk_1` FOREIGN KEY (`brand_id`) REFERENCES `brand_tbl` (`brand_id`),
-  ADD CONSTRAINT `products_tbl_ibfk_2` FOREIGN KEY (`category_id`) REFERENCES `category_tbl` (`category_id`);
-
---
--- Constraints for table `product_images_tbl`
---
-ALTER TABLE `product_images_tbl`
-  ADD CONSTRAINT `product_images_tbl_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products_tbl` (`product_id`) ON DELETE CASCADE;
-
---
--- Constraints for table `reviews_tbl`
---
-ALTER TABLE `reviews_tbl`
-  ADD CONSTRAINT `reviews_tbl_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users_tbl` (`user_id`),
-  ADD CONSTRAINT `reviews_tbl_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products_tbl` (`product_id`);
-
---
--- Constraints for table `shipping_address_tbl`
---
-ALTER TABLE `shipping_address_tbl`
-  ADD CONSTRAINT `shipping_address_tbl_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users_tbl` (`user_id`);
-
---
--- Constraints for table `users_profiles_tbl`
---
-ALTER TABLE `users_profiles_tbl`
-  ADD CONSTRAINT `users_profiles_tbl_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users_tbl` (`user_id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
