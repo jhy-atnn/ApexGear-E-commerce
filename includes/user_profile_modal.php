@@ -84,6 +84,23 @@
                     </div>
                 </div>
 
+                <!-- Shipping Address -->
+                <div class="profile-section-label"><i class="fas fa-shipping-fast" style="color:rgba(0,194,255,.5);font-size:.7rem;"></i> Shipping Address</div>
+                <div class="form-group">
+                    <label for="userStreetAddress">Street Address</label>
+                    <input type="text" id="userStreetAddress" name="street_address" class="form-control" placeholder="Street address" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['street_address'] ?? '') : ''; ?>">
+                </div>
+                <div class="row gx-3 gy-3">
+                    <div class="col-12 col-md-6 form-group">
+                        <label for="userCity">City</label>
+                        <input type="text" id="userCity" name="city" class="form-control" placeholder="City" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['city'] ?? '') : ''; ?>">
+                    </div>
+                    <div class="col-12 col-md-6 form-group">
+                        <label for="userPostalCode">Postal Code</label>
+                        <input type="text" id="userPostalCode" name="postal_code" class="form-control" placeholder="Postal code" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['postal_code'] ?? '') : ''; ?>">
+                    </div>
+                </div>
+
             </form>
         </div>
         <div class="profile-modal-footer">
@@ -186,8 +203,8 @@
         }
 
         const myProfileLink = document.querySelector('.pp-link[href="javascript:void(0)"]'); // Simplified selector
-        const closeModalBtn = document.querySelector('.btn-close-modal');
-        const closeModalAltBtn = document.querySelector('.btn-close-modal-alt');
+        const closeModalBtn = document.querySelector('#userProfileModal .btn-close-modal');
+        const closeModalAltBtn = document.querySelector('#userProfileModal .btn-close-modal-alt');
 
         myProfileLink.addEventListener('click', (e) => {
             e.preventDefault();
@@ -195,9 +212,11 @@
             document.getElementById('profilePanel').classList.remove('open');
         });
 
-        closeModalBtn.addEventListener('click', () => {
-            profileModal.classList.remove('open');
-        });
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', () => {
+                profileModal.classList.remove('open');
+            });
+        }
 
         if (closeModalAltBtn) {
             closeModalAltBtn.addEventListener('click', () => {

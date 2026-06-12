@@ -210,6 +210,23 @@
     border-radius: 8px;
     border-left: 4px solid var(--apex-blue);
     box-shadow: 0 2px 12px rgba(11, 47, 168, .07);
+    flex-wrap: nowrap;
+}
+
+.catalog-summary {
+    min-width: 0;
+}
+
+.apex-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: nowrap;
+    min-width: 0;
+}
+
+.apex-filter-row .apex-sort-wrap {
+    white-space: nowrap;
 }
 
 .catalog-count {
@@ -372,6 +389,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .apex-sort-label {
