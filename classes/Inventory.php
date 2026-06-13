@@ -255,6 +255,8 @@ class Inventory
         $query = "
             SELECT o.*, o.order_ref_code AS reference_number,
                    u.first_name, u.last_name, u.email, u.username,
+                   CONCAT_WS(' ', u.first_name, u.last_name) AS customer_name,
+                   sa.phone_number, sa.street_address, sa.city, sa.zip_code,
                    p.method AS payment_method,
                    p.status AS payment_status,
                    p.qr_screenshot_path AS payment_screenshot,
@@ -262,6 +264,7 @@ class Inventory
                    (SELECT SUM(quantity) FROM order_items_tbl WHERE order_id = o.order_id) as items_count
             FROM orders_tbl o
             LEFT JOIN users_tbl u ON o.user_id = u.user_id
+            LEFT JOIN shipping_address_tbl sa ON sa.order_ref_code = o.order_ref_code
             LEFT JOIN payments_tbl p ON o.order_id = p.order_id
             ORDER BY o.created_at DESC
         ";
@@ -274,9 +277,14 @@ class Inventory
                 // Fetch the specific products inside this order for the Admin Modal UI
                 $orderId = $row['order_id'];
                 $itemQuery = "
-                    SELECT oi.quantity as qty, p.name, oi.price_at_checkout AS price
+                    SELECT oi.product_id, oi.quantity AS qty, oi.price_at_checkout AS price,
+                           (oi.quantity * oi.price_at_checkout) AS line_total,
+                           p.name, b.brand_name AS brand, c.category_name AS category,
+                           (SELECT image_path FROM product_images_tbl WHERE product_id = p.product_id LIMIT 1) AS image
                     FROM order_items_tbl oi
                     LEFT JOIN products_tbl p ON oi.product_id = p.product_id
+                    LEFT JOIN brand_tbl b ON p.brand_id = b.brand_id
+                    LEFT JOIN category_tbl c ON p.category_id = c.category_id
                     WHERE oi.order_id = ?
                 ";
                 
@@ -395,8 +403,10 @@ class Inventory
     public function getOrderItems($orderId)
     {
         $query = "
-            SELECT oi.quantity AS qty,
+            SELECT oi.product_id,
+                   oi.quantity AS qty,
                    oi.price_at_checkout AS price,
+                   (oi.quantity * oi.price_at_checkout) AS line_total,
                    p.name,
                    (SELECT image_path FROM product_images_tbl WHERE product_id = p.product_id LIMIT 1) AS image
             FROM order_items_tbl oi

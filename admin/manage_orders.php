@@ -755,6 +755,7 @@ $orders = $inv->getAllOrders();
                                 <?php foreach ($orders as $order):
                                     $st = strtolower($order['order_status'] ?? '');
                                     $statusClass = match ($st) {
+                                        'completed'  => 'delivered',
                                         'delivered'  => 'delivered',
                                         'canceled'   => 'canceled',
                                         'shipped'    => 'shipped',
@@ -767,7 +768,7 @@ $orders = $inv->getAllOrders();
                                     $stepIndex  = match ($st) {
                                         'on process' => 0,
                                         'shipped'    => 1,
-                                        'delivered'  => 2,
+                                        'delivered', 'completed' => 2,
                                         default      => -1,
                                     };
 
@@ -828,7 +829,7 @@ $orders = $inv->getAllOrders();
                                             <form method="POST" class="d-flex gap-1 align-items-center mt-1">
                                                 <input type="hidden" name="order_id" value="<?php echo intval($order['order_id']); ?>">
                                                 <select name="order_status" class="form-select form-select-sm" style="width:120px;font-size:.75rem;">
-                                                    <?php foreach (['On Process', 'Shipped', 'Delivered', 'Canceled'] as $s): ?>
+                                                    <?php foreach (['On Process', 'Shipped', 'Delivered', 'Completed', 'Canceled'] as $s): ?>
                                                         <option value="<?php echo $s; ?>" <?php echo $order['order_status'] === $s ? 'selected' : ''; ?>><?php echo $s; ?></option>
                                                     <?php endforeach; ?>
                                                 </select>
@@ -866,6 +867,7 @@ $orders = $inv->getAllOrders();
                             <option value="On Process">On Process</option>
                             <option value="Shipped">Shipped</option>
                             <option value="Delivered">Delivered</option>
+                            <option value="Completed">Completed</option>
                             <option value="Canceled">Canceled</option>
                         </select>
                         <label style="font-size:.8rem;font-weight:600;color:var(--text-muted);white-space:nowrap;">Remarks:</label>
@@ -978,7 +980,7 @@ $orders = $inv->getAllOrders();
 
         function statusBadgeHtml(status) {
             const s = (status || '').toLowerCase();
-            const cls = s === 'delivered' ? 'delivered' : s === 'canceled' ? 'canceled' : s === 'shipped' ? 'shipped' : s === 'on process' ? 'process' : 'pending';
+            const cls = (s === 'delivered' || s === 'completed') ? 'delivered' : s === 'canceled' ? 'canceled' : s === 'shipped' ? 'shipped' : s === 'on process' ? 'process' : 'pending';
             return `<span class="status-badge ${cls}">${escHtml(status || 'Pending')}</span>`;
         }
     </script>

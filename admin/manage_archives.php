@@ -449,7 +449,7 @@ $pendingOrders = count(array_filter($allOrders, fn($o) => strtolower($o['order_s
                     <?php if (empty($completedOrders)): ?>
                         <div class="empty-state">
                             <i class="fas fa-shopping-bag"></i>
-                            <p>No completed orders yet.<br>Orders marked as Delivered will appear here.</p>
+                            <p>No completed orders yet.<br>Orders marked as Completed will appear here automatically.</p>
                         </div>
                     <?php else: ?>
                         <div style="overflow-x:auto;">
@@ -459,8 +459,9 @@ $pendingOrders = count(array_filter($allOrders, fn($o) => strtolower($o['order_s
                                         <th>Order #</th>
                                         <th>Customer</th>
                                         <th>Items</th>
+                                        <th>Order Details</th>
                                         <th>Total</th>
-                                        <th>Delivered On</th>
+                                        <th>Completed On</th>
                                         <th>Remarks</th>
                                     </tr>
                                 </thead>
@@ -469,22 +470,39 @@ $pendingOrders = count(array_filter($allOrders, fn($o) => strtolower($o['order_s
                                         <tr>
                                             <td style="font-weight:700;font-family:'Barlow Condensed',sans-serif;"><?php echo htmlspecialchars($o['reference_number'] ?? ('#' . intval($o['order_id'] ?? 0))); ?></td>
                                             <td>
-                                                <div class="product-name"><?php echo htmlspecialchars($o['customer_name'] ?? $o['name'] ?? '—'); ?></div>
+                                                <div class="product-name"><?php echo htmlspecialchars($o['customer_name'] ?? $o['username'] ?? $o['name'] ?? '—'); ?></div>
                                                 <div class="product-meta"><?php echo htmlspecialchars($o['customer_email'] ?? $o['email'] ?? ''); ?></div>
                                             </td>
-                                            <td style="font-size:.82rem;max-width:200px;">
+                                            <td style="font-size:.82rem;min-width:260px;">
                                                 <?php
-                                                $items = $o['items'] ?? $o['cart'] ?? [];
+                                                $items = $o['items'] ?? [];
                                                 if (is_string($items)) $items = json_decode($items, true) ?? [];
-                                                $names = array_map(fn($i) => htmlspecialchars($i['name'] ?? ''), $items);
-                                                echo implode(', ', array_slice($names, 0, 3));
-                                                if (count($names) > 3) echo ' +' . (count($names) - 3) . ' more';
-                                                if (empty($names)) echo '<span style="color:var(--text-muted);">—</span>';
+                                                if (empty($items)) {
+                                                    echo '<span style="color:var(--text-muted);">No item details stored.</span>';
+                                                } else {
+                                                    foreach ($items as $i) {
+                                                        $itemName = htmlspecialchars($i['name'] ?? 'Item');
+                                                        $brand = htmlspecialchars($i['brand'] ?? '');
+                                                        $qty = intval($i['qty'] ?? $i['quantity'] ?? 1);
+                                                        $price = floatval($i['price'] ?? $i['price_at_checkout'] ?? 0);
+                                                        $lineTotal = floatval($i['line_total'] ?? ($qty * $price));
+                                                        echo '<div style="margin-bottom:8px;">';
+                                                        echo '<div style="font-weight:700;">' . $itemName . '</div>';
+                                                        echo '<div style="color:var(--text-muted);font-size:.76rem;">' . ($brand ? $brand . ' · ' : '') . 'Qty: ' . $qty . ' × ₱' . number_format($price, 2) . ' = ₱' . number_format($lineTotal, 2) . '</div>';
+                                                        echo '</div>';
+                                                    }
+                                                }
                                                 ?>
                                             </td>
-                                            <td style="font-weight:600;">₱<?php echo number_format($o['total'] ?? 0, 2); ?></td>
+                                            <td style="font-size:.8rem;color:var(--text-muted);min-width:180px;">
+                                                <div>Subtotal: ₱<?php echo number_format($o['subtotal'] ?? 0, 2); ?></div>
+                                                <div>Tax: ₱<?php echo number_format($o['tax'] ?? 0, 2); ?></div>
+                                                <div>Shipping: ₱<?php echo number_format($o['shipping_fee'] ?? 0, 2); ?></div>
+                                                <div>Status: <span class="status-pill status-delivered"><?php echo htmlspecialchars($o['order_status'] ?? 'Completed'); ?></span></div>
+                                            </td>
+                                            <td style="font-weight:600;">₱<?php echo number_format($o['total_amount'] ?? $o['total'] ?? 0, 2); ?></td>
                                             <td style="color:var(--text-muted);font-size:.8rem;">
-                                                <?php echo !empty($o['updated_at']) ? date('M d, Y', strtotime($o['updated_at'])) : (isset($o['date']) ? date('M d, Y', strtotime($o['date'])) : '—'); ?>
+                                                <?php echo !empty($o['created_at']) ? date('M d, Y', strtotime($o['created_at'])) : (isset($o['date']) ? date('M d, Y', strtotime($o['date'])) : '—'); ?>
                                             </td>
                                             <td style="color:var(--text-muted);font-size:.82rem;"><?php echo htmlspecialchars($o['remarks'] ?? '—'); ?></td>
                                         </tr>

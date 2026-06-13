@@ -159,6 +159,21 @@ $recentOrderNotifications = $inventoryManager->getRecentOrderNotifications(6);
             list-style: none;
             margin: 0;
             padding: 0;
+            max-height: 360px;
+            overflow-y: auto;
+        }
+
+        .notif-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .notif-list::-webkit-scrollbar-track {
+            background: #f4f6fb;
+        }
+
+        .notif-list::-webkit-scrollbar-thumb {
+            background: #c7d2e5;
+            border-radius: 20px;
         }
 
         .notif-list li {
@@ -315,6 +330,30 @@ $recentOrderNotifications = $inventoryManager->getRecentOrderNotifications(6);
                     <p>Here's what's happening with your store today.</p>
                 </div>
             </div>
+            <!-- Stat Cards -->
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="fas fa-box-open"></i></div>
+                    <div>
+                        <div class="stat-num"><?php echo $totalProducts; ?></div>
+                        <div class="stat-lbl">Total Products</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon cyan"><i class="fas fa-cubes"></i></div>
+                    <div>
+                        <div class="stat-num"><?php echo number_format($totalStock); ?></div>
+                        <div class="stat-lbl">Units in Stock</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div>
+                        <div class="stat-num"><?php echo $lowStock; ?></div>
+                        <div class="stat-lbl">Low Stock Items</div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Alerts -->
             <?php if (isset($_GET['success'])): ?>
@@ -400,33 +439,7 @@ $recentOrderNotifications = $inventoryManager->getRecentOrderNotifications(6);
                     </ul>
                 <?php endif; ?>
             </div>
-
-            <!-- Stat Cards -->
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <div class="stat-icon blue"><i class="fas fa-box-open"></i></div>
-                    <div>
-                        <div class="stat-num"><?php echo $totalProducts; ?></div>
-                        <div class="stat-lbl">Total Products</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon cyan"><i class="fas fa-cubes"></i></div>
-                    <div>
-                        <div class="stat-num"><?php echo number_format($totalStock); ?></div>
-                        <div class="stat-lbl">Units in Stock</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon red"><i class="fas fa-exclamation-triangle"></i></div>
-                    <div>
-                        <div class="stat-num"><?php echo $lowStock; ?></div>
-                        <div class="stat-lbl">Low Stock Items</div>
-                    </div>
-                </div>
-            </div>
-    </div><!-- /main-wrap -->
-
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>

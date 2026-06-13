@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $orders = [];
 $order_items_map = [];
 
@@ -10,7 +10,7 @@ if (isset($_SESSION['user']['id'])) {
     $inv = new Inventory();
 
     if (method_exists($inv, 'getOrdersByUser')) {
-        // Fetch orders, you might want to adjust this query in Inventory.php later to EXCLUDE 'Completed' orders if you want them fully hidden
+        // Completed orders are automatically moved out of active order tracking.
         $allUserOrders = $inv->getOrdersByUser($userId);
         
         // Filter out completed/archived orders from the active view
@@ -129,14 +129,7 @@ if (isset($_SESSION['user']['id'])) {
                             <?php endif; ?>
                         </div>
 
-                        <?php if ($status === 'Delivered'): ?>
-                            <div class="card-footer bg-white border-top text-end py-3">
-                                <p class="text-muted small mb-2 text-center text-sm-end"><i class="fas fa-info-circle"></i> Please confirm you have received the items to archive this order.</p>
-                                <button class="btn btn-success btn-sm w-100 w-sm-auto px-4 py-2 fw-bold rounded-pill" onclick="confirmOrder(<?php echo $order['order_id']; ?>)">
-                                    <i class="fas fa-check-double me-1"></i> Confirm Receipt
-                                </button>
-                            </div>
-                        <?php endif; ?>
+
                     </div>
                 <?php endforeach; ?>
                 
