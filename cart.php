@@ -686,7 +686,7 @@ $grand_total = $subtotal + $tax;
         <div class="container">
 
             <!-- Back button -->
-            <button class="back-link" onclick="history.back()">
+            <button class="back-link" type="button" onclick="goBackFromCart(event)">
                 <i class="fas fa-arrow-left"></i> Back
             </button>
 
@@ -892,6 +892,19 @@ $grand_total = $subtotal + $tax;
         }
         updateCartCountdowns();
         setInterval(updateCartCountdowns, 1000);
+
+        function goBackFromCart(event) {
+            event.preventDefault();
+            const currentUrl = window.location.href;
+            const referrer = document.referrer;
+
+            if (referrer && referrer !== currentUrl && !referrer.includes('cart.php')) {
+                window.location.href = referrer;
+                return;
+            }
+
+            window.location.href = 'store.php';
+        }
     </script>
 </body>
 
