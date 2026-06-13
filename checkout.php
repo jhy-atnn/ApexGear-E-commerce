@@ -10,6 +10,16 @@ if (empty($cart_items) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
+// ── Helper: compute the effective (live-sale) price for a cart item ──────────
+// Called at order placement time — if the sale is still running, it applies.
+function getEffectiveCheckoutPrice($item) {
+    $basePrice  = floatval($item['original_price'] ?? $item['price']);
+    $salePct    = intval($item['sale_percent'] ?? 0);
+    $saleExpiry = $item['sale_expiry'] ?? '';
+    $saleActive = $salePct > 0 && (!empty($saleExpiry) ? strtotime($saleExpiry) > time() : true);
+    return $saleActive ? round($basePrice * (1 - $salePct / 100), 2) : $basePrice;
+}
+
 $order_successful = false;
 $receipt_number = '';
 $receipt_data = array();
@@ -63,11 +73,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         $receipt_data['mayaMobile'] = $transactionId;
     }
 
-    // 4. Calculate Totals
+    // 4. Calculate Totals using live sale prices at checkout time
     $subtotal = 0;
     $item_count = 0;
     foreach ($cart_items as $item) {
-        $subtotal += ($item['price'] * $item['qty']);
+        $effectivePrice = getEffectiveCheckoutPrice($item);
+        $subtotal += ($effectivePrice * $item['qty']);
         $item_count += $item['qty'];
     }
     $tax = $subtotal * 0.08;
@@ -112,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     foreach ($cart_items as $pId => $item) {
         $pIdInt = intval($pId);
         $qty = intval($item['qty']);
-        $price = floatval($item['price']);
+        $price = getEffectiveCheckoutPrice($item); // locks in sale price if still valid
 
         // Insert item record
         $stmtItems->bind_param("iiid", $orderId, $pIdInt, $qty, $price);
@@ -172,7 +183,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     $subtotal = 0;
     $item_count = 0;
     foreach ($cart_items as $item) {
-        $subtotal += ($item['price'] * $item['qty']);
+        $effectivePrice = getEffectiveCheckoutPrice($item);
+        $subtotal += ($effectivePrice * $item['qty']);
         $item_count += $item['qty'];
     }
     $tax = $subtotal * 0.08;
@@ -369,12 +381,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php foreach ($receipt_data['items'] as $item): ?>
+                                                <?php foreach ($receipt_data['items'] as $item):
+                                                    $rcptPrice = getEffectiveCheckoutPrice($item);
+                                                    $rcptOrig  = floatval($item['original_price'] ?? $item['price']);
+                                                    $rcptSale  = $rcptPrice < $rcptOrig;
+                                                ?>
                                                     <tr style="border-bottom: 1px solid #f0f0f0;">
-                                                        <td class="py-2 text-dark"><?php echo htmlspecialchars($item['name']); ?></td>
+                                                        <td class="py-2 text-dark">
+                                                            <?php echo htmlspecialchars($item['name']); ?>
+                                                            <?php if ($rcptSale): ?><br><small style="color:#ff3b5c;font-weight:700;"><?php echo intval($item['sale_percent'] ?? 0); ?>% OFF applied</small><?php endif; ?>
+                                                        </td>
                                                         <td class="text-center py-2 text-dark"><?php echo $item['qty']; ?></td>
-                                                        <td class="text-end py-2 text-dark">₱<?php echo number_format($item['price'], 2); ?></td>
-                                                        <td class="text-end py-2 fw-bold text-dark">₱<?php echo number_format($item['price'] * $item['qty'], 2); ?></td>
+                                                        <td class="text-end py-2 text-dark">
+                                                            ₱<?php echo number_format($rcptPrice, 2); ?>
+                                                            <?php if ($rcptSale): ?><br><small style="text-decoration:line-through;color:#aaa;">₱<?php echo number_format($rcptOrig, 2); ?></small><?php endif; ?>
+                                                        </td>
+                                                        <td class="text-end py-2 fw-bold text-dark">₱<?php echo number_format($rcptPrice * $item['qty'], 2); ?></td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
@@ -581,12 +603,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             <h5 class="fw-bold mb-4 text-uppercase" style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem;">In Your Cart</h5>
 
                             <div class="mb-4 border-bottom pb-3">
-                                <?php foreach ($cart_items as $item): ?>
+                                <?php foreach ($cart_items as $item):
+                                    $chkPrice = getEffectiveCheckoutPrice($item);
+                                    $chkOrig  = floatval($item['original_price'] ?? $item['price']);
+                                    $chkSale  = $chkPrice < $chkOrig;
+                                ?>
                                     <div class="d-flex justify-content-between align-items-center mb-2 small">
                                         <span class="text-muted text-truncate me-2" style="max-width: 200px;">
                                             <span class="text-apex-blue fw-bold"><?php echo $item['qty']; ?>x</span> <?php echo htmlspecialchars($item['name']); ?>
+                                            <?php if ($chkSale): ?><span style="color:#ff3b5c;font-weight:700;font-size:.7rem;display:block;"><?php echo intval($item['sale_percent']); ?>% OFF</span><?php endif; ?>
                                         </span>
-                                        <span class="fw-bold text-dark">₱<?php echo number_format($item['price'] * $item['qty'], 2); ?></span>
+                                        <span class="fw-bold text-dark">₱<?php echo number_format($chkPrice * $item['qty'], 2); ?></span>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
@@ -798,7 +825,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                     <?php
                     $subtotal = 0;
                     foreach ($cart_items as $id => $item):
-                        $subtotal += ($item['price'] * $item['qty']);
+                        $ocPrice = getEffectiveCheckoutPrice($item);
+                        $ocOrig  = floatval($item['original_price'] ?? $item['price']);
+                        $ocSale  = $ocPrice < $ocOrig;
+                        $subtotal += ($ocPrice * $item['qty']);
                     ?>
                         <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
                             <div style="width: 60px; height: 60px; border-radius: 8px; background: var(--apex-grey); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink: 0;">
@@ -812,9 +842,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             </div>
                             <div class="flex-grow-1 min-width-0">
                                 <h6 class="mb-1 fw-bold text-dark text-truncate" style="font-size: .9rem;"><?php echo htmlspecialchars($item['name']); ?></h6>
+                                <?php if ($ocSale): ?><small style="color:#ff3b5c;font-weight:700;"><?php echo intval($item['sale_percent']); ?>% OFF</small><?php endif; ?>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="text-muted small">Qty: <?php echo $item['qty']; ?></span>
-                                    <span class="fw-bold text-apex-blue">₱<?php echo number_format($item['price'] * $item['qty'], 2); ?></span>
+                                    <span class="fw-bold text-apex-blue">₱<?php echo number_format($ocPrice * $item['qty'], 2); ?></span>
                                 </div>
                             </div>
                         </div>

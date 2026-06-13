@@ -443,6 +443,19 @@ class Inventory
         return $hasReview;
     }
 
+    // Check if the user has reviewed this specific product FOR this specific order.
+    public function hasUserReviewedProductForOrder($userId, $productId, $orderId)
+    {
+        $query = "SELECT review_id FROM reviews_tbl WHERE user_id = ? AND product_id = ? AND order_id = ? LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("iii", $userId, $productId, $orderId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $hasReview = $result->num_rows > 0;
+        $stmt->close();
+        return $hasReview;
+    }
+
     public function hasUserReviewedOrder($orderId, $userId)
     {
         $query = "
@@ -467,7 +480,7 @@ class Inventory
         }
 
         foreach ($productIds as $productId) {
-            if (!$this->hasUserReviewedProduct($userId, $productId)) {
+            if (!$this->hasUserReviewedProductForOrder($userId, $productId, $orderId)) {
                 return false;
             }
         }

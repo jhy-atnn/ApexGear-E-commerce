@@ -875,7 +875,7 @@ usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percen
                                                 <?php if ($saleActive): ?>
                                                     <span class="sale-pill"><?php echo (int)$salePct; ?>% OFF</span>
                                                     <?php if (!empty($saleExp)): ?>
-                                                        <div style="font-size:.68rem;color:var(--text-muted);">until <?php echo date('M d', strtotime($saleExp)); ?></div>
+                                                        <div style="font-size:.68rem;color:var(--text-muted);">until <?php echo date('M d, Y h:i A', strtotime($saleExp)); ?></div>
                                                     <?php endif; ?>
                                                 <?php elseif ($saleExpired): ?>
                                                     <div style="font-size:.68rem;color:var(--danger);">Sale expired</div>
@@ -963,7 +963,18 @@ usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percen
                                                 <span style="text-decoration:line-through;color:var(--text-muted);font-size:.8rem;margin-left:6px;">₱<?php echo number_format($p['price'], 2); ?></span>
                                             </div>
                                             <?php if (!empty($p['sale_expiry'])): ?>
-                                                <div class="deal-expiry"><i class="fas fa-clock me-1"></i>Expires <?php echo date('M d, Y', strtotime($p['sale_expiry'])); ?></div>
+                                                <div class="deal-expiry"><i class="fas fa-clock me-1"></i>Expires <?php echo date('M d, Y h:i A', strtotime($p['sale_expiry'])); ?></div>
+                                                <div class="deal-expiry" style="margin-top:4px;">
+                                                    <?php
+                                                    $diff = strtotime($p['sale_expiry']) - time();
+                                                    if ($diff > 0) {
+                                                        $d = floor($diff / 86400); $h = floor(($diff % 86400) / 3600); $m = floor(($diff % 3600) / 60);
+                                                        echo '<span style="color:var(--success);font-weight:700;">';
+                                                        if ($d > 0) echo $d . 'd ';
+                                                        echo $h . 'h ' . $m . 'm remaining</span>';
+                                                    }
+                                                    ?>
+                                                </div>
                                             <?php endif; ?>
                                             <?php if (!empty($p['shipping_time'])): ?>
                                                 <div style="margin-top:6px;"><span class="shipping-pill" style="font-size:.65rem;"><i class="fas fa-truck me-1"></i><?php echo htmlspecialchars($p['shipping_time']); ?></span></div>
@@ -1038,8 +1049,8 @@ usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percen
                                     <input type="number" min="1" max="99" name="sale_percent" class="field-control" placeholder="e.g. 20">
                                 </div>
                                 <div class="field-group">
-                                    <label class="field-label">Sale Expiry Date</label>
-                                    <input type="date" name="sale_expiry" class="field-control">
+                                    <label class="field-label">Sale Expiry Date &amp; Time</label>
+                                    <input type="datetime-local" name="sale_expiry" class="field-control" min="<?php echo date('Y-m-d\TH:i'); ?>">
                                 </div>
                             </div>
                             <div class="field-group">
@@ -1138,8 +1149,8 @@ usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percen
                                 <input type="number" min="1" max="99" name="sale_percent" id="edit_sale_percent" class="field-control" placeholder="e.g. 20">
                             </div>
                             <div class="field-group">
-                                <label class="field-label">Sale Expiry Date</label>
-                                <input type="date" name="sale_expiry" id="edit_sale_expiry" class="field-control">
+                                <label class="field-label">Sale Expiry Date &amp; Time</label>
+                                <input type="datetime-local" name="sale_expiry" id="edit_sale_expiry" class="field-control">
                             </div>
                         </div>
                         <div class="field-group">
@@ -1242,7 +1253,7 @@ usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percen
                             </div>
                             <div class="field-group">
                                 <label class="field-label">Sale Expiry</label>
-                                <input type="date" name="sale_expiry" class="field-control">
+                                <input type="datetime-local" name="sale_expiry" class="field-control" min="<?php echo date('Y-m-d\TH:i'); ?>">
                             </div>
                         </div>
                         <div class="field-group">
@@ -1294,7 +1305,12 @@ usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percen
             document.getElementById('edit_price').value = d.price;
             document.getElementById('edit_stock').value = d.stock;
             document.getElementById('edit_sale_percent').value = d.sale_percent;
-            document.getElementById('edit_sale_expiry').value = d.sale_expiry;
+            // Convert "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD" to "YYYY-MM-DDTHH:MM" for datetime-local
+            let expiry = d.sale_expiry || '';
+            if (expiry) {
+                expiry = expiry.replace(' ', 'T').substring(0, 16);
+            }
+            document.getElementById('edit_sale_expiry').value = expiry;
             document.getElementById('edit_shipping_time').value = d.shipping_time;
             document.getElementById('edit_image').value = d.image;
             document.getElementById('edit_desc').value = d.desc;

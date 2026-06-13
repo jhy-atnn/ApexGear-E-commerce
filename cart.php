@@ -21,12 +21,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     exit();
 }
 
-// 3. Calculate Totals
+// ── Helper: compute the effective (sale) price for a cart item ──────────────
+// Fetches live sale data from DB and returns the currently applicable price.
+function getEffectivePriceForCart($item) {
+    // If the item has live sale data embedded (from add-to-cart action), use it;
+    // otherwise fall back to the stored session price.
+    $basePrice  = floatval($item['original_price'] ?? $item['price']);
+    $salePct    = intval($item['sale_percent'] ?? 0);
+    $saleExpiry = $item['sale_expiry'] ?? '';
+
+    $saleActive = $salePct > 0 && (!empty($saleExpiry) ? strtotime($saleExpiry) > time() : true);
+    if ($saleActive) {
+        return round($basePrice * (1 - $salePct / 100), 2);
+    }
+    return $basePrice;
+}
+
+// 3. Calculate Totals using effective (live-sale) prices
 $subtotal = 0;
 $item_count = 0;
 if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
     foreach ($_SESSION['cart'] as $item) {
-        $subtotal += ($item['price'] * $item['qty']);
+        $effectivePrice = getEffectivePriceForCart($item);
+        $subtotal += ($effectivePrice * $item['qty']);
         $item_count += $item['qty'];
     }
 }
@@ -79,7 +96,11 @@ $grand_total = $subtotal + $tax;
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($_SESSION['cart'] as $id => $item): ?>
+                                        <?php foreach ($_SESSION['cart'] as $id => $item):
+                                            $effectivePrice = getEffectivePriceForCart($item);
+                                            $originalPrice  = floatval($item['original_price'] ?? $item['price']);
+                                            $isOnSale = $effectivePrice < $originalPrice;
+                                        ?>
                                             <tr class="border-bottom">
                                                 <td class="py-4" style="padding-left: 20px;">
                                                     <div class="d-flex align-items-center gap-3">
@@ -99,7 +120,14 @@ $grand_total = $subtotal + $tax;
                                                     </div>
                                                 </td>
                                                 <td class="fw-bold text-apex-blue">
-                                                    ₱<?php echo number_format($item['price'], 2); ?>
+                                                    ₱<?php echo number_format($effectivePrice, 2); ?>
+                                                    <?php if ($isOnSale): ?>
+                                                        <br><small style="text-decoration:line-through;color:var(--apex-muted);font-weight:400;">₱<?php echo number_format($originalPrice, 2); ?></small>
+                                                        <br><small style="color:#ff3b5c;font-weight:700;"><?php echo intval($item['sale_percent'] ?? 0); ?>% OFF</small>
+                                                        <?php if (!empty($item['sale_expiry'])): ?>
+                                                            <br><small class="sale-countdown-cart" data-expiry="<?php echo strtotime($item['sale_expiry']); ?>" style="color:#ff3b5c;font-size:.68rem;"></small>
+                                                        <?php endif; ?>
+                                                    <?php endif; ?>
                                                 </td>
                                                 <td>
                                                     <form method="POST" action="cart.php" class="d-flex align-items-center gap-2">
@@ -172,6 +200,25 @@ $grand_total = $subtotal + $tax;
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/navbar.js"></script>
     <script src="assets/js/main.js"></script>
+    <script>
+    // ── Sale countdown in cart ────────────────────────────────────────────────
+    function updateCartCountdowns() {
+        document.querySelectorAll('.sale-countdown-cart[data-expiry]').forEach(el => {
+            const exp = parseInt(el.dataset.expiry) * 1000;
+            const diff = exp - Date.now();
+            if (diff <= 0) { el.textContent = 'Sale ended'; el.style.color = '#999'; return; }
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            if (d > 0) el.textContent = `⏱ Sale: ${d}d ${h}h ${m}m left`;
+            else if (h > 0) el.textContent = `⏱ Sale: ${h}h ${m}m ${s}s left`;
+            else el.textContent = `⏱ Sale: ${m}m ${s}s left`;
+        });
+    }
+    updateCartCountdowns();
+    setInterval(updateCartCountdowns, 1000);
+    </script>
 </body>
 
 </html>

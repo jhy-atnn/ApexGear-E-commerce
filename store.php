@@ -259,14 +259,38 @@ sort($allCategories);
                                     </div>
 
                                     <?php $stock = (int)($product['stock'] ?? 0); ?>
+                                    <?php
+                                    // Compute sale price if sale is active
+                                    $salePct    = (int)($product['sale_percent'] ?? 0);
+                                    $saleExp    = $product['sale_expiry'] ?? '';
+                                    $saleActive = $salePct > 0 && (!empty($saleExp) ? strtotime($saleExp) > time() : true);
+                                    $salePrice  = $saleActive ? round($product['price'] * (1 - $salePct / 100), 2) : null;
+                                    ?>
+
+                                    <?php if ($saleActive): ?>
+                                        <div class="sale-badge-strip" style="position:absolute;top:14px;left:14px;z-index:3;background:#ff3b5c;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.78rem;padding:4px 10px;border-radius:4px;letter-spacing:.06em;">
+                                            <?php echo $salePct; ?>% OFF
+                                        </div>
+                                    <?php endif; ?>
+
                                     <div class="product-price">
-                                        ₱<?php echo number_format($product['price'], 2); ?>
-                                        <?php if (!empty($product['old_price'])): ?>
-                                            <span class="old">₱<?php echo number_format($product['old_price'], 2); ?></span>
+                                        <?php if ($saleActive && $salePrice !== null): ?>
+                                            <span style="color:#ff3b5c;">₱<?php echo number_format($salePrice, 2); ?></span>
+                                            <span class="old" style="text-decoration:line-through;color:var(--apex-muted);font-size:.85rem;margin-left:6px;">₱<?php echo number_format($product['price'], 2); ?></span>
+                                        <?php else: ?>
+                                            ₱<?php echo number_format($product['price'], 2); ?>
+                                            <?php if (!empty($product['old_price'])): ?>
+                                                <span class="old">₱<?php echo number_format($product['old_price'], 2); ?></span>
+                                            <?php endif; ?>
                                         <?php endif; ?>
                                         <span class="d-block" style="font-size:.72rem; font-family:'Barlow',sans-serif; font-weight:600; margin-top:4px; color:<?php echo $stock > 0 ? 'var(--apex-muted)' : '#ff3b5c'; ?>;">
                                             <?php echo $stock > 0 ? 'In stock: ' . $stock : 'Out of Stock'; ?>
                                         </span>
+                                        <?php if ($saleActive && !empty($saleExp)): ?>
+                                            <span class="sale-countdown d-block" data-expiry="<?php echo strtotime($saleExp); ?>" style="font-size:.68rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;color:#ff3b5c;margin-top:3px;letter-spacing:.04em;">
+                                                <i class="fas fa-clock me-1"></i><span class="cdown-text">Loading...</span>
+                                            </span>
+                                        <?php endif; ?>
                                     </div>
 
                                     <div class="product-actions">
@@ -300,6 +324,29 @@ sort($allCategories);
     <?php include 'includes/footer.php'; ?>
 
     <script>
+        // ── Sale countdown timers ─────────────────────────────────────────────
+        function updateSaleCountdowns() {
+            document.querySelectorAll('.sale-countdown[data-expiry]').forEach(el => {
+                const exp = parseInt(el.dataset.expiry) * 1000;
+                const diff = exp - Date.now();
+                const txt = el.querySelector('.cdown-text');
+                if (!txt) return;
+                if (diff <= 0) {
+                    el.style.display = 'none';
+                    return;
+                }
+                const d = Math.floor(diff / 86400000);
+                const h = Math.floor((diff % 86400000) / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                if (d > 0) txt.textContent = `Sale ends in ${d}d ${h}h ${m}m`;
+                else if (h > 0) txt.textContent = `Sale ends in ${h}h ${m}m ${s}s`;
+                else txt.textContent = `Sale ends in ${m}m ${s}s`;
+            });
+        }
+        updateSaleCountdowns();
+        setInterval(updateSaleCountdowns, 1000);
+
         function applySort(val) {
             const url = new URL(window.location.href);
             if (val) url.searchParams.set('sort', val);

@@ -21,9 +21,21 @@
         <?php else: ?>
             <div class="cart-items flex-grow-1 overflow-auto pe-2">
                 <?php
+                // Helper: compute effective (live sale) price
+                function getEffectivePriceModal($item) {
+                    $basePrice  = floatval($item['original_price'] ?? $item['price']);
+                    $salePct    = intval($item['sale_percent'] ?? 0);
+                    $saleExpiry = $item['sale_expiry'] ?? '';
+                    $saleActive = $salePct > 0 && (!empty($saleExpiry) ? strtotime($saleExpiry) > time() : true);
+                    return $saleActive ? round($basePrice * (1 - $salePct / 100), 2) : $basePrice;
+                }
+
                 $subtotal = 0;
                 foreach ($_SESSION['cart'] as $id => $item):
-                    $subtotal += ($item['price'] * $item['qty']);
+                    $effectivePrice = getEffectivePriceModal($item);
+                    $originalPrice  = floatval($item['original_price'] ?? $item['price']);
+                    $isOnSale = $effectivePrice < $originalPrice;
+                    $subtotal += ($effectivePrice * $item['qty']);
                 ?>
                     <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
                         <div style="width: 50px; height: 50px; border-radius: 6px; background: var(--apex-grey); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink: 0;">
@@ -38,7 +50,8 @@
                         <div class="flex-grow-1 min-width-0">
                             <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: .85rem;"><?php echo htmlspecialchars($item['name']); ?></h6>
                             <div class="text-muted small mt-1">
-                                <?php echo $item['qty']; ?> x ₱<?php echo number_format($item['price'], 2); ?>
+                                <?php echo $item['qty']; ?> x ₱<?php echo number_format($effectivePrice, 2); ?>
+                                <?php if ($isOnSale): ?><br><small style="color:#ff3b5c;font-weight:700;"><?php echo intval($item['sale_percent']); ?>% OFF</small><?php endif; ?>
                             </div>
                         </div>
                     </div>

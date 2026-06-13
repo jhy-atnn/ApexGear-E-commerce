@@ -21,7 +21,28 @@ if (!$product) {
     exit();
 }
 
-// 4. Handle "Add to Cart" Submission
+// Determine which of this user's Completed orders containing this product
+// are still eligible for a review (per-order review tracking).
+$reviewableOrders = [];
+if (isset($_SESSION['user']['id']) && method_exists($inv, 'getOrdersByUser')) {
+    $reviewUserIdForList = intval($_SESSION['user']['id']);
+    $allUserOrders = $inv->getOrdersByUser($reviewUserIdForList);
+    foreach ($allUserOrders as $uo) {
+        if (($uo['order_status'] ?? '') !== 'Completed') continue;
+        $items = method_exists($inv, 'getOrderItems') ? $inv->getOrderItems($uo['order_id']) : [];
+        foreach ($items as $item) {
+            if (intval($item['product_id']) === $product_id) {
+                $already = method_exists($inv, 'hasUserReviewedProductForOrder')
+                    && $inv->hasUserReviewedProductForOrder($reviewUserIdForList, $product_id, intval($uo['order_id']));
+                if (!$already) {
+                    $reviewableOrders[] = $uo;
+                }
+                break;
+            }
+        }
+    }
+}
+$selectedReviewOrderId = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
 $cartSuccess   = false;
 $cartError     = false;
 $reviewSuccess = false;
@@ -41,10 +62,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
             $_SESSION['cart'][$product_id]['qty'] += $qty;
         } else {
             $_SESSION['cart'][$product_id] = [
-                'name'  => $product['name'],
-                'price' => $product['price'],
-                'image' => $product['image'],
-                'qty'   => $qty
+                'name'           => $product['name'],
+                'price'          => $product['price'],      // original price (kept for backwards compat)
+                'original_price' => $product['price'],      // explicit original price for sale calculation
+                'sale_percent'   => $product['sale_percent'] ?? 0,
+                'sale_expiry'    => $product['sale_expiry'] ?? '',
+                'image'          => $product['image'],
+                'qty'            => $qty
             ];
         }
         $cartSuccess = true;
@@ -63,38 +87,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_product_review
         $reviewError = 'Please log in before submitting a review.';
     } else {
         $reviewUserId  = intval($_SESSION['user']['id']);
+        $reviewOrderId = intval($_POST['order_id'] ?? 0);
         $reviewRating  = intval($_POST['rating'] ?? 0);
         $reviewComment = trim($_POST['comment'] ?? '');
 
         if ($reviewRating < 1 || $reviewRating > 5) {
             $reviewError = 'Please choose a rating from 1 to 5 stars.';
+        } elseif ($reviewOrderId <= 0) {
+            $reviewError = 'Missing order reference for this review.';
         } else {
-            $hasCompletedPurchase = false;
+            // Verify this order belongs to the user, is Completed, and contains this product.
             $userOrders = method_exists($inv, 'getOrdersByUser') ? $inv->getOrdersByUser($reviewUserId) : [];
-
+            $targetOrder = null;
             foreach ($userOrders as $userOrder) {
-                if (($userOrder['order_status'] ?? '') !== 'Completed') {
-                    continue;
+                if (intval($userOrder['order_id']) === $reviewOrderId) {
+                    $targetOrder = $userOrder;
+                    break;
                 }
-                $items = method_exists($inv, 'getOrderItems') ? $inv->getOrderItems($userOrder['order_id']) : [];
+            }
+
+            $hasCompletedPurchase = false;
+            if ($targetOrder && ($targetOrder['order_status'] ?? '') === 'Completed') {
+                $items = method_exists($inv, 'getOrderItems') ? $inv->getOrderItems($reviewOrderId) : [];
                 foreach ($items as $item) {
                     if (intval($item['product_id']) === $product_id) {
                         $hasCompletedPurchase = true;
-                        break 2;
+                        break;
                     }
                 }
             }
 
             if (!$hasCompletedPurchase) {
                 $reviewError = 'You can review this product after completing an order for it.';
-            } elseif (method_exists($inv, 'hasUserReviewedProduct') && $inv->hasUserReviewedProduct($reviewUserId, $product_id)) {
-                $reviewError = 'You already submitted a review for this product.';
+            } elseif (method_exists($inv, 'hasUserReviewedProductForOrder') && $inv->hasUserReviewedProductForOrder($reviewUserId, $product_id, $reviewOrderId)) {
+                $reviewError = 'You already submitted a review for this product on this order.';
             } else {
                 require_once __DIR__ . '/database/db_connect.php';
                 $db   = new Database();
                 $conn = $db->getConnection();
-                $stmt = $conn->prepare("INSERT INTO reviews_tbl (user_id, product_id, rating, comment) VALUES (?, ?, ?, ?)");
-                $stmt->bind_param("iiis", $reviewUserId, $product_id, $reviewRating, $reviewComment);
+                $stmt = $conn->prepare("INSERT INTO reviews_tbl (user_id, product_id, order_id, rating, comment) VALUES (?, ?, ?, ?, ?)");
+                $stmt->bind_param("iiiis", $reviewUserId, $product_id, $reviewOrderId, $reviewRating, $reviewComment);
                 $reviewSuccess = $stmt->execute();
                 $stmt->close();
                 $db->closeConnection();
@@ -821,8 +853,38 @@ function renderStars($rating, $max = 5) {
                         <h5 class="fw-bold text-dark mb-3" style="font-family:'Barlow Condensed', sans-serif; text-transform:uppercase;">
                             Submit a Review
                         </h5>
+                        <?php if (empty($reviewableOrders)): ?>
+                            <p class="text-muted small mb-0">
+                                You can review this product after completing an order for it
+                                (and once you haven't already reviewed it for that order).
+                            </p>
+                        <?php else: ?>
                         <form method="POST" action="product.php?id=<?php echo $product_id; ?>#submit-review">
                             <input type="hidden" name="submit_product_review" value="1">
+
+                            <?php if (count($reviewableOrders) === 1): ?>
+                                <input type="hidden" name="order_id" value="<?php echo intval($reviewableOrders[0]['order_id']); ?>">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-uppercase text-muted">Reviewing order</label>
+                                    <div class="form-control-plaintext small fw-semibold">
+                                        Ref: <?php echo htmlspecialchars($reviewableOrders[0]['reference_number'] ?? $reviewableOrders[0]['order_id']); ?>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-uppercase text-muted">Which order is this review for?</label>
+                                    <select class="form-select" name="order_id" required>
+                                        <option value="">Choose order</option>
+                                        <?php foreach ($reviewableOrders as $ro): ?>
+                                            <option value="<?php echo intval($ro['order_id']); ?>"
+                                                <?php echo ($selectedReviewOrderId === intval($ro['order_id'])) ? 'selected' : ''; ?>>
+                                                Ref: <?php echo htmlspecialchars($ro['reference_number'] ?? $ro['order_id']); ?>
+                                                (<?php echo date('M d, Y', strtotime($ro['created_at'])); ?>)
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            <?php endif; ?>
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold small text-uppercase text-muted">Rating</label>
@@ -844,6 +906,7 @@ function renderStars($rating, $max = 5) {
 
                             <button type="submit" class="btn-apex px-4 py-2">Submit Review</button>
                         </form>
+                        <?php endif; ?>
                     </div>
 
                     <!-- First 5 reviews -->

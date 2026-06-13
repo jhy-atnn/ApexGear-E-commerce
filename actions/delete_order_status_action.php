@@ -48,6 +48,16 @@ foreach ($selectedIds as $selectedId) {
 }
 
 if ($deletedCount > 0) {
+    // Persist deleted order IDs in session so they stay hidden from
+    // order_status listing and notifications after a page refresh,
+    // without modifying orders_tbl, order_items_tbl, or any other DB data.
+    if (!isset($_SESSION['hidden_order_status_ids']) || !is_array($_SESSION['hidden_order_status_ids'])) {
+        $_SESSION['hidden_order_status_ids'] = [];
+    }
+    foreach ($deletedIds as $did) {
+        $_SESSION['hidden_order_status_ids'][$did] = true;
+    }
+
     echo json_encode([
         'success'     => true,
         'message'     => $deletedCount . ' order status entr' . ($deletedCount === 1 ? 'y' : 'ies') . ' deleted.',

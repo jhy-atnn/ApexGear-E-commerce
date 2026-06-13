@@ -15,6 +15,16 @@ if (isset($_SESSION['user']['id'])) {
 
     if (method_exists($inv, 'getOrdersByUser')) {
         $orders = $inv->getOrdersByUser($userId);
+
+        // Filter out orders whose status entry was deleted in this session
+        // (without modifying the database) so they don't reappear on refresh.
+        $hiddenIds = $_SESSION['hidden_order_status_ids'] ?? [];
+        if (!empty($hiddenIds)) {
+            $orders = array_values(array_filter($orders, function ($ord) use ($hiddenIds) {
+                return !isset($hiddenIds[intval($ord['order_id'])]);
+            }));
+        }
+
         foreach ($orders as $ord) {
             if (method_exists($inv, 'getOrderItems')) {
                 $order_items_map[intval($ord['order_id'])] = $inv->getOrderItems($ord['order_id']);
@@ -168,7 +178,7 @@ if (isset($_SESSION['user']['id'])) {
                                             Submit a review before deleting this completed order.
                                         </div>
                                         <?php if ($firstProductId > 0): ?>
-                                            <a class="btn btn-sm btn-primary" href="product.php?id=<?php echo $firstProductId; ?>#submit-review">
+                                            <a class="btn btn-sm btn-primary" href="product.php?id=<?php echo $firstProductId; ?>&order_id=<?php echo intval($order['order_id']); ?>#submit-review">
                                                 <i class="fas fa-star me-1"></i> Submit a Review
                                             </a>
                                         <?php endif; ?>
