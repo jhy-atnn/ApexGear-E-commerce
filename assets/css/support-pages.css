@@ -1,0 +1,175 @@
+/* ============================================================
+   SUPPORT PAGES — FAQ / Shipping / Returns / Tracking /
+   Warranty / Privacy. Built on ApeX Gear design tokens.
+   ============================================================ */
+
+/* ---------- Page hero ---------- */
+.support-hero {
+    background: linear-gradient(135deg, var(--apex-dark) 0%, var(--apex-blue) 55%, var(--apex-blue-lt) 100%);
+    padding: 72px 0 64px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.support-hero::after {
+    content: "";
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 280px; height: 280px;
+    background: rgba(0, 194, 255, .12);
+    border-radius: 50%;
+}
+.support-hero-eyebrow {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: .82rem;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--apex-accent);
+    margin-bottom: 14px;
+}
+.support-hero-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 3rem;
+    text-transform: uppercase;
+    color: var(--apex-white);
+    line-height: 1;
+    margin-bottom: 16px;
+}
+.support-hero-title em {
+    font-style: normal;
+    color: var(--apex-accent);
+}
+.support-hero-sub {
+    color: rgba(255, 255, 255, .72);
+    font-size: 1rem;
+    max-width: 620px;
+    margin: 0 auto;
+}
+
+/* ---------- Generic section ---------- */
+.support-section { padding: 64px 0 80px; background: var(--apex-grey); }
+.support-intro {
+    text-align: center;
+    color: var(--apex-muted);
+    max-width: 640px;
+    margin: 0 auto 36px;
+}
+.support-prose { background: var(--apex-white); border: 1px solid var(--apex-border); border-radius: 12px; padding: 32px 36px; margin-top: 28px; }
+.support-prose h3 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--apex-blue);
+    font-size: 1.25rem;
+    margin: 22px 0 8px;
+}
+.support-prose h3:first-child { margin-top: 0; }
+.support-prose p { color: var(--apex-text); line-height: 1.7; margin-bottom: 0; }
+.support-prose a { color: var(--apex-blue); font-weight: 600; }
+
+/* ---------- FAQ accordion ---------- */
+.faq-item { background: var(--apex-white); border: 1px solid var(--apex-border); border-radius: 10px; margin-bottom: 14px; overflow: hidden; transition: box-shadow .25s; }
+.faq-item.open { box-shadow: 0 8px 28px rgba(11, 47, 168, .12); }
+.faq-q { width: 100%; display: flex; align-items: center; gap: 14px; background: none; border: none; padding: 18px 22px; text-align: left; cursor: pointer; }
+.faq-cat {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: .68rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--apex-accent);
+    background: var(--apex-dark);
+    padding: 4px 10px;
+    border-radius: 20px;
+    flex-shrink: 0;
+}
+.faq-q-text { flex: 1; font-weight: 600; color: var(--apex-text); }
+.faq-chevron { color: var(--apex-muted); transition: transform .3s; }
+.faq-item.open .faq-chevron { transform: rotate(180deg); color: var(--apex-blue); }
+.faq-a { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
+.faq-item.open .faq-a { max-height: 400px; }
+.faq-a p { padding: 0 22px 20px 22px; color: var(--apex-muted); line-height: 1.7; margin: 0; }
+
+/* ---------- CTA box ---------- */
+.support-cta-box {
+    display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;
+    background: linear-gradient(135deg, var(--apex-blue) 0%, var(--apex-dark) 100%);
+    border-radius: 14px; padding: 32px 40px; margin-top: 44px;
+}
+.support-cta-text h3 { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; text-transform: uppercase; color: var(--apex-white); margin: 0 0 4px; }
+.support-cta-text p { color: rgba(255, 255, 255, .7); margin: 0; }
+
+/* ---------- Rate table ---------- */
+.support-rate-table { background: var(--apex-white); border: 1px solid var(--apex-border); border-radius: 12px; padding: 28px 32px; margin-top: 28px; }
+.support-rate-table h3 { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; text-transform: uppercase; color: var(--apex-blue); margin-bottom: 16px; }
+.support-rate-table table { margin: 0; }
+.support-rate-table thead th { font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .04em; color: var(--apex-dark); border-bottom: 2px solid var(--apex-border); }
+.support-rate-table td { color: var(--apex-text); vertical-align: middle; }
+
+/* ---------- Steps ---------- */
+.support-steps { display: grid; gap: 16px; margin-top: 8px; }
+.support-step { display: flex; gap: 18px; align-items: flex-start; background: var(--apex-white); border: 1px solid var(--apex-border); border-radius: 10px; padding: 20px 24px; }
+.support-step-num {
+    flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%;
+    background: var(--apex-blue); color: var(--apex-white);
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 1.3rem;
+    display: flex; align-items: center; justify-content: center;
+}
+.support-step-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; text-transform: uppercase; color: var(--apex-text); margin-bottom: 4px; }
+.support-step p { color: var(--apex-muted); margin: 0; line-height: 1.6; }
+
+/* ---------- Order tracking ---------- */
+.track-box { background: var(--apex-white); border: 1px solid var(--apex-border); border-radius: 14px; padding: 36px 40px; max-width: 520px; margin: 0 auto; box-shadow: 0 10px 30px rgba(11, 47, 168, .08); }
+.track-form label { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: .8rem; color: var(--apex-dark); display: block; margin: 16px 0 6px; }
+.track-form label:first-child { margin-top: 0; }
+.track-form .form-control { border: 1px solid var(--apex-border); border-radius: 8px; padding: 12px 14px; }
+.track-form .form-control:focus { border-color: var(--apex-accent); box-shadow: 0 0 0 .2rem rgba(0, 194, 255, .15); }
+.track-help { text-align: center; margin-top: 22px; }
+.track-help a { color: var(--apex-blue); font-weight: 600; }
+.track-stages { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; margin-top: 40px; }
+.track-stage { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 110px; color: var(--apex-muted); }
+.track-stage i { width: 54px; height: 54px; border-radius: 50%; background: var(--apex-white); border: 1px solid var(--apex-border); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: var(--apex-blue); }
+.track-stage span { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; font-size: .82rem; }
+
+@media (max-width: 575px) {
+    .support-hero-title { font-size: 2.2rem; }
+    .support-cta-box { padding: 26px 24px; }
+}
+
+
+/* ---------- Feature cards (blue container, banner-colored) ---------- */
+.support-section .why-card {
+    background: linear-gradient(135deg, var(--apex-dark) 0%, var(--apex-blue) 55%, var(--apex-blue-lt) 100%);
+    border: 1px solid rgba(0, 194, 255, .25);
+    border-radius: 14px;
+    padding: 30px 28px;
+    height: 100%;
+    box-shadow: 0 10px 30px rgba(11, 47, 168, .18);
+    transition: transform .25s, box-shadow .25s;
+}
+.support-section .why-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(11, 47, 168, .28);
+}
+.support-section .why-card i {
+    color: var(--apex-accent);
+    font-size: 1.9rem;
+    margin-bottom: 14px;
+}
+.support-section .why-card .why-card-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--apex-white);
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+}
+.support-section .why-card p {
+    color: rgba(255, 255, 255, .8);
+    line-height: 1.65;
+    margin: 0;
+}

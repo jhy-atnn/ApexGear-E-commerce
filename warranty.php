@@ -1,6 +1,4 @@
-<?php
-require_once __DIR__ . '/includes/storage.php';
-?>
+<?php $currentPage = 'warranty'; ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,74 +11,67 @@ require_once __DIR__ . '/includes/storage.php';
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
+    <link href="assets/css/support-pages.css" rel="stylesheet" />
 </head>
 
 <body>
-    <?php include_once __DIR__ . '/includes/cookie_notif.php'; ?>
+    <?php include_once __DIR__ . '/includes\cookie_notif.php'; ?>
 
+    <!-- INJECT NAVBAR -->
     <?php
-    $currentPage = '';
-    include 'includes/navbar.php';
+    $currentPage = 'warranty';
+    include 'includes\navbar.php';
     ?>
 
-    <section class="py-5" style="background: rgba(7, 10, 28, 0.95); color: white;">
-        <div class="container">
-            <div class="row align-items-center gy-4">
-                <div class="col-lg-8">
-                    <h1 class="display-6 fw-bold">Product Warranty</h1>
-                    <p class="lead text-muted">Understand the warranty coverage for your purchase and how to file a claim if needed.</p>
-                </div>
-                <div class="col-lg-4 text-lg-end d-flex flex-column align-items-lg-end gap-3">
-                    <a href="index.php" class="btn btn-outline-light btn-lg">Back to Home</a>
-                   
-                </div>
-            </div>
+    <!-- PAGE HERO -->
+    <section class="support-hero">
+        <div class="container" style="position:relative; z-index:1;">
+            <div class="support-hero-eyebrow">Protection</div>
+            <h1 class="support-hero-title">Warranty <em>Coverage</em></h1>
+            <p class="support-hero-sub">Every product we carry is backed by a warranty and a team that knows tech inside-out.</p>
         </div>
     </section>
 
-    <main class="py-5">
-        <div class="container">
-            <div class="row g-5">
-                <div class="col-lg-8">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body">
-                            <h2 class="h4 mb-3">Warranty Overview</h2>
-                            <p>Most products purchased from ApeX Gear come with a 6-month limited warranty covering manufacturing defects and hardware failures.</p>
-                            <h2 class="h5 mt-4">What is covered?</h2>
-                            <ul>
-                                <li>Defective components or parts.</li>
-                                <li>Non-functioning electronics not caused by physical damage.</li>
-                                <li>Failure due to improper assembly if sold as pre-owned or refurbished with warranty.</li>
-                            </ul>
-                            <h2 class="h5 mt-4">What is not covered?</h2>
-                            <ul>
-                                <li>Damage caused by drops, spills, or misuse.</li>
-                                <li>Cosmetic wear and tear.</li>
-                                <li>Issues caused by third-party repairs or unauthorized modifications.</li>
-                            </ul>
-                            <h2 class="h5 mt-4">How to claim warranty</h2>
-                            <p>Contact support with your order number, product details, and description of the issue. We will provide steps for diagnostics, repair, or replacement.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body">
-                            <h5 class="card-title">Keep these ready</h5>
-                            <ul class="list-unstyled mb-0">
-                                <li class="mb-2"><i class="fas fa-receipt me-2 text-apex-blue"></i>Order invoice</li>
-                                <li class="mb-2"><i class="fas fa-barcode me-2 text-apex-blue"></i>Product serial or model number</li>
-                                <li class="mb-2"><i class="fas fa-calendar-check me-2 text-apex-blue"></i>Date of purchase</li>
-                                <li><i class="fas fa-comments me-2 text-apex-blue"></i>Problem description</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+    <section class="support-section">
+        <div class="container" style="max-width:900px;">
+            <div class="text-center mb-2 fade-up">
+                <h2 class="sec-title">Warranty <span>Coverage</span></h2>
             </div>
+            <div class="sec-divider mx-auto fade-up"></div>
+            <p class="support-intro fade-up">We stand behind every product we sell — with real warranties and honest support.</p>
+            <div class="row g-4 fade-up">
+                <div class="col-md-6">
+                    <div class="why-card" style="height:100%;">
+                        <i class="fas fa-shield-alt"></i>
+                        <div class="why-card-title">Manufacturer Warranty</div>
+                        <p>Brand-new items carry the full manufacturer warranty, honored through our authorized partner network.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="why-card" style="height:100%;">
+                        <i class="fas fa-certificate"></i>
+                        <div class="why-card-title">ApeX Certified Warranty</div>
+                        <p>Certified pre-owned units include a limited ApeX warranty covering functional defects.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="why-card" style="height:100%;">
+                        <i class="fas fa-screwdriver-wrench"></i>
+                        <div class="why-card-title">Repair &amp; Service</div>
+                        <p>Our in-house tech team handles diagnostics, repairs, and warranty claims directly.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="why-card" style="height:100%;">
+                        <i class="fas fa-rotate"></i>
+                        <div class="why-card-title">Replacement Units</div>
+                        <p>Where repair isn't possible within the warranty period, we provide a replacement or store credit.</p>
+                    </div>
+                </div></div><div class="support-prose fade-up"><h3>Coverage Periods</h3><p>Warranty periods vary by product and brand — typically 12 months for new laptops and desktops, and 3–6 months for certified pre-owned units. The exact term is listed on each product page.</p><h3>What's Covered</h3><p>Manufacturing defects, hardware failures under normal use, and dead-on-arrival units. Coverage excludes physical/liquid damage, unauthorized modifications, and normal wear.</p><h3>How to Claim</h3><p>Contact support with your order number and a description of the issue. Our tech team will guide you through diagnostics and arrange repair, replacement, or refund as applicable.</p></div>
         </div>
-    </main>
+    </section>
 
-    <?php include 'includes/footer.php'; ?>
+    <?php include 'includes\footer.php'; ?>
 </body>
 
 </html>

@@ -1,6 +1,4 @@
-<?php
-require_once __DIR__ . '/includes/storage.php';
-?>
+<?php $currentPage = 'faq'; ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,104 +11,125 @@ require_once __DIR__ . '/includes/storage.php';
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
+    <link href="assets/css/support-pages.css" rel="stylesheet" />
 </head>
 
 <body>
-    <?php include_once __DIR__ . '/includes/cookie_notif.php'; ?>
+    <?php include_once __DIR__ . '/includes\cookie_notif.php'; ?>
 
+    <!-- INJECT NAVBAR -->
     <?php
-    $currentPage = '';
-    include 'includes/navbar.php';
+    $currentPage = 'faq';
+    include 'includes\navbar.php';
     ?>
 
-    <section class="py-5" style="background: rgba(7, 10, 28, 0.95); color: white;">
+    <!-- PAGE HERO -->
+    <section class="support-hero">
+        <div class="container" style="position:relative; z-index:1;">
+            <div class="support-hero-eyebrow">Help Center</div>
+            <h1 class="support-hero-title">Frequently Asked <em>Questions</em></h1>
+            <p class="support-hero-sub">Everything you need to know about ordering, payments, shipping, and support at ApeX Gear.</p>
+        </div>
+    </section>
+
+    <section class="support-section">
         <div class="container">
-            <div class="row align-items-center gy-4">
-                <div class="col-lg-8">
-                    <h1 class="display-6 fw-bold">Frequently Asked Questions</h1>
-                    <p class="lead text-muted">Find quick answers about ordering, shipping, payment, and returns at ApeX Gear.</p>
+            <div class="text-center mb-2 fade-up">
+                <h2 class="sec-title">Frequently Asked <span>Questions</span></h2>
+            </div>
+            <div class="sec-divider mx-auto fade-up"></div>
+            <div class="faq-wrap" style="max-width:820px; margin:0 auto;">
+                    <div class="faq-item fade-up">
+                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                            <span class="faq-cat">Ordering</span>
+                            <span class="faq-q-text">How do I place an order?</span>
+                            <i class="fas fa-chevron-down faq-chevron"></i>
+                        </button>
+                        <div class="faq-a"><p>Browse our catalog, click <strong>View Details</strong> on any in-stock product, then add it to your cart and proceed to checkout. You can check out as a guest or log in for faster future orders.</p></div>
+                    </div>
+                    <div class="faq-item fade-up">
+                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                            <span class="faq-cat">Ordering</span>
+                            <span class="faq-q-text">Can I modify or cancel my order after placing it?</span>
+                            <i class="fas fa-chevron-down faq-chevron"></i>
+                        </button>
+                        <div class="faq-a"><p>Yes — as long as the order has not yet been dispatched. Contact our support team immediately and we will update or cancel it for you.</p></div>
+                    </div>
+                    <div class="faq-item fade-up">
+                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                            <span class="faq-cat">Payments</span>
+                            <span class="faq-q-text">What payment methods do you accept?</span>
+                            <i class="fas fa-chevron-down faq-chevron"></i>
+                        </button>
+                        <div class="faq-a"><p>We accept GCash, PayMaya, major credit/debit cards, and Cash on Delivery (COD). All online payments are secured with 256-bit SSL encryption.</p></div>
+                    </div>
+                    <div class="faq-item fade-up">
+                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                            <span class="faq-cat">Payments</span>
+                            <span class="faq-q-text">Is Cash on Delivery available nationwide?</span>
+                            <i class="fas fa-chevron-down faq-chevron"></i>
+                        </button>
+                        <div class="faq-a"><p>COD is available in most serviceable areas across the Philippines. Availability is confirmed at checkout based on your delivery address.</p></div>
+                    </div>
+                    <div class="faq-item fade-up">
+                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                            <span class="faq-cat">Shipping</span>
+                            <span class="faq-q-text">How long does delivery take?</span>
+                            <i class="fas fa-chevron-down faq-chevron"></i>
+                        </button>
+                        <div class="faq-a"><p>Most in-stock orders arrive within 1–3 business days via our trusted courier partners. Same-day dispatch applies to in-stock items ordered before cut-off.</p></div>
+                    </div>
+                    <div class="faq-item fade-up">
+                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                            <span class="faq-cat">Products</span>
+                            <span class="faq-q-text">Are your products authentic?</span>
+                            <i class="fas fa-chevron-down faq-chevron"></i>
+                        </button>
+                        <div class="faq-a"><p>100%. Every item is genuine, sourced directly from authorized distributors and brand partners, and passes our internal quality check before listing.</p></div>
+                    </div>
+                    <div class="faq-item fade-up">
+                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                            <span class="faq-cat">Products</span>
+                            <span class="faq-q-text">Do you sell pre-owned units?</span>
+                            <i class="fas fa-chevron-down faq-chevron"></i>
+                        </button>
+                        <div class="faq-a"><p>Yes. We offer certified pre-owned and refurbished units, clearly labeled as such, each inspected and vetted by our in-house tech team.</p></div>
+                    </div>
+                    <div class="faq-item fade-up">
+                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                            <span class="faq-cat">Support</span>
+                            <span class="faq-q-text">How can I reach customer support?</span>
+                            <i class="fas fa-chevron-down faq-chevron"></i>
+                        </button>
+                        <div class="faq-a"><p>Our tech-savvy team is available 24/7 via live chat, email, or phone. We are happy to help you pick the right gear or resolve any issue.</p></div>
+                    </div>
+            </div>
+            <div class="support-cta-box fade-up">
+                <div class="support-cta-text">
+                    <h3>Still have questions?</h3>
+                    <p>Our support team is here 24/7 to help with anything we missed.</p>
                 </div>
-                <div class="col-lg-4 text-lg-end d-flex flex-column align-items-lg-end gap-3">
-                    <a href="index.php" class="btn btn-outline-light btn-lg">Back to Home</a>
-                   
-                </div>
+                <a href="contact.php" class="btn-apex">Contact Support</a>
             </div>
         </div>
     </section>
 
-    <main class="py-5">
-        <div class="container">
-            <div class="row g-5">
-                <div class="col-lg-8">
-                    <div class="accordion" id="faqAccordion">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="faqOne">
-                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                    How do I place an order?
-                                </button>
-                            </h2>
-                            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="faqOne" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body">
-                                    Browse our catalog, add items to your cart, and proceed to checkout. You can pay with credit card, debit card, GCash, Maya, or Cash on Delivery where available.
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="faqTwo">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                                    Can I change my delivery address after ordering?
-                                </button>
-                            </h2>
-                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="faqTwo" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body">
-                                    If your order has not yet shipped, please contact our support team immediately with your order number. Once the order is dispatched, we may not be able to update the address.
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="faqThree">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                                    What payment methods do you accept?
-                                </button>
-                            </h2>
-                            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="faqThree" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body">
-                                    We accept major credit cards, debit cards, GCash, Maya, and Cash on Delivery for eligible orders. Payment options are shown at checkout.
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="faqFour">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                                    How can I track my order?
-                                </button>
-                            </h2>
-                            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="faqFour" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body">
-                                    After shipping, we send a tracking number by email or SMS. You can also visit the Order Tracking page for status updates.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body">
-                            <h5 class="card-title">Need more help?</h5>
-                            <p class="text-muted">Our team is ready to assist with orders, payments, shipping, and returns.</p>
-                            <ul class="list-unstyled mb-0">
-                                <li class="mb-2"><i class="fas fa-phone-alt me-2 text-apex-blue"></i>+1 (234) 567-890</li>
-                                <li class="mb-2"><i class="fas fa-envelope me-2 text-apex-blue"></i>support@apexgear.com</li>
-                                <li><i class="fas fa-clock me-2 text-apex-blue"></i>Mon–Sat 9AM–9PM</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
+    <script>
+        function toggleFaq(btn) {
+            const item = btn.closest('.faq-item');
+            const isOpen = item.classList.contains('open');
+            document.querySelectorAll('.faq-item.open').forEach(el => {
+                el.classList.remove('open');
+                el.querySelector('.faq-q').setAttribute('aria-expanded', 'false');
+            });
+            if (!isOpen) {
+                item.classList.add('open');
+                btn.setAttribute('aria-expanded', 'true');
+            }
+        }
+    </script>
 
-    <?php include 'includes/footer.php'; ?>
+    <?php include 'includes\footer.php'; ?>
 </body>
 
 </html>

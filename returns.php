@@ -1,6 +1,4 @@
-<?php
-require_once __DIR__ . '/includes/storage.php';
-?>
+<?php $currentPage = 'returns'; ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,70 +11,55 @@ require_once __DIR__ . '/includes/storage.php';
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
+    <link href="assets/css/support-pages.css" rel="stylesheet" />
 </head>
 
 <body>
-    <?php include_once __DIR__ . '/includes/cookie_notif.php'; ?>
+    <?php include_once __DIR__ . '/includes\cookie_notif.php'; ?>
 
+    <!-- INJECT NAVBAR -->
     <?php
-    $currentPage = '';
-    include 'includes/navbar.php';
+    $currentPage = 'returns';
+    include 'includes\navbar.php';
     ?>
 
-    <section class="py-5" style="background: rgba(7, 10, 28, 0.95); color: white;">
-        <div class="container">
-            <div class="row align-items-center gy-4">
-                <div class="col-lg-8">
-                    <h1 class="display-6 fw-bold">Return Policy</h1>
-                    <p class="lead text-muted">Learn how to return an item, what conditions apply, and how to get a refund or replacement.</p>
-                </div>
-                <div class="col-lg-4 text-lg-end d-flex flex-column align-items-lg-end gap-3">
-                    <a href="index.php" class="btn btn-outline-light btn-lg">Back to Home</a>
-                   
-                </div>
-            </div>
+    <!-- PAGE HERO -->
+    <section class="support-hero">
+        <div class="container" style="position:relative; z-index:1;">
+            <div class="support-hero-eyebrow">Returns</div>
+            <h1 class="support-hero-title">Easy <em>Returns</em></h1>
+            <p class="support-hero-sub">Our hassle-free 30-day return policy means you can shop with total confidence.</p>
         </div>
     </section>
 
-    <main class="py-5">
-        <div class="container">
-            <div class="row g-5">
-                <div class="col-lg-8">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body">
-                            <h2 class="h4 mb-3">Return Window</h2>
-                            <p>Items can be returned within 7 days from delivery, provided they are unused, in original condition, and accompanied by the original packaging.</p>
-                            <h2 class="h5 mt-4">How to Request a Return</h2>
-                            <ol>
-                                <li>Contact support by email or phone with your order number and reason for return.</li>
-                                <li>Wait for return approval and shipping instructions from our support team.</li>
-                                <li>Ship the item back using a trusted courier and keep the tracking number.</li>
-                            </ol>
-                            <h2 class="h5 mt-4">Refunds and Replacements</h2>
-                            <p>Once we confirm receipt and inspect the item, we process refunds within 5 business days. Replacements are available where stock permits.</p>
-                            <h2 class="h5 mt-4">Non-Returnable Items</h2>
-                            <p>Opened software, damaged items from misuse, and products missing original accessories may not qualify for return.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body">
-                            <h5 class="card-title">Return tips</h5>
-                            <ul class="list-unstyled mb-0">
-                                <li class="mb-2"><i class="fas fa-box-open me-2 text-apex-blue"></i>Keep original packaging.</li>
-                                <li class="mb-2"><i class="fas fa-receipt me-2 text-apex-blue"></i>Include your order invoice.</li>
-                                <li class="mb-2"><i class="fas fa-shield-alt me-2 text-apex-blue"></i>Use a trackable courier service.</li>
-                                <li><i class="fas fa-headset me-2 text-apex-blue"></i>Contact support before shipping.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+    <section class="support-section">
+        <div class="container" style="max-width:900px;">
+            <div class="text-center mb-2 fade-up">
+                <h2 class="sec-title">Returns &amp;  <span>Refunds</span></h2>
             </div>
+            <div class="sec-divider mx-auto fade-up"></div>
+            <p class="support-intro fade-up">Changed your mind? No problem. Our hassle-free policy has you covered.</p>
+            <div class="support-steps fade-up">
+                <div class="support-step">
+                    <div class="support-step-num">1</div>
+                    <div><div class="support-step-title">Request a Return</div><p>Contact support within the return window with your order number and reason for return.</p></div>
+                </div>
+                <div class="support-step">
+                    <div class="support-step-num">2</div>
+                    <div><div class="support-step-title">Pack the Item</div><p>Repack the product in its original packaging with all accessories and freebies included.</p></div>
+                </div>
+                <div class="support-step">
+                    <div class="support-step-num">3</div>
+                    <div><div class="support-step-title">Ship It Back</div><p>We arrange pickup or provide a drop-off point through our courier partners.</p></div>
+                </div>
+                <div class="support-step">
+                    <div class="support-step-num">4</div>
+                    <div><div class="support-step-title">Get Your Refund</div><p>Once inspected and approved, your refund is processed to your original payment method.</p></div>
+                </div></div><div class="support-prose fade-up"><h3>Return Window</h3><p>Eligible products may be returned within <strong>30 days</strong> for brand-new items and <strong>7 days</strong> for certified pre-owned units, provided they are in resalable condition.</p><h3>Non-Returnable Items</h3><p>Software, digital licenses, and items damaged through misuse are not eligible for return. Opened consumables may be subject to inspection.</p><h3>Refund Timeline</h3><p>Approved refunds are processed within 5–7 business days. Card refunds may take an additional billing cycle to reflect.</p></div>
         </div>
-    </main>
+    </section>
 
-    <?php include 'includes/footer.php'; ?>
+    <?php include 'includes\footer.php'; ?>
 </body>
 
 </html>

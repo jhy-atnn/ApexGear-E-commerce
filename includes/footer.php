@@ -32,11 +32,11 @@
                 <div class="footer-heading">Support</div>
                 <ul>
                     <li><a href="faq.php">FAQ</a></li>
-                    <li><a href="shipping_policy.php">Shipping Policy</a></li>
+                    <li><a href="shipping.php">Shipping Policy</a></li>
                     <li><a href="returns.php">Returns</a></li>
-                    <li><a href="order_tracking.php">Order Tracking</a></li>
+                    <li><a href="order-tracking.php">Order Tracking</a></li>
                     <li><a href="warranty.php">Warranty</a></li>
-                    <li><a href="privacy_policy.php">Privacy Policy</a></li>
+                    <li><a href="privacy.php">Privacy Policy</a></li>
                 </ul>
             </div>
             <div class="col-md-6 col-lg-3">
