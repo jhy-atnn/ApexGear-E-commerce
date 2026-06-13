@@ -72,6 +72,10 @@ if (!isset($inventoryManager)) {
                         <?php echo isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'qty')) : 0;
                         ?></span>
                 </a>
+                <?php if (isset($_SESSION['user'])): ?>
+                    <a href="javascript:void(0)" class="order-status-link ms-3" aria-label="Order Status" style="position:relative; cursor:pointer; color: rgba(255, 255, 255, .75);" title="Order Status">
+                    </a>
+                <?php endif; ?>
                     <div class="profile-btn-wrap ms-3">
                         <button class="profile-btn" id="profileToggle" onclick="toggleProfilePanel(event)">
                             <span class="profile-avatar"><?php echo !empty($_SESSION['user']['profile_picture']) ? '<img src="' . htmlspecialchars($_SESSION['user']['profile_picture']) . '" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">' : htmlspecialchars($_SESSION['user']['avatar'] ?? 'A'); ?></span>
@@ -89,6 +93,7 @@ if (!isset($inventoryManager)) {
 
 <?php include_once __DIR__ . '/cart_modal.php'; ?>
 <?php include_once __DIR__ . '/favorites_modal.php'; ?>
+<?php include_once __DIR__ . '/order_status.php'; ?>
 <?php include_once __DIR__ . '/user_profile_modal.php'; ?>
 
 

@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-require_once 'database\db_connect.php'; 
+require_once __DIR__ . '/database/db_connect.php';
 
 $cart_items = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? $_SESSION['cart'] : [];
 

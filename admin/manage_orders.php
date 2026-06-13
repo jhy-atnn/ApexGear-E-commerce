@@ -1,33 +1,81 @@
 <?php
-require_once __DIR__ . '/../includes/storage.php';
+session_start();
+if (!isset($_SESSION['admin'])) {
+    header("Location: ../admingear.php");
+    exit;
+}
+
+// Ensure strict OOP logic
 require_once __DIR__ . '/../classes/Inventory.php';
+require_once __DIR__ . '/../database/db_connect.php';
 
 $status_message = '';
 $status_class   = 'alert-info';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
     if (isset($_POST['update_status'])) {
         $order_id     = intval($_POST['order_id']     ?? 0);
         $order_status = trim($_POST['order_status']   ?? '');
         $remarks      = trim($_POST['remarks']        ?? '');
-        $allowed      = ['Delivered', 'Canceled', 'On Process', 'Shipped'];
+        
+        // Allowed statuses matching your tracking modal progress steps
+        $allowed      = ['Pending', 'On Process', 'Shipped', 'Delivered', 'Canceled', 'Completed'];
 
         if ($order_id > 0 && in_array($order_status, $allowed, true)) {
             $inv = new Inventory();
-            $ok  = $inv->updateOrderStatus($order_id, $order_status, $remarks);
-            $status_message = $ok ? 'Order status updated.' : 'Order not found.';
-            $status_class   = $ok ? 'alert-success' : 'alert-danger';
+            $ok  = $inv->   ($order_id, $order_status, $remarks);
+            
+            if ($ok) {
+                $status_message = 'Order status successfully updated to ' . htmlspecialchars($order_status) . '.';
+                $status_class   = 'alert-success';
+                
+                // ── NOTIFICATION SYSTEM TRIGGER ──
+                $db = new Database();
+                $conn = $db->getConnection();
+                
+                // Fetch the user_id and reference number for this specific order
+                $fetchStmt = $conn->prepare("SELECT user_id, reference_number FROM orders_tbl WHERE order_id = ?");
+                $fetchStmt->bind_param("i", $order_id);
+                $fetchStmt->execute();
+                $res = $fetchStmt->get_result();
+                
+                if ($row = $res->fetch_assoc()) {
+                    $user_id = $row['user_id'];
+                    $ref = $row['reference_number'];
+                    
+                    // Verify it is a registered user (not a guest checkout) before sending notification
+                    if (!empty($user_id)) {
+                        // Construct the notification message
+                        $msg = "Your order ({$ref}) status has been updated to: {$order_status}.";
+                        if (!empty($remarks)) {
+                            $msg .= " Note: " . $remarks;
+                        }
+                        
+                        // Insert directly into the notifications_tbl
+                        $notifStmt = $conn->prepare("INSERT INTO notifications_tbl (user_id, message) VALUES (?, ?)");
+                        $notifStmt->bind_param("is", $user_id, $msg);
+                        $notifStmt->execute();
+                    }
+                }
+                $db->closeConnection();
+                // ─────────────────────────────────
+                
+            } else {
+                $status_message = 'Failed to update order.';
+                $status_class   = 'alert-danger';
+            }
         } else {
-            $status_message = 'Invalid order data.';
+            $status_message = 'Invalid order data or status.';
             $status_class   = 'alert-danger';
         }
     }
 }
 
+// Fetch all orders for the admin table
 $inv    = new Inventory();
 $orders = $inv->getAllOrders();
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 

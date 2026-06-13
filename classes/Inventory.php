@@ -152,9 +152,51 @@ class Inventory
     }
 
     // Temporary mock for Orders to prevent crashes until we do the Orders module
-    public function getAllOrders()
-    {
-        return [];
+// 1. FOR ADMIN: Fetch all orders for the management dashboard
+    public function getAllOrders() {
+        // Fetch orders, user details, and the total item count in one query
+        $query = "
+            SELECT o.*, u.first_name, u.last_name, u.email, u.username,
+                   (SELECT SUM(quantity) FROM order_items_tbl WHERE order_id = o.order_id) as items_count
+            FROM orders_tbl o
+            LEFT JOIN users_tbl u ON o.user_id = u.user_id
+            ORDER BY o.created_at DESC
+        ";
+
+        $result = $this->conn->query($query);
+        $orders = [];
+
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                // Fetch the specific products inside this order for the Admin Modal UI
+                $orderId = $row['order_id'];
+                $itemQuery = "
+                    SELECT oi.quantity as qty, p.name, oi.price 
+                    FROM order_items_tbl oi
+                    LEFT JOIN products_tbl p ON oi.product_id = p.product_id
+                    WHERE oi.order_id = ?
+                ";
+                
+                $stmt = $this->conn->prepare($itemQuery);
+                if ($stmt) {
+                    $stmt->bind_param("i", $orderId);
+                    $stmt->execute();
+                    $itemRes = $stmt->get_result();
+                    
+                    $items = [];
+                    while($itemRow = $itemRes->fetch_assoc()) {
+                        $items[] = $itemRow;
+                    }
+                    $row['items'] = $items;
+                    $stmt->close();
+                } else {
+                    $row['items'] = [];
+                }
+
+                $orders[] = $row;
+            }
+        }
+        return $orders;
     }
 
 
@@ -197,4 +239,5 @@ class Inventory
     {
         return [];
     }
+
 }
