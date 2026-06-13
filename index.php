@@ -522,20 +522,21 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
 
 
     <?php include 'includes\footer.php'; ?>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        function filterProducts(btn, cat) {
-            document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            function filterProducts(btn, cat) {
+                document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
 
-            document.querySelectorAll('.product-item').forEach(item => {
-                if (cat === 'all' || item.dataset.cat === cat) {
-                    item.style.display = '';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-        }
+                document.querySelectorAll('.product-item').forEach(item => {
+                    if (cat === 'all' || item.dataset.cat === cat) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
 
         document.querySelectorAll('.category-carousel').forEach(carousel => {
             const slider = carousel.querySelector('.category-slider');

@@ -50,30 +50,14 @@ if (!isset($inventoryManager)) {
                         <input type="search" class="nav-product-search" name="q" value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" placeholder="Search products..." autocomplete="off">
                     </div>
                     <div class="nav-search-panel" aria-label="Search products">
-                        <div class="nav-search-results">
-                            <?php
+                        <?php
                             if (!isset($inventoryManager)) {
-                                require_once __DIR__ . '/../includes/storage.php';
                                 require_once __DIR__ . '/../classes/Inventory.php';
                                 /** @var Inventory $inventoryManager */
                                 $inventoryManager = new Inventory();
                             }
                             $navProducts = $inventoryManager->getAllProducts();
                             if (!empty($navProducts)): ?>
-                                <?php foreach ($navProducts as $searchProduct): ?>
-                                    <a href="product.php?id=<?php echo (int)$searchProduct['id']; ?>" class="nav-search-result" data-search-text="<?php echo htmlspecialchars(strtolower(($searchProduct['brand'] ?? '') . ' ' . ($searchProduct['name'] ?? '') . ' ' . ($searchProduct['category'] ?? ''))); ?>">
-                                        <img src="<?php echo htmlspecialchars($searchProduct['image'] ?? ''); ?>" alt="<?php echo htmlspecialchars($searchProduct['name'] ?? 'Product'); ?>">
-                                        <span>
-                                            <strong><?php echo htmlspecialchars($searchProduct['name'] ?? 'Product'); ?></strong>
-                                            <small><?php echo htmlspecialchars($searchProduct['brand'] ?? 'ApeX'); ?> · ₱<?php echo number_format((float)($searchProduct['price'] ?? 0), 2); ?></small>
-                                        </span>
-                                    </a>
-                                <?php endforeach; ?>
-                                <div class="nav-search-empty">No products found.</div>
-                            <?php else: ?>
-                                <div class="nav-search-empty show">No products available.</div>
-                            <?php endif; ?>
-                        </div>
                     </div>
                 </div>
                 <a href="#favoritesOffcanvas" data-bs-toggle="offcanvas" role="button" aria-controls="favoritesOffcanvas" style="position:relative; cursor:pointer; color: rgba(255, 255, 255, .75);">
@@ -88,7 +72,6 @@ if (!isset($inventoryManager)) {
                         <?php echo isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'qty')) : 0;
                         ?></span>
                 </a>
-                <?php if (isset($_SESSION['user'])): ?>
                     <div class="profile-btn-wrap ms-3">
                         <button class="profile-btn" id="profileToggle" onclick="toggleProfilePanel(event)">
                             <span class="profile-avatar"><?php echo !empty($_SESSION['user']['profile_picture']) ? '<img src="' . htmlspecialchars($_SESSION['user']['profile_picture']) . '" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">' : htmlspecialchars($_SESSION['user']['avatar'] ?? 'A'); ?></span>
@@ -106,3 +89,6 @@ if (!isset($inventoryManager)) {
 
 <?php include_once __DIR__ . '/cart_modal.php'; ?>
 <?php include_once __DIR__ . '/favorites_modal.php'; ?>
+<?php include_once __DIR__ . '/user_profile_modal.php'; ?>
+
+
