@@ -788,11 +788,15 @@ $orders = $inv->getAllOrders();
                                     // Payment method display (no card details)
                                     $payMethod = $order['payment_method'] ?? 'N/A';
                                     $isCard    = stripos($payMethod, 'card') !== false || stripos($payMethod, 'credit') !== false || stripos($payMethod, 'debit') !== false;
+                                    $customerName = trim((string)($order['display_customer_name'] ?? $order['customer_name'] ?? $order['username'] ?? ''));
+                                    if ($customerName === '') {
+                                        $customerName = 'Guest';
+                                    }
                                 ?>
                                     <tr>
                                         <td><span class="ref-code"><?php echo htmlspecialchars($order['reference_number'] ?? '—'); ?></span></td>
                                         <td>
-                                            <div style="font-weight:600;"><?php echo htmlspecialchars($order['username'] ?: 'Guest'); ?></div>
+                                            <div style="font-weight:600;"><?php echo htmlspecialchars($customerName); ?></div>
                                             <div style="font-size:.75rem;color:var(--text-muted);"><?php echo htmlspecialchars($order['email'] ?: '—'); ?></div>
                                         </td>
                                         <td style="text-align:center;"><?php echo intval($order['items_count'] ?? 0); ?></td>
@@ -893,6 +897,31 @@ $orders = $inv->getAllOrders();
             const payStatus = (order.payment_status || 'pending').toLowerCase();
             const payClass = ['success', 'paid', 'completed'].includes(payStatus) ? 'success' : (payStatus === 'failed' ? 'failed' : 'pending');
             const payLabel = payClass === 'success' ? 'Paid' : (payClass === 'failed' ? 'Failed' : 'Pending');
+            const customerName = order.display_customer_name || order.customer_name || order.username || 'Guest';
+            const streetAddress = order.street_address || '';
+            const city = order.city || '';
+            const postalCode = order.zip_code || '';
+            const hasShippingAddress = streetAddress || city || postalCode;
+            const shippingHtml = hasShippingAddress ? `
+    <hr class="section-divider">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Shipping Address</div>
+    <div class="detail-grid" style="margin-bottom:6px;">
+        <div class="detail-item">
+            <label>Street Address</label>
+            <span>${escHtml(streetAddress || 'N/A')}</span>
+        </div>
+        <div class="detail-item">
+            <label>City</label>
+            <span>${escHtml(city || 'N/A')}</span>
+        </div>
+        <div class="detail-item">
+            <label>Postal Code</label>
+            <span>${escHtml(postalCode || 'N/A')}</span>
+        </div>
+    </div>` : `
+    <hr class="section-divider">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Shipping Address</div>
+    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:6px;"><em>No shipping address recorded for this order.</em></p>`;
 
             // Build items HTML
             let itemsHtml = '<p style="color:var(--text-muted);font-size:.82rem;"><em>No item details stored.</em></p>';
@@ -932,7 +961,7 @@ $orders = $inv->getAllOrders();
         </div>
         <div class="detail-item">
             <label>Customer</label>
-            <span>${escHtml(order.username || 'Guest')}</span>
+            <span>${escHtml(customerName)}</span>
         </div>
         <div class="detail-item">
             <label>Email</label>
@@ -949,6 +978,8 @@ $orders = $inv->getAllOrders();
     </div>
 
     ${order.remarks ? `<div style="background:#f8fafd;border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 8px 8px 0;margin-bottom:16px;font-size:.85rem;"><strong>Remarks:</strong> ${escHtml(order.remarks)}</div>` : ''}
+
+    ${shippingHtml}
 
     <hr class="section-divider">
     <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">Order Items</div>

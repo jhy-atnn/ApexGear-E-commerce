@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $orders = [];
 $order_items_map = [];
 
@@ -58,7 +58,9 @@ if (isset($_SESSION['user']['id'])) {
                 <div class="d-flex gap-2 mb-3">
                     <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllOrderStatus">Select All</button>
                     <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllOrderStatus">Deselect All</button>
-                    <button type="submit" class="btn btn-sm btn-outline-danger" id="deleteSelectedOrderStatus" disabled>Delete Selected</button>
+                    <button type="submit" class="btn btn-sm btn-outline-danger" id="deleteSelectedOrderStatus" aria-label="Delete Selected" disabled>
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
 
                 <?php foreach ($orders as $order):

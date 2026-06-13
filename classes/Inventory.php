@@ -416,7 +416,14 @@ class Inventory
         $query = "
             SELECT o.*, o.order_ref_code AS reference_number,
                    u.first_name, u.last_name, u.email, u.username,
-                   CONCAT_WS(' ', u.first_name, u.last_name) AS customer_name,
+                   TRIM(CONCAT_WS(' ', NULLIF(u.first_name, ''), NULLIF(u.last_name, ''))) AS customer_name,
+                   TRIM(CONCAT_WS(' ', NULLIF(sa.first_name, ''), NULLIF(sa.last_name, ''))) AS shipping_name,
+                   COALESCE(
+                       NULLIF(TRIM(CONCAT_WS(' ', NULLIF(u.first_name, ''), NULLIF(u.last_name, ''))), ''),
+                       NULLIF(TRIM(CONCAT_WS(' ', NULLIF(sa.first_name, ''), NULLIF(sa.last_name, ''))), ''),
+                       NULLIF(u.username, ''),
+                       'Guest'
+                   ) AS display_customer_name,
                    sa.phone_number, sa.street_address, sa.city, sa.zip_code,
                    p.method AS payment_method,
                    p.status AS payment_status,

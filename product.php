@@ -26,6 +26,7 @@ $productRegularPrice = (float)($product['regular_price'] ?? $product['price']);
 $productOnSale = $productPrice < $productRegularPrice;
 $productSalePercent = (int)($product['discount_percent'] ?? $product['sale_percent'] ?? 0);
 $productSaleExpiry = $product['sale_expiry'] ?? '';
+$productSaleExpiryTs = !empty($productSaleExpiry) ? strtotime((string)$productSaleExpiry) : 0;
 $productImage = Inventory::getProductImageSrc($product['image'] ?? '');
 
 // Determine which of this user's Completed orders containing this product
@@ -54,6 +55,7 @@ $cartSuccess   = false;
 $cartError     = false;
 $reviewSuccess = false;
 $reviewError   = '';
+$submittedReviewOrderId = 0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     $qty    = (int)$_POST['quantity'];
@@ -101,6 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_product_review
         $reviewOrderId = intval($_POST['order_id'] ?? 0);
         $reviewRating  = intval($_POST['rating'] ?? 0);
         $reviewComment = trim($_POST['comment'] ?? '');
+        $submittedReviewOrderId = $reviewOrderId;
 
         if ($reviewRating < 1 || $reviewRating > 5) {
             $reviewError = 'Please choose a rating from 1 to 5 stars.';
@@ -144,67 +147,92 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_product_review
 
                 if (!$reviewSuccess) {
                     $reviewError = 'Unable to save your review. Please try again.';
+                } else {
+                    $reviewableOrders = array_values(array_filter($reviewableOrders, function ($order) use ($submittedReviewOrderId) {
+                        return intval($order['order_id'] ?? 0) !== $submittedReviewOrderId;
+                    }));
                 }
             }
         }
     }
 }
 
-// 5. Static fake reviews
-$reviews = [
-    [
-        'username'       => 'JohnR_Tech',
-        'avatar_letter'  => 'J',
-        'rating'         => 5,
-        'date'           => 'May 28, 2025',
-        'review_text'    => 'Absolutely worth every peso! Build quality is top-notch and performance exceeded my expectations. Highly recommend for anyone looking for a reliable upgrade.',
-    ],
-    [
-        'username'       => 'MariaC',
-        'avatar_letter'  => 'M',
-        'rating'         => 5,
-        'date'           => 'Apr 14, 2025',
-        'review_text'    => 'Fast delivery and the product was exactly as described. ApeX Gear never disappoints. Already planning my next purchase!',
-    ],
-    [
-        'username'       => 'Kevin_PH',
-        'avatar_letter'  => 'K',
-        'rating'         => 4,
-        'date'           => 'Mar 30, 2025',
-        'review_text'    => 'Great product overall. Setup was a breeze and it\'s been running flawlessly for weeks. Took one star off only because the box arrived slightly dented, but the item itself is perfect.',
-    ],
-    [
-        'username'       => 'AngelaS',
-        'avatar_letter'  => 'A',
-        'rating'         => 5,
-        'date'           => 'Mar 12, 2025',
-        'review_text'    => 'Exceeded all my expectations! Super smooth and the free shipping was a nice bonus. Will definitely buy from ApeX Gear again.',
-    ],
-    [
-        'username'       => 'DanteVR',
-        'avatar_letter'  => 'D',
-        'rating'         => 4,
-        'date'           => 'Feb 22, 2025',
-        'review_text'    => 'Solid buy for the price. Performance is great and it looks even better in person. Customer support was also very responsive when I had a question.',
-    ],
-    [
-        'username'       => 'PaulM',
-        'avatar_letter'  => 'P',
-        'rating'         => 5,
-        'date'           => 'Feb 10, 2025',
-        'review_text'    => 'One of the best purchases I\'ve made this year. Exactly what I needed for work and gaming. Zero complaints!',
-    ],
-];
-
-$total_reviews = count($reviews);
+// 5. Fetch verified reviews for this product from completed orders.
+$reviews = [];
 $rating_counts = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
 $sum = 0;
+
+require_once __DIR__ . '/database/db_connect.php';
+$reviewDb = new Database();
+$reviewConn = $reviewDb->getConnection();
+$reviewStmt = $reviewConn->prepare("
+    SELECT r.review_id,
+           r.rating,
+           r.comment,
+           o.created_at AS order_date,
+           COALESCE(
+               NULLIF(TRIM(CONCAT_WS(' ', NULLIF(u.first_name, ''), NULLIF(u.last_name, ''))), ''),
+               NULLIF(u.username, ''),
+               'Customer'
+           ) AS reviewer_name
+    FROM reviews_tbl r
+    INNER JOIN orders_tbl o
+        ON o.order_id = r.order_id
+       AND o.user_id = r.user_id
+       AND o.order_status = 'Completed'
+    LEFT JOIN users_tbl u
+        ON u.user_id = r.user_id
+    WHERE r.product_id = ?
+      AND r.rating BETWEEN 1 AND 5
+      AND EXISTS (
+          SELECT 1
+          FROM order_items_tbl oi
+          WHERE oi.order_id = r.order_id
+            AND oi.product_id = r.product_id
+      )
+    ORDER BY r.review_id DESC
+");
+
+if ($reviewStmt) {
+    $reviewStmt->bind_param("i", $product_id);
+    $reviewStmt->execute();
+    $reviewResult = $reviewStmt->get_result();
+
+    while ($row = $reviewResult->fetch_assoc()) {
+        $reviewerName = trim((string)($row['reviewer_name'] ?? 'Customer'));
+        if ($reviewerName === '') {
+            $reviewerName = 'Customer';
+        }
+
+        $dateText = '';
+        if (!empty($row['order_date'])) {
+            $dateTs = strtotime((string)$row['order_date']);
+            if ($dateTs !== false) {
+                $dateText = date('M d, Y', $dateTs);
+            }
+        }
+
+        $reviews[] = [
+            'reviewer_name' => $reviewerName,
+            'avatar_letter' => strtoupper(substr($reviewerName, 0, 1)),
+            'rating'        => (int)$row['rating'],
+            'date'          => $dateText,
+            'review_text'   => trim((string)($row['comment'] ?? '')),
+        ];
+    }
+
+    $reviewStmt->close();
+}
+$reviewDb->closeConnection();
+
+$total_reviews = count($reviews);
 foreach ($reviews as $rev) {
     $r = (int)$rev['rating'];
     $rating_counts[$r]++;
     $sum += $r;
 }
-$avg_rating = round($sum / $total_reviews, 1);
+$avg_rating = $total_reviews > 0 ? round($sum / $total_reviews, 1) : 0;
+$avg_rating_display = number_format($avg_rating, 1);
 
 // 6. Fetch "You Might Also Like" — pick related products from Inventory
 $related_products = [];
@@ -647,7 +675,7 @@ function renderStars($rating, $max = 5) {
                     <?php if ($total_reviews > 0): ?>
                         <div class="d-flex align-items-center gap-2 mb-3">
                             <div><?php echo renderStars($avg_rating); ?></div>
-                            <span class="fw-bold" style="font-size:.9rem;"><?php echo $avg_rating; ?></span>
+                            <span class="fw-bold" style="font-size:.9rem;"><?php echo $avg_rating_display; ?></span>
                             <span class="text-muted small">(<?php echo $total_reviews; ?> review<?php echo $total_reviews !== 1 ? 's' : ''; ?>)</span>
                             <a href="#reviews" class="text-muted small text-decoration-underline">See all</a>
                         </div>
@@ -659,8 +687,8 @@ function renderStars($rating, $max = 5) {
                                 <span style="background:#ff3b5c;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.9rem;padding:5px 12px;border-radius:4px;letter-spacing:.06em;">
                                     <?php echo $productSalePercent; ?>% OFF
                                 </span>
-                                <?php if (!empty($productSaleExpiry)): ?>
-                                    <span class="sale-countdown" data-expiry="<?php echo strtotime($productSaleExpiry); ?>" style="font-size:.82rem;font-family:'Barlow Condensed',sans-serif;font-weight:800;color:#ff3b5c;letter-spacing:.04em;">
+                                <?php if ($productSaleExpiryTs > 0): ?>
+                                    <span class="sale-countdown" data-expiry="<?php echo $productSaleExpiryTs; ?>" style="font-size:.82rem;font-family:'Barlow Condensed',sans-serif;font-weight:800;color:#ff3b5c;letter-spacing:.04em;">
                                         <i class="fas fa-clock me-1"></i><span class="cdown-text">Loading...</span>
                                     </span>
                                 <?php endif; ?>
@@ -841,7 +869,7 @@ function renderStars($rating, $max = 5) {
                         <?php if ($total_reviews > 0): ?>
                             <div class="d-flex align-items-flex-start gap-4 mb-4">
                                 <div>
-                                    <div class="rating-score"><?php echo $avg_rating; ?></div>
+                                    <div class="rating-score"><?php echo $avg_rating_display; ?></div>
                                     <div class="mb-1"><?php echo renderStars($avg_rating); ?></div>
                                     <div class="rating-score-sub"><?php echo $total_reviews; ?> Review<?php echo $total_reviews !== 1 ? 's' : ''; ?></div>
                                 </div>
@@ -949,17 +977,21 @@ function renderStars($rating, $max = 5) {
                                     </div>
                                     <div class="flex-grow-1">
                                         <div class="fw-bold text-dark" style="font-size:.9rem;">
-                                            <?php echo htmlspecialchars($rev['username']); ?>
+                                            <?php echo htmlspecialchars($rev['reviewer_name']); ?>
                                         </div>
                                         <div style="font-size:.72rem;"><?php echo renderStars((int)$rev['rating']); ?></div>
                                     </div>
-                                    <div class="text-muted" style="font-size:.78rem; white-space:nowrap;">
-                                        <?php echo htmlspecialchars($rev['date']); ?>
-                                    </div>
+                                    <?php if (!empty($rev['date'])): ?>
+                                        <div class="text-muted" style="font-size:.78rem; white-space:nowrap;">
+                                            <?php echo htmlspecialchars($rev['date']); ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
-                                <p class="mb-0 text-muted" style="font-size:.9rem; line-height:1.6;">
-                                    <?php echo htmlspecialchars($rev['review_text']); ?>
-                                </p>
+                                <?php if (!empty($rev['review_text'])): ?>
+                                    <p class="mb-0 text-muted" style="font-size:.9rem; line-height:1.6;">
+                                        <?php echo htmlspecialchars($rev['review_text']); ?>
+                                    </p>
+                                <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -980,17 +1012,21 @@ function renderStars($rating, $max = 5) {
                                         </div>
                                         <div class="flex-grow-1">
                                             <div class="fw-bold text-dark" style="font-size:.9rem;">
-                                                <?php echo htmlspecialchars($rev['username']); ?>
+                                                <?php echo htmlspecialchars($rev['reviewer_name']); ?>
                                             </div>
                                             <div style="font-size:.72rem;"><?php echo renderStars((int)$rev['rating']); ?></div>
                                         </div>
-                                        <div class="text-muted" style="font-size:.78rem; white-space:nowrap;">
-                                            <?php echo htmlspecialchars($rev['date']); ?>
-                                        </div>
+                                        <?php if (!empty($rev['date'])): ?>
+                                            <div class="text-muted" style="font-size:.78rem; white-space:nowrap;">
+                                                <?php echo htmlspecialchars($rev['date']); ?>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
-                                    <p class="mb-0 text-muted" style="font-size:.9rem; line-height:1.6;">
-                                        <?php echo htmlspecialchars($rev['review_text']); ?>
-                                    </p>
+                                    <?php if (!empty($rev['review_text'])): ?>
+                                        <p class="mb-0 text-muted" style="font-size:.9rem; line-height:1.6;">
+                                            <?php echo htmlspecialchars($rev['review_text']); ?>
+                                        </p>
+                                    <?php endif; ?>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -1063,6 +1099,7 @@ function renderStars($rating, $max = 5) {
 
     <!-- ── Footer (external) ── -->
     <?php include_once __DIR__ . '/includes/footer.php'; ?>
+    <?php include_once __DIR__ . '/includes/sale_countdown_script.php'; ?>
 
     <!-- ── Load More Reviews JS ── -->
     <script>

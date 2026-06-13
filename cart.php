@@ -19,7 +19,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     exit();
 }
 
-function getEffectivePriceForCart($item) {
+function getEffectivePriceForCart($item)
+{
     return Inventory::getCartItemEffectivePrice($item);
 }
 
@@ -43,13 +44,14 @@ $grand_total = $subtotal + $tax;
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Cart | ApeX Gear</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet">
     <style>
         /* ── CART HEADER BAR ── */
@@ -57,24 +59,28 @@ $grand_total = $subtotal + $tax;
             background: var(--apex-blue);
             padding: 0 0;
         }
+
         .cart-header-inner {
             display: flex;
             align-items: center;
             justify-content: space-between;
             height: 64px;
         }
+
         .cart-header-logo {
             display: flex;
             align-items: center;
             gap: 10px;
             text-decoration: none;
         }
+
         .cart-header-logo img {
             height: 42px;
             width: auto;
             object-fit: contain;
-            filter: drop-shadow(0 0 4px rgba(0,194,255,.3));
+            filter: drop-shadow(0 0 4px rgba(0, 194, 255, .3));
         }
+
         .cart-header-logo .logo-wordmark {
             font-family: 'Barlow Condensed', sans-serif;
             font-size: 1.7rem;
@@ -83,14 +89,18 @@ $grand_total = $subtotal + $tax;
             letter-spacing: -.01em;
             color: #fff;
         }
-        .cart-header-logo .logo-wordmark span { color: var(--apex-accent); }
+
+        .cart-header-logo .logo-wordmark span {
+            color: var(--apex-accent);
+        }
+
         .cart-header-label {
             font-family: 'Barlow Condensed', sans-serif;
             font-size: .72rem;
             font-weight: 700;
             letter-spacing: 2px;
             text-transform: uppercase;
-            color: rgba(255,255,255,.5);
+            color: rgba(255, 255, 255, .5);
         }
 
         /* ── PAGE BODY ── */
@@ -116,8 +126,14 @@ $grand_total = $subtotal + $tax;
             border: none;
             padding: 0;
         }
-        .back-link:hover { color: var(--apex-blue-mid); }
-        .back-link i { font-size: .75rem; }
+
+        .back-link:hover {
+            color: var(--apex-blue-mid);
+        }
+
+        .back-link i {
+            font-size: .75rem;
+        }
 
         /* ── PAGE HEADING ── */
         .cart-heading {
@@ -128,7 +144,11 @@ $grand_total = $subtotal + $tax;
             margin-bottom: 4px;
             letter-spacing: .01em;
         }
-        .cart-heading span { color: var(--apex-blue-mid); }
+
+        .cart-heading span {
+            color: var(--apex-blue-mid);
+        }
+
         .cart-subtext {
             font-size: .85rem;
             color: var(--apex-muted);
@@ -144,12 +164,16 @@ $grand_total = $subtotal + $tax;
         }
 
         /* ── TABLE ── */
-        .cart-table { width: 100%; border-collapse: collapse; }
+        .cart-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
         .cart-table thead tr {
             background: var(--apex-grey);
             border-bottom: 1px solid var(--apex-border);
         }
+
         .cart-table thead th {
             font-family: 'Barlow Condensed', sans-serif;
             font-size: .72rem;
@@ -164,9 +188,19 @@ $grand_total = $subtotal + $tax;
             border-bottom: 1px solid var(--apex-border);
             transition: background .15s;
         }
-        .cart-table tbody tr:last-child { border-bottom: none; }
-        .cart-table tbody tr:hover { background: #fafbff; }
-        .cart-table td { padding: 18px 20px; vertical-align: middle; }
+
+        .cart-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .cart-table tbody tr:hover {
+            background: #fafbff;
+        }
+
+        .cart-table td {
+            padding: 18px 20px;
+            vertical-align: middle;
+        }
 
         /* ── PRODUCT CELL ── */
         .product-thumb {
@@ -181,7 +215,12 @@ $grand_total = $subtotal + $tax;
             overflow: hidden;
             flex-shrink: 0;
         }
-        .product-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        .product-thumb img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
 
         .product-name {
             font-family: 'Barlow Condensed', sans-serif;
@@ -190,7 +229,12 @@ $grand_total = $subtotal + $tax;
             color: var(--apex-text);
             letter-spacing: .02em;
         }
-        .product-sub { font-size: .75rem; color: var(--apex-muted); margin-top: 2px; }
+
+        .product-sub {
+            font-size: .75rem;
+            color: var(--apex-muted);
+            margin-top: 2px;
+        }
 
         /* ── PRICE CELL ── */
         .price-main {
@@ -199,15 +243,17 @@ $grand_total = $subtotal + $tax;
             font-weight: 800;
             color: var(--apex-blue);
         }
+
         .price-original {
             font-size: .75rem;
             color: var(--apex-muted);
             text-decoration: line-through;
             margin-top: 2px;
         }
+
         .badge-sale {
             display: inline-block;
-            background: rgba(255,59,92,.1);
+            background: rgba(255, 59, 92, .1);
             color: #ff3b5c;
             font-size: .66rem;
             font-weight: 700;
@@ -217,6 +263,7 @@ $grand_total = $subtotal + $tax;
             margin-top: 3px;
             font-family: 'Barlow Condensed', sans-serif;
         }
+
         .sale-timer {
             font-size: .67rem;
             color: #ff3b5c;
@@ -224,7 +271,12 @@ $grand_total = $subtotal + $tax;
         }
 
         /* ── QTY CONTROLS ── */
-        .qty-wrap { display: flex; align-items: center; gap: 6px; }
+        .qty-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
         .qty-input {
             width: 54px;
             height: 34px;
@@ -238,19 +290,26 @@ $grand_total = $subtotal + $tax;
             outline: none;
             transition: border-color .2s;
         }
-        .qty-input:focus { border-color: var(--apex-blue-mid); }
+
+        .qty-input:focus {
+            border-color: var(--apex-blue-mid);
+        }
 
         .btn-qty-update {
-            width: 34px; height: 34px;
+            width: 34px;
+            height: 34px;
             border: 1px solid var(--apex-border);
             background: var(--apex-grey);
             border-radius: 7px;
             color: var(--apex-muted);
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
             transition: all .2s;
             font-size: .78rem;
         }
+
         .btn-qty-update:hover {
             background: var(--apex-blue);
             border-color: var(--apex-blue);
@@ -259,61 +318,100 @@ $grand_total = $subtotal + $tax;
 
         /* ── REMOVE BTN ── */
         .btn-remove {
-            width: 34px; height: 34px;
-            border: 1px solid rgba(255,59,92,.2);
-            background: rgba(255,59,92,.06);
+            width: 34px;
+            height: 34px;
+            border: 1px solid rgba(255, 59, 92, .2);
+            background: rgba(255, 59, 92, .06);
             border-radius: 7px;
             color: #ff3b5c;
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
             transition: all .2s;
             font-size: .78rem;
         }
-        .btn-remove:hover { background: #ff3b5c; border-color: #ff3b5c; color: #fff; }
+
+        .btn-remove:hover {
+            background: #ff3b5c;
+            border-color: #ff3b5c;
+            color: #fff;
+        }
 
         /* ── EMPTY STATE ── */
-        .empty-cart { padding: 68px 24px; text-align: center; }
+        .empty-cart {
+            padding: 68px 24px;
+            text-align: center;
+        }
+
         .empty-cart .empty-icon {
-            width: 80px; height: 80px;
+            width: 80px;
+            height: 80px;
             background: var(--apex-grey);
             border: 1px solid var(--apex-border);
             border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             margin: 0 auto 22px;
             font-size: 1.8rem;
             color: var(--apex-muted);
         }
+
         .empty-cart h4 {
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: 1.35rem; font-weight: 800;
-            color: var(--apex-text); margin-bottom: 8px;
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--apex-text);
+            margin-bottom: 8px;
         }
-        .empty-cart p { color: var(--apex-muted); font-size: .88rem; margin-bottom: 26px; }
+
+        .empty-cart p {
+            color: var(--apex-muted);
+            font-size: .88rem;
+            margin-bottom: 26px;
+        }
 
         /* ── BTN APEX (shop / continue) ── */
         .btn-apex-sm {
-            display: inline-flex; align-items: center; gap: 7px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
             background: var(--apex-blue);
             color: #fff;
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: .88rem; font-weight: 800;
-            letter-spacing: 1.2px; text-transform: uppercase;
+            font-size: .88rem;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
             text-decoration: none;
             padding: 10px 22px;
             border-radius: 8px;
-            border: none; cursor: pointer;
+            border: none;
+            cursor: pointer;
             transition: background .2s, transform .2s;
         }
-        .btn-apex-sm:hover { background: var(--apex-blue-mid); color: #fff; transform: translateY(-1px); }
+
+        .btn-apex-sm:hover {
+            background: var(--apex-blue-mid);
+            color: #fff;
+            transform: translateY(-1px);
+        }
 
         /* ── CONTINUE SHOPPING LINK ── */
         .continue-link {
-            font-size: .82rem; color: var(--apex-muted);
+            font-size: .82rem;
+            color: var(--apex-muted);
             text-decoration: none;
-            display: inline-flex; align-items: center; gap: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             transition: color .18s;
         }
-        .continue-link:hover { color: var(--apex-blue-mid); }
+
+        .continue-link:hover {
+            color: var(--apex-blue-mid);
+        }
 
         /* ── SUMMARY CARD ── */
         .summary-card {
@@ -324,61 +422,98 @@ $grand_total = $subtotal + $tax;
             position: sticky;
             top: 20px;
         }
+
         .summary-title {
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: 1.15rem; font-weight: 800;
-            letter-spacing: .06em; text-transform: uppercase;
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: .06em;
+            text-transform: uppercase;
             color: var(--apex-text);
             padding-bottom: 16px;
             border-bottom: 1px solid var(--apex-border);
             margin-bottom: 20px;
         }
+
         .summary-row {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 12px; font-size: .88rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: .88rem;
         }
-        .summary-row .lbl { color: var(--apex-muted); }
-        .summary-row .val { font-weight: 600; color: var(--apex-text); }
-        .summary-row .val.free { color: #10b981; font-weight: 700; }
 
-        .summary-divider { border: none; border-top: 1px solid var(--apex-border); margin: 18px 0; }
-
-        .summary-total {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 22px;
+        .summary-row .lbl {
+            color: var(--apex-muted);
         }
-        .summary-total .tot-lbl {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 1rem; font-weight: 800;
-            text-transform: uppercase; letter-spacing: .04em;
+
+        .summary-row .val {
+            font-weight: 600;
             color: var(--apex-text);
         }
+
+        .summary-row .val.free {
+            color: #10b981;
+            font-weight: 700;
+        }
+
+        .summary-divider {
+            border: none;
+            border-top: 1px solid var(--apex-border);
+            margin: 18px 0;
+        }
+
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 22px;
+        }
+
+        .summary-total .tot-lbl {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--apex-text);
+        }
+
         .summary-total .tot-amt {
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: 1.65rem; font-weight: 900;
+            font-size: 1.65rem;
+            font-weight: 900;
             color: var(--apex-blue);
         }
 
         /* ── CHECKOUT BTN ── */
         .btn-checkout {
-            display: block; width: 100%;
+            display: block;
+            width: 100%;
             background: var(--apex-blue);
             color: #fff;
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: .95rem; font-weight: 800;
-            letter-spacing: 1.4px; text-transform: uppercase;
-            text-decoration: none; text-align: center;
+            font-size: .95rem;
+            font-weight: 800;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            text-decoration: none;
+            text-align: center;
             padding: 14px 20px;
-            border-radius: 9px; border: none; cursor: pointer;
+            border-radius: 9px;
+            border: none;
+            cursor: pointer;
             transition: background .2s, box-shadow .2s, transform .2s;
-            box-shadow: 0 4px 18px rgba(11,47,168,.25);
+            box-shadow: 0 4px 18px rgba(11, 47, 168, .25);
         }
+
         .btn-checkout:hover {
             background: var(--apex-blue-mid);
             color: #fff;
             transform: translateY(-1px);
-            box-shadow: 0 6px 24px rgba(11,47,168,.35);
+            box-shadow: 0 6px 24px rgba(11, 47, 168, .35);
         }
+
         .btn-checkout:disabled,
         .btn-checkout-disabled {
             background: var(--apex-grey);
@@ -390,9 +525,11 @@ $grand_total = $subtotal + $tax;
 
         /* ── SHIPPING BADGE ── */
         .shipping-badge {
-            display: flex; align-items: center; gap: 8px;
-            background: rgba(16,185,129,.08);
-            border: 1px solid rgba(16,185,129,.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, .08);
+            border: 1px solid rgba(16, 185, 129, .2);
             border-radius: 7px;
             padding: 9px 13px;
             font-size: .78rem;
@@ -400,24 +537,134 @@ $grand_total = $subtotal + $tax;
             font-weight: 600;
             margin-bottom: 18px;
         }
-        .shipping-badge i { font-size: .8rem; }
+
+        .shipping-badge i {
+            font-size: .8rem;
+        }
 
         /* ── SECURE NOTE ── */
         .secure-note {
-            display: flex; align-items: center; justify-content: center; gap: 5px;
-            font-size: .72rem; color: var(--apex-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: .72rem;
+            color: var(--apex-muted);
             margin-top: 12px;
         }
-        .secure-note i { color: #10b981; }
+
+        .secure-note i {
+            color: #10b981;
+        }
+
+        /* ── COUPON SECTION ── */
+        .coupon-section {
+            margin-top: 16px;
+        }
+
+        .coupon-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            color: var(--apex-muted);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .coupon-label i {
+            font-size: .68rem;
+            color: var(--apex-blue-mid);
+        }
+
+        .coupon-input-wrap {
+            display: flex;
+            gap: 7px;
+        }
+
+        .coupon-input {
+            flex: 1;
+            height: 38px;
+            border: 1px solid var(--apex-border);
+            border-radius: 8px;
+            background: var(--apex-grey);
+            color: var(--apex-text);
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .92rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 0 12px;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .coupon-input::placeholder {
+            color: var(--apex-muted);
+            font-weight: 400;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: .78rem;
+        }
+
+        .coupon-input:focus {
+            border-color: var(--apex-blue-mid);
+            box-shadow: 0 0 0 3px rgba(0, 100, 255, .08);
+        }
+
+        .coupon-btn {
+            height: 38px;
+            padding: 0 14px;
+            background: var(--apex-blue);
+            color: #fff;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .82rem;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background .2s, transform .15s;
+            white-space: nowrap;
+        }
+
+        .coupon-btn:hover {
+            background: var(--apex-blue-mid);
+            transform: translateY(-1px);
+        }
+
+        .coupon-note {
+            font-size: .7rem;
+            color: var(--apex-muted);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .coupon-note i {
+            font-size: .65rem;
+        }
 
         /* ── RESPONSIVE ── */
         @media (max-width: 768px) {
+
             .cart-table thead th:nth-child(3),
-            .cart-table td:nth-child(3) { display: none; }
-            .cart-page { padding: 28px 0 60px; }
+            .cart-table td:nth-child(3) {
+                display: none;
+            }
+
+            .cart-page {
+                padding: 28px 0 60px;
+            }
         }
     </style>
 </head>
+
 <body>
     <?php include_once __DIR__ . '/includes/cookie_notif.php'; ?>
 
@@ -484,54 +731,54 @@ $grand_total = $subtotal + $tax;
                                             $originalPrice  = floatval($item['original_price'] ?? $item['price']);
                                             $isOnSale = $effectivePrice < $originalPrice;
                                         ?>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center gap-3">
-                                                    <div class="product-thumb">
-                                                        <?php
-                                                        if (strpos($item['image'], '<svg') !== false) {
-                                                            echo $item['image'];
-                                                        } else {
-                                                            echo '<img src="' . htmlspecialchars($item['image']) . '">';
-                                                        }
-                                                        ?>
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <div class="product-thumb">
+                                                            <?php
+                                                            if (strpos($item['image'], '<svg') !== false) {
+                                                                echo $item['image'];
+                                                            } else {
+                                                                echo '<img src="' . htmlspecialchars($item['image']) . '">';
+                                                            }
+                                                            ?>
+                                                        </div>
+                                                        <div>
+                                                            <div class="product-name"><?php echo htmlspecialchars($item['name']); ?></div>
+                                                            <div class="product-sub">Standard Edition</div>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <div class="product-name"><?php echo htmlspecialchars($item['name']); ?></div>
-                                                        <div class="product-sub">Standard Edition</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="price-main">₱<?php echo number_format($effectivePrice, 2); ?></div>
-                                                <?php if ($isOnSale): ?>
-                                                    <div class="price-original">₱<?php echo number_format($originalPrice, 2); ?></div>
-                                                    <span class="badge-sale"><?php echo intval($item['discount_percent'] ?? $item['sale_percent'] ?? 0); ?>% OFF</span>
-                                                    <?php if (!empty($item['sale_expiry'])): ?>
-                                                        <div class="sale-timer sale-countdown-cart" data-expiry="<?php echo strtotime($item['sale_expiry']); ?>"></div>
+                                                </td>
+                                                <td>
+                                                    <div class="price-main">₱<?php echo number_format($effectivePrice, 2); ?></div>
+                                                    <?php if ($isOnSale): ?>
+                                                        <div class="price-original">₱<?php echo number_format($originalPrice, 2); ?></div>
+                                                        <span class="badge-sale"><?php echo intval($item['discount_percent'] ?? $item['sale_percent'] ?? 0); ?>% OFF</span>
+                                                        <?php if (!empty($item['sale_expiry'])): ?>
+                                                            <div class="sale-timer sale-countdown-cart" data-expiry="<?php echo strtotime($item['sale_expiry']); ?>"></div>
+                                                        <?php endif; ?>
                                                     <?php endif; ?>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <form method="POST" action="cart.php" class="qty-wrap">
-                                                    <input type="hidden" name="action" value="update">
-                                                    <input type="hidden" name="product_id" value="<?php echo $id; ?>">
-                                                    <input type="number" name="qty" value="<?php echo $item['qty']; ?>" class="qty-input" min="1">
-                                                    <button type="submit" class="btn-qty-update" title="Update quantity">
-                                                        <i class="fas fa-sync-alt"></i>
-                                                    </button>
-                                                </form>
-                                            </td>
-                                            <td style="text-align:right; padding-right:24px;">
-                                                <form method="POST" action="cart.php">
-                                                    <input type="hidden" name="action" value="remove">
-                                                    <input type="hidden" name="product_id" value="<?php echo $id; ?>">
-                                                    <button type="submit" class="btn-remove" title="Remove item">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </td>
-                                        </tr>
+                                                </td>
+                                                <td>
+                                                    <form method="POST" action="cart.php" class="qty-wrap">
+                                                        <input type="hidden" name="action" value="update">
+                                                        <input type="hidden" name="product_id" value="<?php echo $id; ?>">
+                                                        <input type="number" name="qty" value="<?php echo $item['qty']; ?>" class="qty-input" min="1">
+                                                        <button type="submit" class="btn-qty-update" title="Update quantity">
+                                                            <i class="fas fa-sync-alt"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                                <td style="text-align:right; padding-right:24px;">
+                                                    <form method="POST" action="cart.php">
+                                                        <input type="hidden" name="action" value="remove">
+                                                        <input type="hidden" name="product_id" value="<?php echo $id; ?>">
+                                                        <button type="submit" class="btn-remove" title="Remove item">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
@@ -552,10 +799,10 @@ $grand_total = $subtotal + $tax;
                         <div class="summary-title">Order Summary</div>
 
                         <?php if ($item_count > 0): ?>
-                        <div class="shipping-badge">
-                            <i class="fas fa-truck"></i>
-                            You qualify for <strong>FREE shipping!</strong>
-                        </div>
+                            <div class="shipping-badge">
+                                <i class="fas fa-truck"></i>
+                                You qualify for <strong>FREE shipping!</strong>
+                            </div>
                         <?php endif; ?>
 
                         <div class="summary-row">
@@ -569,6 +816,28 @@ $grand_total = $subtotal + $tax;
                         <div class="summary-row">
                             <span class="lbl">Shipping</span>
                             <span class="val free"><i class="fas fa-check-circle" style="font-size:.72rem;margin-right:3px;"></i> FREE</span>
+                        </div>
+
+                        <!-- ── APPLY A COUPON ── -->
+                        <div class="coupon-section">
+                            <div class="coupon-label">
+                                <i class="fas fa-tag"></i> Apply a Coupon
+                            </div>
+                            <div class="coupon-input-wrap">
+                                <input
+                                    type="text"
+                                    class="coupon-input"
+                                    id="couponCode"
+                                    placeholder="Enter code"
+                                    maxlength="20"
+                                    oninput="this.value = this.value.toUpperCase()"
+                                    autocomplete="off"
+                                    spellcheck="false">
+                                <button type="button" class="coupon-btn">Apply</button>
+                            </div>
+                            <div class="coupon-note">
+                                <i class="fas fa-info-circle"></i> Coupon codes are case-insensitive.
+                            </div>
                         </div>
 
                         <hr class="summary-divider">
@@ -602,23 +871,28 @@ $grand_total = $subtotal + $tax;
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    // Sale countdown
-    function updateCartCountdowns() {
-        document.querySelectorAll('.sale-countdown-cart[data-expiry]').forEach(el => {
-            const exp = parseInt(el.dataset.expiry) * 1000;
-            const diff = exp - Date.now();
-            if (diff <= 0) { el.textContent = 'Sale ended'; el.style.color = '#999'; return; }
-            const d = Math.floor(diff / 86400000);
-            const h = Math.floor((diff % 86400000) / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            if (d > 0) el.textContent = `⏱ ${d}d ${h}h ${m}m left`;
-            else if (h > 0) el.textContent = `⏱ ${h}h ${m}m ${s}s left`;
-            else el.textContent = `⏱ ${m}m ${s}s left`;
-        });
-    }
-    updateCartCountdowns();
-    setInterval(updateCartCountdowns, 1000);
+        // Sale countdown
+        function updateCartCountdowns() {
+            document.querySelectorAll('.sale-countdown-cart[data-expiry]').forEach(el => {
+                const exp = parseInt(el.dataset.expiry) * 1000;
+                const diff = exp - Date.now();
+                if (diff <= 0) {
+                    el.textContent = 'Sale ended';
+                    el.style.color = '#999';
+                    return;
+                }
+                const d = Math.floor(diff / 86400000);
+                const h = Math.floor((diff % 86400000) / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                if (d > 0) el.textContent = `⏱ ${d}d ${h}h ${m}m left`;
+                else if (h > 0) el.textContent = `⏱ ${h}h ${m}m ${s}s left`;
+                else el.textContent = `⏱ ${m}m ${s}s left`;
+            });
+        }
+        updateCartCountdowns();
+        setInterval(updateCartCountdowns, 1000);
     </script>
 </body>
+
 </html>

@@ -17,6 +17,7 @@ if (!function_exists('renderProductCard')) {
         $regularPrice = (float)($product['regular_price'] ?? $product['original_price'] ?? $product['price'] ?? 0);
         $salePct = (int)($product['discount_percent'] ?? $product['sale_percent'] ?? 0);
         $saleExp = $product['sale_expiry'] ?? $product['sale_valid_until'] ?? '';
+        $saleExpiryTs = !empty($saleExp) ? strtotime((string)$saleExp) : 0;
         $saleActive = !empty($product['is_sale_active']) || Inventory::isSaleActive($salePct, $saleExp);
         $salePrice = $saleActive
             ? (float)($product['sale_price'] ?? $product['effective_price'] ?? Inventory::salePriceFromPercent($regularPrice, $salePct))
@@ -88,8 +89,8 @@ if (!function_exists('renderProductCard')) {
                     <span class="d-block" style="font-size:.72rem;font-family:'Barlow',sans-serif;font-weight:600;margin-top:4px;color:<?php echo $stock > 0 ? 'var(--apex-muted)' : '#ff3b5c'; ?>;">
                         <?php echo $stock > 0 ? 'In stock: ' . $stock : 'Out of Stock'; ?>
                     </span>
-                    <?php if ($saleActive && !empty($saleExp)): ?>
-                        <span class="sale-countdown d-block" data-expiry="<?php echo strtotime($saleExp); ?>" style="font-size:.68rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;color:#ff3b5c;margin-top:3px;letter-spacing:.04em;">
+                    <?php if ($saleActive && $saleExpiryTs > 0): ?>
+                        <span class="sale-countdown d-block" data-expiry="<?php echo $saleExpiryTs; ?>" style="font-size:.68rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;color:#ff3b5c;margin-top:3px;letter-spacing:.04em;">
                             <i class="fas fa-clock me-1"></i><span class="cdown-text">Loading...</span>
                         </span>
                     <?php endif; ?>
