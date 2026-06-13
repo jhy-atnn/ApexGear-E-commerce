@@ -173,3 +173,30 @@
     line-height: 1.65;
     margin: 0;
 }
+
+
+/* ---------- Contact page ---------- */
+.contact-info-card {
+    background: linear-gradient(135deg, var(--apex-dark) 0%, var(--apex-blue) 55%, var(--apex-blue-lt) 100%);
+    border-radius: 14px;
+    padding: 34px 32px;
+    height: 100%;
+    box-shadow: 0 10px 30px rgba(11, 47, 168, .18);
+}
+.contact-info-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; text-transform: uppercase; color: var(--apex-white); margin-bottom: 8px; }
+.contact-info-sub { color: rgba(255, 255, 255, .72); margin-bottom: 24px; }
+.contact-line { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 18px; }
+.contact-line i { color: var(--apex-accent); font-size: 1.1rem; width: 22px; margin-top: 3px; }
+.contact-line strong { display: block; color: var(--apex-white); font-weight: 600; }
+.contact-line span { color: rgba(255, 255, 255, .72); font-size: .92rem; }
+.contact-socials { display: flex; gap: 12px; margin-top: 24px; }
+.contact-socials a { width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .18); color: var(--apex-white); display: flex; align-items: center; justify-content: center; transition: background .25s, color .25s; }
+.contact-socials a { text-decoration: none; }
+.contact-socials a:hover { background: var(--apex-accent); color: var(--apex-dark); text-decoration: none; }
+.contact-form-card { background: var(--apex-white); border: 1px solid var(--apex-border); border-radius: 14px; padding: 34px 36px; height: 100%; box-shadow: 0 10px 30px rgba(11, 47, 168, .08); }
+.contact-form-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; text-transform: uppercase; color: var(--apex-blue); margin-bottom: 20px; }
+.support-label { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: .8rem; color: var(--apex-dark); display: block; margin-bottom: 6px; }
+.contact-form-card .form-control { border: 1px solid var(--apex-border); border-radius: 8px; padding: 12px 14px; }
+.contact-form-card .form-control:focus { border-color: var(--apex-accent); box-shadow: 0 0 0 .2rem rgba(0, 194, 255, .15); }
+
+

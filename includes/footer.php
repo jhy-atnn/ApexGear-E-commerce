@@ -1,3 +1,57 @@
+<style>
+.footer-bottom-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.footer-bottom-links a {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--gray-500);
+  text-decoration: none;
+  transition: color 0.35s ease;
+}
+
+.footer-bottom-links a:hover {
+  color: var(--apex-accent);
+  text-decoration: none;
+}
+
+/* Responsive: Tablet */
+@media (max-width: 768px) {
+  .footer-bottom-links {
+    gap: 16px;
+    justify-content: center;
+    margin-top: 12px;
+  }
+
+  .footer-bottom-links a {
+    font-size: 11px;
+  }
+
+  .footer-bottom .container {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+}
+
+/* Responsive: Mobile */
+@media (max-width: 480px) {
+  .footer-bottom-links {
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .footer-bottom-links a {
+    font-size: 11px;
+  }
+}
+</style>
+
 <!-- ── Footer ── -->
 <footer>
     <div class="container">
@@ -58,15 +112,19 @@
             </div>
         </div>
     </div>
+
+    <!-- Footer bottom -->
     <div class="footer-bottom">
         <div class="container d-flex flex-wrap justify-content-between align-items-center">
             <p>© 2026 ApeX Gear. All rights reserved.</p>
-            <p style="margin:0;">Terms &nbsp;|&nbsp; Privacy &nbsp;|&nbsp; Cookies</p>
+          <nav class="footer-bottom-links" style="display:flex; gap:16px; flex-wrap:wrap;">
+            <a href="privacy.php">Privacy Policy</a>
+            <a href="terms.php">Terms and Conditions</a>
+            <a href="cookies.php">Cookie Policy</a>
+          </nav>
         </div>
     </div>
 </footer>
-
-<a href="#" id="btt"><i class="fas fa-arrow-up"></i></a>
 
 <!-- JavaScript Files -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
