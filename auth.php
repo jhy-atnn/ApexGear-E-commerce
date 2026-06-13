@@ -151,8 +151,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             echo json_encode(['success' => false, 'message' => 'Both fields are required.']);
             exit;
         }
-
-        $query = "SELECT u.*, p.bio, p.street_address, p.city, p.phone_number 
+        // Updated query to fetch EVERYTHING from the profile table
+        $query = "SELECT u.*, p.bio, p.street_address, p.city, p.zip_code, p.phone_number, p.image_path, p.birthday 
                   FROM users_tbl u 
                   LEFT JOIN users_profiles_tbl p ON u.user_id = p.user_id 
                   WHERE u.username = ?";
@@ -174,6 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             exit;
         }
 
+        // Updated session array to store the newly fetched data
         $_SESSION['user'] = [
             'id' => $found['user_id'],
             'username' => $found['username'],
@@ -188,7 +189,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             'street_address' => $found['street_address'] ?? null,
             'city' => $found['city'] ?? null,
             'postal_code' => $found['zip_code'] ?? null,
-            'profile_picture' => $found['image_path'] ?? null
+            'profile_picture' => $found['image_path'] ?? null,
+            'birthday' => $found['birthday'] ?? null
         ];
 
         setcookie('apex_logged_in', (string)time(), time() + 60, '/');
