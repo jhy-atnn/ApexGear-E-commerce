@@ -22,8 +22,10 @@ if (!$product) {
 }
 
 // 4. Handle "Add to Cart" Submission
-$cartSuccess = false;
-$cartError   = false;
+$cartSuccess   = false;
+$cartError     = false;
+$reviewSuccess = false;
+$reviewError   = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     $qty    = (int)$_POST['quantity'];
@@ -52,6 +54,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         }
     } else {
         $cartError = "Cannot add to cart. Only $stock left in stock.";
+    }
+}
+
+// Handle submitted product review from completed order status
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_product_review'])) {
+    if (!isset($_SESSION['user']['id'])) {
+        $reviewError = 'Please log in before submitting a review.';
+    } else {
+        $reviewUserId  = intval($_SESSION['user']['id']);
+        $reviewRating  = intval($_POST['rating'] ?? 0);
+        $reviewComment = trim($_POST['comment'] ?? '');
+
+        if ($reviewRating < 1 || $reviewRating > 5) {
+            $reviewError = 'Please choose a rating from 1 to 5 stars.';
+        } else {
+            $hasCompletedPurchase = false;
+            $userOrders = method_exists($inv, 'getOrdersByUser') ? $inv->getOrdersByUser($reviewUserId) : [];
+
+            foreach ($userOrders as $userOrder) {
+                if (($userOrder['order_status'] ?? '') !== 'Completed') {
+                    continue;
+                }
+                $items = method_exists($inv, 'getOrderItems') ? $inv->getOrderItems($userOrder['order_id']) : [];
+                foreach ($items as $item) {
+                    if (intval($item['product_id']) === $product_id) {
+                        $hasCompletedPurchase = true;
+                        break 2;
+                    }
+                }
+            }
+
+            if (!$hasCompletedPurchase) {
+                $reviewError = 'You can review this product after completing an order for it.';
+            } elseif (method_exists($inv, 'hasUserReviewedProduct') && $inv->hasUserReviewedProduct($reviewUserId, $product_id)) {
+                $reviewError = 'You already submitted a review for this product.';
+            } else {
+                require_once __DIR__ . '/database/db_connect.php';
+                $db   = new Database();
+                $conn = $db->getConnection();
+                $stmt = $conn->prepare("INSERT INTO reviews_tbl (user_id, product_id, rating, comment) VALUES (?, ?, ?, ?)");
+                $stmt->bind_param("iiis", $reviewUserId, $product_id, $reviewRating, $reviewComment);
+                $reviewSuccess = $stmt->execute();
+                $stmt->close();
+                $db->closeConnection();
+
+                if (!$reviewSuccess) {
+                    $reviewError = 'Unable to save your review. Please try again.';
+                }
+            }
+        }
     }
 }
 
@@ -500,6 +552,20 @@ function renderStars($rating, $max = 5) {
                 </div>
             <?php endif; ?>
 
+            <?php if ($reviewSuccess): ?>
+                <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 bg-white" role="alert" id="submit-review">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    <strong>Review submitted!</strong> You can now delete the matching completed order status entry.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php elseif (!empty($reviewError)): ?>
+                <div class="alert alert-warning alert-dismissible fade show shadow-sm border-0 bg-white" role="alert" id="submit-review">
+                    <i class="fas fa-exclamation-circle text-warning me-2"></i>
+                    <strong>Review not submitted.</strong> <?php echo htmlspecialchars($reviewError); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+
             <div class="row g-5 align-items-center apex-card">
 
                 <!-- Product Image -->
@@ -749,6 +815,36 @@ function renderStars($rating, $max = 5) {
 
                 <!-- RIGHT: Review cards -->
                 <div class="col-lg-8">
+
+                    <!-- Submit a Review -->
+                    <div class="review-card mb-4" id="submit-review">
+                        <h5 class="fw-bold text-dark mb-3" style="font-family:'Barlow Condensed', sans-serif; text-transform:uppercase;">
+                            Submit a Review
+                        </h5>
+                        <form method="POST" action="product.php?id=<?php echo $product_id; ?>#submit-review">
+                            <input type="hidden" name="submit_product_review" value="1">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-uppercase text-muted">Rating</label>
+                                <select class="form-select" name="rating" required>
+                                    <option value="">Choose rating</option>
+                                    <option value="5">5 Stars</option>
+                                    <option value="4">4 Stars</option>
+                                    <option value="3">3 Stars</option>
+                                    <option value="2">2 Stars</option>
+                                    <option value="1">1 Star</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-uppercase text-muted">Comment</label>
+                                <textarea class="form-control" name="comment" rows="4"
+                                          placeholder="Share your experience with this product"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn-apex px-4 py-2">Submit Review</button>
+                        </form>
+                    </div>
 
                     <!-- First 5 reviews -->
                     <div class="d-flex flex-column gap-3 mb-4">

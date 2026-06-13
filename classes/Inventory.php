@@ -429,4 +429,93 @@ class Inventory
         return $items;
     }
 
+    // ── REVIEW & ORDER DELETION METHODS ──
+
+    public function hasUserReviewedProduct($userId, $productId)
+    {
+        $query = "SELECT review_id FROM reviews_tbl WHERE user_id = ? AND product_id = ? LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ii", $userId, $productId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $hasReview = $result->num_rows > 0;
+        $stmt->close();
+        return $hasReview;
+    }
+
+    public function hasUserReviewedOrder($orderId, $userId)
+    {
+        $query = "
+            SELECT oi.product_id
+            FROM order_items_tbl oi
+            INNER JOIN orders_tbl o ON oi.order_id = o.order_id
+            WHERE oi.order_id = ? AND o.user_id = ?
+        ";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ii", $orderId, $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $productIds = [];
+        while ($row = $result->fetch_assoc()) {
+            $productIds[] = intval($row['product_id']);
+        }
+        $stmt->close();
+
+        if (empty($productIds)) {
+            return false;
+        }
+
+        foreach ($productIds as $productId) {
+            if (!$this->hasUserReviewedProduct($userId, $productId)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function canDeleteOrderStatusEntry($orderId, $userId)
+    {
+        $query = "SELECT order_status FROM orders_tbl WHERE order_id = ? AND user_id = ? LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ii", $orderId, $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $order = $result->fetch_assoc();
+        $stmt->close();
+
+        if (!$order) {
+            return ['can_delete' => false, 'reason' => 'Order not found.'];
+        }
+
+        $status = $order['order_status'];
+        if ($status === 'Canceled') {
+            return ['can_delete' => true, 'reason' => 'Canceled orders can be deleted.'];
+        }
+
+        if ($status === 'Completed') {
+            if ($this->hasUserReviewedOrder($orderId, $userId)) {
+                return ['can_delete' => true, 'reason' => 'Review submitted.'];
+            }
+            return ['can_delete' => false, 'reason' => 'Submit a review before deleting this completed order.'];
+        }
+
+        return ['can_delete' => false, 'reason' => 'Only completed or canceled orders can be deleted.'];
+    }
+
+    public function deleteOrderStatusEntry($orderId, $userId)
+    {
+        $eligibility = $this->canDeleteOrderStatusEntry($orderId, $userId);
+        if (empty($eligibility['can_delete'])) {
+            return false;
+        }
+
+        $stmt = $this->conn->prepare("DELETE FROM order_status_tbl WHERE order_id = ?");
+        $stmt->bind_param("i", $orderId);
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
+    }
+
 }

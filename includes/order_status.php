@@ -2,6 +2,10 @@
 $orders = [];
 $order_items_map = [];
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (isset($_SESSION['user']['id'])) {
     require_once __DIR__ . '/../classes/Inventory.php';
     $userId = intval($_SESSION['user']['id']);
@@ -10,16 +14,10 @@ if (isset($_SESSION['user']['id'])) {
     $inv = new Inventory();
 
     if (method_exists($inv, 'getOrdersByUser')) {
-        // Completed orders are automatically moved out of active order tracking.
-        $allUserOrders = $inv->getOrdersByUser($userId);
-        
-        // Filter out completed/archived orders from the active view
-        foreach ($allUserOrders as $ord) {
-            if ($ord['order_status'] !== 'Completed') {
-                $orders[] = $ord;
-                if (method_exists($inv, 'getOrderItems')) {
-                    $order_items_map[intval($ord['order_id'])] = $inv->getOrderItems($ord['order_id']);
-                }
+        $orders = $inv->getOrdersByUser($userId);
+        foreach ($orders as $ord) {
+            if (method_exists($inv, 'getOrderItems')) {
+                $order_items_map[intval($ord['order_id'])] = $inv->getOrderItems($ord['order_id']);
             }
         }
     }
@@ -45,17 +43,33 @@ if (isset($_SESSION['user']['id'])) {
                     <p class="text-muted small">You don't have any orders currently in progress.</p>
                 </div>
             <?php else: ?>
-                
-                <?php foreach ($orders as $order): 
+            <form method="POST" id="orderStatusBulkForm">
+                <input type="hidden" name="delete_order_status_entries" value="1">
+                <div class="d-flex gap-2 mb-3">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllOrderStatus">Select All</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllOrderStatus">Deselect All</button>
+                    <button type="submit" class="btn btn-sm btn-outline-danger" id="deleteSelectedOrderStatus" disabled>Delete Selected</button>
+                </div>
+
+                <?php foreach ($orders as $order):
                     $status = $order['order_status'] ?? 'Pending';
                     $isCanceled = ($status === 'Canceled');
-                    
+                    $isCompleted = ($status === 'Completed');
+                    $isFinalStatus = in_array($status, ['Completed', 'Canceled'], true);
+                    $itemsForOrder = $order_items_map[$order['order_id']] ?? [];
+                    $firstProductId = !empty($itemsForOrder) ? intval($itemsForOrder[0]['product_id']) : 0;
+                    $hasReview = false;
+                    if ($isCompleted && method_exists($inv, 'hasUserReviewedOrder')) {
+                        $hasReview = $inv->hasUserReviewedOrder(intval($order['order_id']), $userId);
+                    }
+                    $canDeleteEntry = $isCanceled || ($isCompleted && $hasReview);
+
                     // Determine Timeline Progress
                     $step1 = true; // Placed is always true
-                    $step2 = in_array($status, ['On Process', 'Shipped', 'Delivered']);
-                    $step3 = in_array($status, ['Shipped', 'Delivered']);
-                    $step4 = ($status === 'Delivered');
-                    
+                    $step2 = in_array($status, ['On Process', 'Shipped', 'Delivered', 'Completed']);
+                    $step3 = in_array($status, ['Shipped', 'Delivered', 'Completed']);
+                    $step4 = in_array($status, ['Delivered', 'Completed'], true);
+
                     // Calculate Progress Bar Width
                     $progressWidth = '0%';
                     if ($step4) $progressWidth = '100%';
@@ -64,6 +78,19 @@ if (isset($_SESSION['user']['id'])) {
                 ?>
                     <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;">
                         <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+                            <?php if ($isFinalStatus): ?>
+                                <div class="form-check me-3">
+                                    <input class="form-check-input order-status-checkbox"
+                                           type="checkbox"
+                                           name="selected_orders[]"
+                                           value="<?php echo intval($order['order_id']); ?>"
+                                           data-deletable="<?php echo $canDeleteEntry ? '1' : '0'; ?>"
+                                           <?php echo $canDeleteEntry ? '' : 'disabled'; ?>
+                                           title="<?php echo $canDeleteEntry
+                                               ? 'Select for deletion'
+                                               : ($isCanceled ? 'Cannot delete' : 'Submit a review before deleting this completed order'); ?>">
+                                </div>
+                            <?php endif; ?>
                             <div>
                                 <span class="badge <?php echo $isCanceled ? 'bg-danger' : ($step4 ? 'bg-success' : 'bg-primary'); ?> mb-1">
                                     <?php echo htmlspecialchars($status); ?>
@@ -127,11 +154,32 @@ if (isset($_SESSION['user']['id'])) {
                                     <i class="fas fa-times-circle me-1"></i> This order was canceled.
                                 </div>
                             <?php endif; ?>
-                        </div>
 
+                            <?php if ($isCompleted): ?>
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3">
+                                    <?php if ($hasReview): ?>
+                                        <div class="small text-success">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            Review Submitted — this entry can now be deleted.
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="small text-muted">
+                                            <i class="fas fa-lock me-1"></i>
+                                            Submit a review before deleting this completed order.
+                                        </div>
+                                        <?php if ($firstProductId > 0): ?>
+                                            <a class="btn btn-sm btn-primary" href="product.php?id=<?php echo $firstProductId; ?>#submit-review">
+                                                <i class="fas fa-star me-1"></i> Submit a Review
+                                            </a>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
 
                     </div>
                 <?php endforeach; ?>
+            </form>
                 
             <?php endif; ?>
         </div>
@@ -211,6 +259,94 @@ if (isset($_SESSION['user']['id'])) {
             alertBox.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i> Connection error.';
             alertBox.classList.remove('d-none');
         }
+    }
+
+    // Bulk Delete Logic
+    const selectAllOrderStatus = document.getElementById('selectAllOrderStatus');
+    const deselectAllOrderStatus = document.getElementById('deselectAllOrderStatus');
+    const deleteSelectedOrderStatus = document.getElementById('deleteSelectedOrderStatus');
+
+    // Only returns checkboxes that are genuinely eligible for deletion
+    // (not disabled AND explicitly marked deletable via data attribute).
+    function getDeletableOrderStatusCheckboxes() {
+        return Array.from(
+            document.querySelectorAll('.order-status-checkbox[data-deletable="1"]:not(:disabled)')
+        );
+    }
+
+    function updateDeleteSelectedState() {
+        if (!deleteSelectedOrderStatus) return;
+        deleteSelectedOrderStatus.disabled = !getDeletableOrderStatusCheckboxes().some(cb => cb.checked);
+    }
+
+    if (selectAllOrderStatus) {
+        selectAllOrderStatus.addEventListener('click', function () {
+            // Only select checkboxes that are eligible — completed-without-review are excluded
+            getDeletableOrderStatusCheckboxes().forEach(cb => cb.checked = true);
+            updateDeleteSelectedState();
+        });
+    }
+
+    if (deselectAllOrderStatus) {
+        deselectAllOrderStatus.addEventListener('click', function () {
+            getDeletableOrderStatusCheckboxes().forEach(cb => cb.checked = false);
+            updateDeleteSelectedState();
+        });
+    }
+
+    document.querySelectorAll('.order-status-checkbox').forEach(cb => cb.addEventListener('change', updateDeleteSelectedState));
+
+    const orderStatusBulkForm = document.getElementById('orderStatusBulkForm');
+    if (orderStatusBulkForm) {
+        orderStatusBulkForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            // Re-filter at submit time: only deletable + checked checkboxes are sent
+            const checkedBoxes = getDeletableOrderStatusCheckboxes().filter(cb => cb.checked);
+            if (checkedBoxes.length === 0) {
+                showOrderAlert('Please select at least one eligible order entry to delete.', 'alert-warning');
+                return;
+            }
+            if (!confirm('Delete the selected order status entries?')) return;
+
+            const deleteBtn = document.getElementById('deleteSelectedOrderStatus');
+            if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Deleting...'; }
+
+            const formData = new FormData();
+            formData.append('delete_order_status_entries', '1');
+            checkedBoxes.forEach(cb => formData.append('selected_orders[]', cb.value));
+
+            try {
+                const response = await fetch('actions/delete_order_status_action.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                showOrderAlert(result.message, result.success ? 'alert-success' : 'alert-warning');
+
+                if (result.success && result.deleted_ids && result.deleted_ids.length > 0) {
+                    result.deleted_ids.forEach(id => {
+                        const cb = document.querySelector(`.order-status-checkbox[value="${id}"]`);
+                        if (cb) cb.closest('.card')?.remove();
+                    });
+                    updateDeleteSelectedState();
+                }
+            } catch (err) {
+                showOrderAlert('Connection error. Please try again.', 'alert-danger');
+            } finally {
+                if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.innerHTML = 'Delete Selected'; updateDeleteSelectedState(); }
+            }
+        });
+    }
+
+    function showOrderAlert(message, cls) {
+        const alertBox = document.getElementById('orderAlert');
+        if (!alertBox) return;
+        alertBox.className = 'alert ' + cls;
+        alertBox.innerHTML = message;
+        alertBox.classList.remove('d-none');
+        setTimeout(() => alertBox.classList.add('d-none'), 4000);
     }
 
     // Modal Opening/Closing Logic
