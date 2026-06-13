@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/classes/Inventory.php';
+require_once __DIR__ . '/includes/product_card.php';
 
 /** @var Inventory $inventoryManager */
 $inventoryManager = new Inventory();
@@ -210,6 +211,8 @@ sort($allCategories);
                 <?php else: ?>
                     <?php foreach ($products as $product): ?>
                         <div class="col-sm-6 col-md-4 col-lg-3 fade-up">
+                            <?php renderProductCard($product); ?>
+                            <?php if (false): ?>
                             <div class="product-card h-100 position-relative">
 
                                 <?php
@@ -313,6 +316,7 @@ sort($allCategories);
                                 </div>
 
                             </div>
+                            <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>

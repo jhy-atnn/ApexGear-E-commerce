@@ -24,6 +24,9 @@ if (!$product) {
 $productPrice = (float)($product['effective_price'] ?? $product['price']);
 $productRegularPrice = (float)($product['regular_price'] ?? $product['price']);
 $productOnSale = $productPrice < $productRegularPrice;
+$productSalePercent = (int)($product['discount_percent'] ?? $product['sale_percent'] ?? 0);
+$productSaleExpiry = $product['sale_expiry'] ?? '';
+$productImage = Inventory::getProductImageSrc($product['image'] ?? '');
 
 // Determine which of this user's Completed orders containing this product
 // are still eligible for a review (per-order review tracking).
@@ -613,10 +616,10 @@ function renderStars($rating, $max = 5) {
                     <div class="p-4 rounded-4 d-flex align-items-center justify-content-center"
                         style="min-height: 400px;">
                         <?php
-                        if (strpos($product['image'], '<svg') !== false) {
+                        if (strpos($product['image'] ?? '', '<svg') !== false) {
                             echo $product['image'];
                         } else {
-                            echo '<img src="' . htmlspecialchars($product['image']) . '" alt="img" class="img-fluid" style="max-height: 350px; object-fit: contain;">';
+                            echo '<img src="' . htmlspecialchars($productImage) . '" alt="' . htmlspecialchars($product['name']) . '" class="img-fluid" style="max-height: 350px; width:100%; object-fit: contain;">';
                         }
                         ?>
                     </div>
@@ -650,10 +653,29 @@ function renderStars($rating, $max = 5) {
                         </div>
                     <?php endif; ?>
 
-                    <h2 class="text-apex-blue fw-bold mb-4"
-                        style="font-family: 'Barlow Condensed', sans-serif; font-size: 2.5rem;">
-                        ₱<?php echo number_format($product['price'], 2); ?>
-                    </h2>
+                    <div class="mb-4">
+                        <?php if ($productOnSale): ?>
+                            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                <span style="background:#ff3b5c;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.9rem;padding:5px 12px;border-radius:4px;letter-spacing:.06em;">
+                                    <?php echo $productSalePercent; ?>% OFF
+                                </span>
+                                <?php if (!empty($productSaleExpiry)): ?>
+                                    <span class="sale-countdown" data-expiry="<?php echo strtotime($productSaleExpiry); ?>" style="font-size:.82rem;font-family:'Barlow Condensed',sans-serif;font-weight:800;color:#ff3b5c;letter-spacing:.04em;">
+                                        <i class="fas fa-clock me-1"></i><span class="cdown-text">Loading...</span>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                        <h2 class="fw-bold mb-0"
+                            style="font-family: 'Barlow Condensed', sans-serif; font-size: 2.5rem; color:<?php echo $productOnSale ? '#ff3b5c' : 'var(--apex-blue)'; ?>;">
+                            &#8369;<?php echo number_format($productPrice, 2); ?>
+                            <?php if ($productOnSale): ?>
+                                <span style="font-size:1.15rem;text-decoration:line-through;color:var(--apex-muted);margin-left:10px;">
+                                    &#8369;<?php echo number_format($productRegularPrice, 2); ?>
+                                </span>
+                            <?php endif; ?>
+                        </h2>
+                    </div>
 
                     <hr class="mb-4 border-secondary">
 
@@ -998,19 +1020,29 @@ function renderStars($rating, $max = 5) {
                     <div class="related-slider-track" id="relTrack">
                         <?php foreach ($related_products as $rel): ?>
                             <div class="related-slider-item">
-                                <a href="product.php?id=<?php echo $rel['product_id']; ?>" class="related-card">
+                                <a href="product.php?id=<?php echo $rel['id']; ?>" class="related-card">
                                     <div class="related-card-img">
                                         <?php
-                                        if (strpos($rel['image'], '<svg') !== false) {
+                                        if (strpos($rel['image'] ?? '', '<svg') !== false) {
                                             echo $rel['image'];
                                         } else {
-                                            echo '<img src="' . htmlspecialchars($rel['image']) . '" alt="' . htmlspecialchars($rel['name']) . '">';
+                                            echo '<img src="' . htmlspecialchars(Inventory::getProductImageSrc($rel['image'] ?? '')) . '" alt="' . htmlspecialchars($rel['name']) . '">';
                                         }
                                         ?>
                                     </div>
                                     <div class="related-card-body">
                                         <div class="related-card-name"><?php echo htmlspecialchars($rel['name']); ?></div>
-                                        <div class="related-card-price">₱<?php echo number_format($rel['price'], 2); ?></div>
+                                        <?php
+                                        $relRegular = (float)($rel['regular_price'] ?? $rel['price'] ?? 0);
+                                        $relEffective = (float)($rel['effective_price'] ?? $relRegular);
+                                        $relOnSale = $relEffective < $relRegular;
+                                        ?>
+                                        <div class="related-card-price">
+                                            &#8369;<?php echo number_format($relEffective, 2); ?>
+                                            <?php if ($relOnSale): ?>
+                                                <span style="text-decoration:line-through;color:var(--apex-muted);font-size:.82rem;margin-left:6px;">&#8369;<?php echo number_format($relRegular, 2); ?></span>
+                                            <?php endif; ?>
+                                        </div>
                                         <?php if (isset($rel['stock']) && (int)$rel['stock'] <= 0): ?>
                                             <span class="badge mt-1" style="background:#ff3b5c; font-size:.7rem;">Out of Stock</span>
                                         <?php endif; ?>

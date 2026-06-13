@@ -48,6 +48,7 @@ class Inventory
         $row['is_sale_active']   = $saleActive;
         $row['discount_percent'] = $saleActive ? $salePercent : 0;
         $row['old_price']        = $saleActive ? $regularPrice : ($row['old_price'] ?? null);
+        $row['image']            = self::normalizeProductImagePath($row['image'] ?? '');
 
         return $row;
     }
@@ -193,13 +194,14 @@ class Inventory
     }
 
     // ── 2. ADD PRODUCT VIA ADMIN ──
-    public function addProduct($name, $brand, $category, $price, $old_price, $stock, $rating, $badge, $badge_type, $image, $desc, $shipping_time, $sale_percent, $sale_expiry)
+    public function addProduct($name, $brand, $category, $price, $old_price = null, $stock = 0, $rating = null, $badge = '', $badge_type = '', $image = '', $desc = '', $shipping_time = '', $sale_percent = 0, $sale_expiry = null)
     {
         $brand_id = $this->getBrandId($brand);
         $cat_id = $this->getCategoryId($category);
 
         $sale_expiry = !empty($sale_expiry) ? $sale_expiry : null;
         $sale_percent = !empty($sale_percent) ? $sale_percent : 0;
+        $image = self::normalizeProductImagePath($image);
 
         // Insert main product
         $stmt = $this->conn->prepare("INSERT INTO products_tbl (brand_id, category_id, name, `desc`, price, sale_percent, sale_valid_until, stock_qty, badge, badge_type, est_shipping_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -224,6 +226,7 @@ class Inventory
 
         $sale_expiry = !empty($sale_expiry) ? $sale_expiry : null;
         $sale_percent = !empty($sale_percent) ? $sale_percent : 0;
+        $image = self::normalizeProductImagePath($image);
 
         $stmt = $this->conn->prepare("UPDATE products_tbl SET brand_id=?, category_id=?, name=?, `desc`=?, price=?, sale_percent=?, sale_valid_until=?, stock_qty=?, badge=?, badge_type=?, est_shipping_time=? WHERE product_id=?");
         $stmt->bind_param("iissdisisssi", $brand_id, $cat_id, $name, $desc, $price, $sale_percent, $sale_expiry, $stock, $badge, $badge_type, $shipping_time, $id);
@@ -350,10 +353,59 @@ class Inventory
         return $orders;
     }
 
+    public static function normalizeProductImagePath($imagePath)
+    {
+        $imagePath = trim((string)$imagePath);
+
+        if ($imagePath === '') {
+            return '';
+        }
+
+        if (strpos($imagePath, '<svg') !== false) {
+            return $imagePath;
+        }
+
+        if (preg_match('#^(https?:)?//#i', $imagePath) || strpos($imagePath, 'data:image/') === 0) {
+            return $imagePath;
+        }
+
+        $path = str_replace('\\', '/', $imagePath);
+        $path = preg_replace('#^\./+#', '', $path);
+        $path = preg_replace('#^(\.\./)+#', '', $path);
+
+        if (preg_match('#(?:^|/)(assets/images/.+)$#i', $path, $matches)) {
+            return $matches[1];
+        }
+
+        $compact = strtolower(preg_replace('/[^a-z0-9._-]/i', '', $imagePath));
+        $knownImageDirs = [
+            'products' => 'assetsimagesproducts',
+            'profiles' => 'assetsimagesprofiles',
+        ];
+
+        foreach ($knownImageDirs as $dir => $marker) {
+            $markerPos = strpos($compact, $marker);
+            if ($markerPos !== false) {
+                $fileName = substr($compact, $markerPos + strlen($marker));
+                if ($fileName !== '') {
+                    return 'assets/images/' . $dir . '/' . basename($fileName);
+                }
+            }
+        }
+
+        $baseName = basename($path);
+        if ($baseName !== '' && file_exists(__DIR__ . '/../assets/images/products/' . $baseName)) {
+            return 'assets/images/products/' . $baseName;
+        }
+
+        return ltrim($path, '/');
+    }
+
     public static function getProductImageSrc($imagePath, $prefix = '')
     {
+        $imagePath = self::normalizeProductImagePath($imagePath);
         if (empty($imagePath)) return 'https://via.placeholder.com/300';
-        if (strpos($imagePath, 'http') === 0 || strpos($imagePath, '<svg') !== false) return $imagePath;
+        if (preg_match('#^(https?:)?//#i', $imagePath) || strpos($imagePath, 'data:image/') === 0 || strpos($imagePath, '<svg') !== false) return $imagePath;
         return $prefix . $imagePath;
     }
 

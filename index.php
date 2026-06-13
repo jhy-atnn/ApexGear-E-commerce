@@ -1,6 +1,7 @@
 <?php
 session_start(); // ADDED: Restores session for the navbar, cart, and user logins
 require_once __DIR__ . '/classes/Inventory.php';
+require_once __DIR__ . '/includes/product_card.php';
 
 /** @var Inventory $inventoryManager */
 $inventoryManager = new Inventory();
@@ -33,6 +34,7 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
+    <link href="assets/css/store-styles.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -279,6 +281,8 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
                         $oldPrice  = isset($product['old_price']) ? $product['old_price'] : null;
                     ?>
                         <div class="featured-product-slide product-item" data-cat="<?php echo htmlspecialchars($cat); ?>">
+                            <?php renderProductCard($product); ?>
+                            <?php if (false): ?>
                             <div class="product-card h-100 position-relative">
 
                                 <?php if ($badgeType === 'new'): ?>
@@ -350,6 +354,7 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
                                     </div>
                                 </div>
                             </div>
+                            <?php endif; ?>
                         </div>
                     <?php } ?>
                 </div>
@@ -522,6 +527,7 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
 
 
     <?php include 'includes\footer.php'; ?>
+    <?php include_once __DIR__ . '/includes/sale_countdown_script.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>

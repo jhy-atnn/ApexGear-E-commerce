@@ -1,22 +1,17 @@
 <?php
 require_once __DIR__ . '/includes/storage.php';
 require_once 'classes/Inventory.php';
+require_once __DIR__ . '/includes/product_card.php';
 
 /** @var Inventory $inventoryManager */
 $inventoryManager = new Inventory();
 $all_products = $inventoryManager->getAllProducts();
 
-// Dynamically generate the sale items array from the inventory
-$sale_items = [];
-foreach ($all_products as $item) {
-    // Only include items that have an old_price greater than their current price
-    if (!empty($item['old_price']) && $item['old_price'] > $item['price']) {
-        // Calculate the dynamic discount percentage
-        $discount = round((($item['old_price'] - $item['price']) / $item['old_price']) * 100);
-        $item['discount'] = $discount;
-        $sale_items[] = $item;
-    }
-}
+// Only active sale products should appear on the deals page.
+$sale_items = array_values(array_filter($all_products, fn($item) => !empty($item['is_sale_active'])));
+usort($sale_items, fn($a, $b) => (int)($b['discount_percent'] ?? 0) <=> (int)($a['discount_percent'] ?? 0));
+$flash_items = array_slice($sale_items, 0, 4);
+$maxDiscount = !empty($sale_items) ? max(array_map(fn($item) => (int)($item['discount_percent'] ?? 0), $sale_items)) : 0;
 
 $bundles = [
     [
@@ -45,7 +40,7 @@ $bundles = [
     ],
 ];
 
-$flash_deal_ids = [10, 11, 12, 13];
+$flash_deal_ids = [];
 ?>
 
 <!DOCTYPE html>
@@ -61,6 +56,7 @@ $flash_deal_ids = [10, 11, 12, 13];
     <link href="assets/css/style.css" rel="stylesheet" />
     <link rel="stylesheet" href="assets/css/deals.css">
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
+    <link href="assets/css/store-styles.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -97,7 +93,7 @@ $flash_deal_ids = [10, 11, 12, 13];
                     </div>
                     <!-- Big % graphic -->
                     <div style="font-family:'Barlow Condensed',sans-serif; font-size:7rem; font-weight:900; line-height:1; color:rgba(0,194,255,.18); margin-top:10px; user-select:none;">
-                        UP TO<br><span style="font-size:9rem; color:rgba(0,194,255,.28);">25%</span><br>OFF
+                        UP TO<br><span style="font-size:9rem; color:rgba(0,194,255,.28);"><?php echo $maxDiscount; ?>%</span><br>OFF
                     </div>
                 </div>
             </div>
@@ -123,7 +119,7 @@ $flash_deal_ids = [10, 11, 12, 13];
                         <div style="position:absolute; bottom:-50px; left:-20px; width:160px; height:160px; background:rgba(21,73,212,.15); border-radius:50%;"></div>
                         <div style="position:relative;">
                             <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:.78rem; letter-spacing:.25em; text-transform:uppercase; color:var(--apex-accent); margin-bottom:8px;">Limited Time</div>
-                            <h3 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:2.4rem; text-transform:uppercase; color:#fff; line-height:1; margin-bottom:12px;">Up to <span style="color:var(--apex-accent)">40% Off</span><br>Gaming Gear</h3>
+                            <h3 style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:2.4rem; text-transform:uppercase; color:#fff; line-height:1; margin-bottom:12px;">Up to <span style="color:var(--apex-accent)"><?php echo $maxDiscount; ?>% Off</span><br>Gaming Gear</h3>
                             <p style="color:rgba(255,255,255,.6); font-size:.88rem; margin-bottom:24px;">Massive discounts on keyboards, mice, headsets, and more. Don't miss out.</p>
                             <div class="d-flex gap-2 mb-28" id="countdown" style="margin-bottom:24px;">
                                 <div style="background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.15); border-radius:6px; padding:10px 14px; text-align:center; min-width:56px;">
@@ -146,6 +142,19 @@ $flash_deal_ids = [10, 11, 12, 13];
 
                 <div class="col-lg-7">
                     <div class="row g-3">
+                        <?php if (empty($flash_items)): ?>
+                            <div class="col-12">
+                                <div class="text-center py-5 bg-white border rounded-3">
+                                    <h5 class="text-muted mb-0">No active flash deals right now.</h5>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <?php foreach ($flash_items as $f_item): ?>
+                                <div class="col-sm-6">
+                                    <?php renderProductCard($f_item, ['button_text' => 'View Deal']); ?>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                         <!-- Dynamically load the specific Flash Deals -->
                         <?php foreach ($flash_deal_ids as $fid):
                             if (isset($all_products[$fid])):
@@ -202,6 +211,8 @@ $flash_deal_ids = [10, 11, 12, 13];
                 <?php else: ?>
                     <?php foreach ($sale_items as $item): ?>
                         <div class="col-sm-6 col-lg-4">
+                            <?php renderProductCard($item, ['button_text' => 'View Deal']); ?>
+                            <?php if (false): ?>
                             <div class="sale-card">
                                 <div class="sale-discount-badge">-<?php echo $item['discount']; ?>%</div>
                                 <div class="sale-img-wrap">
@@ -223,6 +234,7 @@ $flash_deal_ids = [10, 11, 12, 13];
                                     <a href="product.php?id=<?php echo $item['id']; ?>" class="btn-sale">View Deal</a>
                                 </div>
                             </div>
+                            <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -233,6 +245,7 @@ $flash_deal_ids = [10, 11, 12, 13];
   
 
     <?php include 'includes/footer.php'; ?>
+    <?php include_once __DIR__ . '/includes/sale_countdown_script.php'; ?>
 
     <script>
         // ── HERO COUNTDOWN (3 days from page load) ──
