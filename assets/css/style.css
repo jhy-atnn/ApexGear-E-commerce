@@ -398,6 +398,10 @@ body {
 }
 
 /* ── HERO ── */
+.inner-page {
+    padding: 48px 0;
+}
+
 .hero {
     background: linear-gradient(135deg, var(--apex-dark) 0%, var(--apex-blue) 55%, var(--apex-blue-lt) 100%);
     min-height: 520px;

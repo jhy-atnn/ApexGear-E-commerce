@@ -21,6 +21,10 @@ if (!$product) {
     exit();
 }
 
+$productPrice = (float)($product['effective_price'] ?? $product['price']);
+$productRegularPrice = (float)($product['regular_price'] ?? $product['price']);
+$productOnSale = $productPrice < $productRegularPrice;
+
 // Determine which of this user's Completed orders containing this product
 // are still eligible for a review (per-order review tracking).
 $reviewableOrders = [];
@@ -63,10 +67,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         } else {
             $_SESSION['cart'][$product_id] = [
                 'name'           => $product['name'],
-                'price'          => $product['price'],      // original price (kept for backwards compat)
-                'original_price' => $product['price'],      // explicit original price for sale calculation
+                'price'          => $productRegularPrice,   // regular price (kept for backwards compat)
+                'original_price' => $productRegularPrice,
+                'effective_price'=> $productPrice,
+                'sale_price'     => $product['sale_price'] ?? null,
                 'sale_percent'   => $product['sale_percent'] ?? 0,
                 'sale_expiry'    => $product['sale_expiry'] ?? '',
+                'is_sale_active' => $product['is_sale_active'] ?? false,
+                'discount_percent' => $product['discount_percent'] ?? 0,
                 'image'          => $product['image'],
                 'qty'            => $qty
             ];

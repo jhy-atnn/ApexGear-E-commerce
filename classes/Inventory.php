@@ -12,6 +12,114 @@ class Inventory
         $this->conn = $db->getConnection();
     }
 
+    public static function isSaleActive($salePercent, $saleExpiry)
+    {
+        $salePercent = (int)$salePercent;
+        if ($salePercent <= 0) {
+            return false;
+        }
+
+        if ($saleExpiry === null || trim((string)$saleExpiry) === '') {
+            return true;
+        }
+
+        $expiryTs = strtotime((string)$saleExpiry);
+        return $expiryTs !== false && $expiryTs > time();
+    }
+
+    public static function salePriceFromPercent($regularPrice, $salePercent)
+    {
+        return round((float)$regularPrice * (1 - ((int)$salePercent / 100)), 2);
+    }
+
+    public static function applyPricingFields(array $row)
+    {
+        $regularPrice = (float)($row['regular_price'] ?? $row['original_price'] ?? $row['price'] ?? 0);
+        $salePercent  = (int)($row['sale_percent'] ?? 0);
+        $saleExpiry   = $row['sale_expiry'] ?? $row['sale_valid_until'] ?? null;
+        $saleActive   = self::isSaleActive($salePercent, $saleExpiry);
+        $salePrice    = $saleActive ? self::salePriceFromPercent($regularPrice, $salePercent) : null;
+
+        $row['price']            = $regularPrice;
+        $row['regular_price']    = $regularPrice;
+        $row['original_price']   = $regularPrice;
+        $row['effective_price']  = $saleActive ? $salePrice : $regularPrice;
+        $row['sale_price']       = $salePrice;
+        $row['is_sale_active']   = $saleActive;
+        $row['discount_percent'] = $saleActive ? $salePercent : 0;
+        $row['old_price']        = $saleActive ? $regularPrice : ($row['old_price'] ?? null);
+
+        return $row;
+    }
+
+    public static function getCartItemEffectivePrice(array $item)
+    {
+        if (isset($item['price_at_checkout'])) {
+            return (float)$item['price_at_checkout'];
+        }
+
+        if (isset($item['effective_price'])) {
+            return (float)$item['effective_price'];
+        }
+
+        $priced = self::applyPricingFields($item);
+        return (float)$priced['effective_price'];
+    }
+
+    private static function buildSessionProductItem(array $product, $qty = null)
+    {
+        $item = [
+            'name'           => $product['name'] ?? 'Product',
+            'price'          => $product['regular_price'] ?? $product['price'] ?? 0,
+            'original_price' => $product['regular_price'] ?? $product['price'] ?? 0,
+            'effective_price'=> $product['effective_price'] ?? $product['price'] ?? 0,
+            'sale_price'     => $product['sale_price'] ?? null,
+            'sale_percent'   => $product['sale_percent'] ?? 0,
+            'sale_expiry'    => $product['sale_expiry'] ?? '',
+            'is_sale_active' => !empty($product['is_sale_active']),
+            'discount_percent' => $product['discount_percent'] ?? 0,
+            'image'          => $product['image'] ?? '',
+            'brand'          => $product['brand'] ?? '',
+            'category'       => $product['category'] ?? '',
+        ];
+
+        if ($qty !== null) {
+            $item['qty'] = max(1, (int)$qty);
+        }
+
+        return $item;
+    }
+
+    public function refreshCartItemsWithLivePricing(array $cartItems)
+    {
+        foreach ($cartItems as $id => $item) {
+            $product = $this->findProductById((int)$id);
+            if (!$product) {
+                $cartItems[$id] = self::applyPricingFields($item);
+                continue;
+            }
+
+            $cartItems[$id] = self::buildSessionProductItem($product, $item['qty'] ?? 1);
+        }
+
+        return $cartItems;
+    }
+
+    public function refreshFavoriteItemsWithLivePricing(array $favoriteItems)
+    {
+        foreach ($favoriteItems as $id => $item) {
+            $product = $this->findProductById((int)$id);
+            if (!$product) {
+                $favoriteItems[$id] = self::applyPricingFields($item);
+                continue;
+            }
+
+            $favoriteItems[$id] = self::buildSessionProductItem($product);
+        }
+
+        return $favoriteItems;
+    }
+
     // ── HELPER: Resolve or Insert Brand ID ──
     private function getBrandId($brandName)
     {
@@ -75,6 +183,7 @@ class Inventory
 
         while ($row = $result->fetch_assoc()) {
             // Placeholder data for frontend features not yet in database
+            $row = self::applyPricingFields($row);
             $row['rating'] = rand(4, 5); // Mock rating until reviews_tbl is active
             $row['sales']  = rand(50, 500); // Mock sales for featured sorting
 
@@ -365,6 +474,7 @@ class Inventory
 
         if ($row = $result->fetch_assoc()) {
             // Placeholder data for frontend features not yet in database
+            $row = self::applyPricingFields($row);
             $row['rating'] = rand(4, 5);
             $row['sales']  = rand(50, 500);
             return $row;

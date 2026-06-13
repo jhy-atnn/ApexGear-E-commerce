@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 13, 2026 at 07:19 AM
+-- Generation Time: Jun 13, 2026 at 06:58 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -412,6 +412,7 @@ CREATE TABLE `reviews_tbl` (
   `review_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `product_id` int(11) NOT NULL,
+  `order_id` int(11) DEFAULT NULL,
   `rating` int(11) NOT NULL CHECK (`rating` >= 1 and `rating` <= 5),
   `comment` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -636,8 +637,10 @@ ALTER TABLE `product_images_tbl`
 --
 ALTER TABLE `reviews_tbl`
   ADD PRIMARY KEY (`review_id`),
+  ADD UNIQUE KEY `uniq_user_order_product` (`user_id`,`order_id`,`product_id`),
   ADD KEY `user_id` (`user_id`),
-  ADD KEY `product_id` (`product_id`);
+  ADD KEY `product_id` (`product_id`),
+  ADD KEY `order_id` (`order_id`);
 
 --
 -- Indexes for table `shipping_address_tbl`

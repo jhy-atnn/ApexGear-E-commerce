@@ -1,4 +1,14 @@
 <!-- ── Favorites Offcanvas ── -->
+<?php
+if (!isset($inventoryManager)) {
+    require_once __DIR__ . '/../classes/Inventory.php';
+    /** @var Inventory $inventoryManager */
+    $inventoryManager = new Inventory();
+}
+if (isset($_SESSION['favorites']) && is_array($_SESSION['favorites'])) {
+    $_SESSION['favorites'] = $inventoryManager->refreshFavoriteItemsWithLivePricing($_SESSION['favorites']);
+}
+?>
 <div class="offcanvas offcanvas-end" tabindex="-1" id="favoritesOffcanvas" aria-labelledby="favoritesOffcanvasLabel" style="width: 400px; border-left: none; box-shadow: -4px 0 24px rgba(0,0,0,0.1);">
     <div class="offcanvas-header border-bottom pb-3 pt-4 px-4">
         <h6 class="offcanvas-title fw-bold text-dark d-flex align-items-center" id="favoritesOffcanvasLabel">
@@ -20,7 +30,11 @@
             </div>
         <?php else: ?>
             <div class="cart-items flex-grow-1 overflow-auto pe-2">
-                <?php foreach ($_SESSION['favorites'] as $id => $item): ?>
+                <?php foreach ($_SESSION['favorites'] as $id => $item):
+                    $favoritePrice = Inventory::getCartItemEffectivePrice($item);
+                    $favoriteOriginal = floatval($item['original_price'] ?? $item['price'] ?? 0);
+                    $favoriteSale = $favoritePrice < $favoriteOriginal;
+                ?>
                     <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
                         <div style="width: 50px; height: 50px; border-radius: 6px; background: var(--apex-grey); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink: 0;">
                             <?php
@@ -36,7 +50,11 @@
                                 <a href="product.php?id=<?php echo $id; ?>" class="text-dark text-decoration-none"><?php echo htmlspecialchars($item['name']); ?></a>
                             </h6>
                             <div class="fw-bold text-apex-blue small mt-1">
-                                ₱<?php echo number_format($item['price'], 2); ?>
+                                ₱<?php echo number_format($favoritePrice, 2); ?>
+                                <?php if ($favoriteSale): ?>
+                                    <span style="text-decoration:line-through;color:var(--apex-muted);font-weight:400;margin-left:5px;">₱<?php echo number_format($favoriteOriginal, 2); ?></span>
+                                    <span style="color:#ff3b5c;font-weight:700;display:block;"><?php echo intval($item['discount_percent'] ?? $item['sale_percent'] ?? 0); ?>% OFF</span>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <form method="POST" action="actions/favorites_action.php" class="ms-auto m-0">

@@ -1,10 +1,10 @@
 <?php
-session_start(); // 1. Manually start the session 
+session_start();
+require_once __DIR__ . '/classes/Inventory.php';
+$currentPage = 'cart';
 
-// 2. Handle POST actions (Updates & Removals)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $product_id = $_POST['product_id'] ?? 0;
-
     if ($_POST['action'] === 'remove') {
         unset($_SESSION['cart'][$product_id]);
     } elseif ($_POST['action'] === 'update') {
@@ -15,29 +15,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             unset($_SESSION['cart'][$product_id]);
         }
     }
-
-    // CRITICAL: This redirect MUST stay strictly inside this IF block to prevent infinite loops!
     header("Location: cart.php");
     exit();
 }
 
-// ── Helper: compute the effective (sale) price for a cart item ──────────────
-// Fetches live sale data from DB and returns the currently applicable price.
 function getEffectivePriceForCart($item) {
-    // If the item has live sale data embedded (from add-to-cart action), use it;
-    // otherwise fall back to the stored session price.
-    $basePrice  = floatval($item['original_price'] ?? $item['price']);
-    $salePct    = intval($item['sale_percent'] ?? 0);
-    $saleExpiry = $item['sale_expiry'] ?? '';
-
-    $saleActive = $salePct > 0 && (!empty($saleExpiry) ? strtotime($saleExpiry) > time() : true);
-    if ($saleActive) {
-        return round($basePrice * (1 - $salePct / 100), 2);
-    }
-    return $basePrice;
+    return Inventory::getCartItemEffectivePrice($item);
 }
 
-// 3. Calculate Totals using effective (live-sale) prices
+/** @var Inventory $inventoryManager */
+$inventoryManager = new Inventory();
+if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
+    $_SESSION['cart'] = $inventoryManager->refreshCartItemsWithLivePricing($_SESSION['cart']);
+}
+
 $subtotal = 0;
 $item_count = 0;
 if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
@@ -50,49 +41,441 @@ if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
 $tax = $subtotal * 0.08;
 $grand_total = $subtotal + $tax;
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Cart | ApeX Gear</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
     <link href="assets/css/style.css" rel="stylesheet">
+    <style>
+        /* ── CART HEADER BAR ── */
+        .cart-header-bar {
+            background: var(--apex-blue);
+            padding: 0 0;
+        }
+        .cart-header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+        .cart-header-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .cart-header-logo img {
+            height: 42px;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 0 4px rgba(0,194,255,.3));
+        }
+        .cart-header-logo .logo-wordmark {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.7rem;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -.01em;
+            color: #fff;
+        }
+        .cart-header-logo .logo-wordmark span { color: var(--apex-accent); }
+        .cart-header-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.5);
+        }
+
+        /* ── PAGE BODY ── */
+        .cart-page {
+            background: var(--apex-grey);
+            flex: 1;
+            padding: 40px 0 80px;
+        }
+
+        /* ── BACK LINK ── */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: .82rem;
+            font-weight: 600;
+            color: var(--apex-muted);
+            text-decoration: none;
+            margin-bottom: 28px;
+            transition: color .18s;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        .back-link:hover { color: var(--apex-blue-mid); }
+        .back-link i { font-size: .75rem; }
+
+        /* ── PAGE HEADING ── */
+        .cart-heading {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--apex-text);
+            margin-bottom: 4px;
+            letter-spacing: .01em;
+        }
+        .cart-heading span { color: var(--apex-blue-mid); }
+        .cart-subtext {
+            font-size: .85rem;
+            color: var(--apex-muted);
+            margin-bottom: 32px;
+        }
+
+        /* ── CART CARD ── */
+        .cart-card {
+            background: #fff;
+            border: 1px solid var(--apex-border);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        /* ── TABLE ── */
+        .cart-table { width: 100%; border-collapse: collapse; }
+
+        .cart-table thead tr {
+            background: var(--apex-grey);
+            border-bottom: 1px solid var(--apex-border);
+        }
+        .cart-table thead th {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            color: var(--apex-muted);
+            padding: 13px 20px;
+        }
+
+        .cart-table tbody tr {
+            border-bottom: 1px solid var(--apex-border);
+            transition: background .15s;
+        }
+        .cart-table tbody tr:last-child { border-bottom: none; }
+        .cart-table tbody tr:hover { background: #fafbff; }
+        .cart-table td { padding: 18px 20px; vertical-align: middle; }
+
+        /* ── PRODUCT CELL ── */
+        .product-thumb {
+            width: 62px;
+            height: 62px;
+            border-radius: 10px;
+            background: var(--apex-grey);
+            border: 1px solid var(--apex-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .product-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        .product-name {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--apex-text);
+            letter-spacing: .02em;
+        }
+        .product-sub { font-size: .75rem; color: var(--apex-muted); margin-top: 2px; }
+
+        /* ── PRICE CELL ── */
+        .price-main {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--apex-blue);
+        }
+        .price-original {
+            font-size: .75rem;
+            color: var(--apex-muted);
+            text-decoration: line-through;
+            margin-top: 2px;
+        }
+        .badge-sale {
+            display: inline-block;
+            background: rgba(255,59,92,.1);
+            color: #ff3b5c;
+            font-size: .66rem;
+            font-weight: 700;
+            letter-spacing: .6px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 3px;
+            font-family: 'Barlow Condensed', sans-serif;
+        }
+        .sale-timer {
+            font-size: .67rem;
+            color: #ff3b5c;
+            margin-top: 3px;
+        }
+
+        /* ── QTY CONTROLS ── */
+        .qty-wrap { display: flex; align-items: center; gap: 6px; }
+        .qty-input {
+            width: 54px;
+            height: 34px;
+            border: 1px solid var(--apex-border);
+            border-radius: 7px;
+            background: var(--apex-grey);
+            color: var(--apex-text);
+            font-weight: 700;
+            font-size: .88rem;
+            text-align: center;
+            outline: none;
+            transition: border-color .2s;
+        }
+        .qty-input:focus { border-color: var(--apex-blue-mid); }
+
+        .btn-qty-update {
+            width: 34px; height: 34px;
+            border: 1px solid var(--apex-border);
+            background: var(--apex-grey);
+            border-radius: 7px;
+            color: var(--apex-muted);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all .2s;
+            font-size: .78rem;
+        }
+        .btn-qty-update:hover {
+            background: var(--apex-blue);
+            border-color: var(--apex-blue);
+            color: #fff;
+        }
+
+        /* ── REMOVE BTN ── */
+        .btn-remove {
+            width: 34px; height: 34px;
+            border: 1px solid rgba(255,59,92,.2);
+            background: rgba(255,59,92,.06);
+            border-radius: 7px;
+            color: #ff3b5c;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all .2s;
+            font-size: .78rem;
+        }
+        .btn-remove:hover { background: #ff3b5c; border-color: #ff3b5c; color: #fff; }
+
+        /* ── EMPTY STATE ── */
+        .empty-cart { padding: 68px 24px; text-align: center; }
+        .empty-cart .empty-icon {
+            width: 80px; height: 80px;
+            background: var(--apex-grey);
+            border: 1px solid var(--apex-border);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 22px;
+            font-size: 1.8rem;
+            color: var(--apex-muted);
+        }
+        .empty-cart h4 {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.35rem; font-weight: 800;
+            color: var(--apex-text); margin-bottom: 8px;
+        }
+        .empty-cart p { color: var(--apex-muted); font-size: .88rem; margin-bottom: 26px; }
+
+        /* ── BTN APEX (shop / continue) ── */
+        .btn-apex-sm {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: var(--apex-blue);
+            color: #fff;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .88rem; font-weight: 800;
+            letter-spacing: 1.2px; text-transform: uppercase;
+            text-decoration: none;
+            padding: 10px 22px;
+            border-radius: 8px;
+            border: none; cursor: pointer;
+            transition: background .2s, transform .2s;
+        }
+        .btn-apex-sm:hover { background: var(--apex-blue-mid); color: #fff; transform: translateY(-1px); }
+
+        /* ── CONTINUE SHOPPING LINK ── */
+        .continue-link {
+            font-size: .82rem; color: var(--apex-muted);
+            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: color .18s;
+        }
+        .continue-link:hover { color: var(--apex-blue-mid); }
+
+        /* ── SUMMARY CARD ── */
+        .summary-card {
+            background: #fff;
+            border: 1px solid var(--apex-border);
+            border-radius: 14px;
+            padding: 26px;
+            position: sticky;
+            top: 20px;
+        }
+        .summary-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.15rem; font-weight: 800;
+            letter-spacing: .06em; text-transform: uppercase;
+            color: var(--apex-text);
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--apex-border);
+            margin-bottom: 20px;
+        }
+        .summary-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; font-size: .88rem;
+        }
+        .summary-row .lbl { color: var(--apex-muted); }
+        .summary-row .val { font-weight: 600; color: var(--apex-text); }
+        .summary-row .val.free { color: #10b981; font-weight: 700; }
+
+        .summary-divider { border: none; border-top: 1px solid var(--apex-border); margin: 18px 0; }
+
+        .summary-total {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 22px;
+        }
+        .summary-total .tot-lbl {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: .04em;
+            color: var(--apex-text);
+        }
+        .summary-total .tot-amt {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.65rem; font-weight: 900;
+            color: var(--apex-blue);
+        }
+
+        /* ── CHECKOUT BTN ── */
+        .btn-checkout {
+            display: block; width: 100%;
+            background: var(--apex-blue);
+            color: #fff;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .95rem; font-weight: 800;
+            letter-spacing: 1.4px; text-transform: uppercase;
+            text-decoration: none; text-align: center;
+            padding: 14px 20px;
+            border-radius: 9px; border: none; cursor: pointer;
+            transition: background .2s, box-shadow .2s, transform .2s;
+            box-shadow: 0 4px 18px rgba(11,47,168,.25);
+        }
+        .btn-checkout:hover {
+            background: var(--apex-blue-mid);
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(11,47,168,.35);
+        }
+        .btn-checkout:disabled,
+        .btn-checkout-disabled {
+            background: var(--apex-grey);
+            color: var(--apex-muted);
+            box-shadow: none;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* ── SHIPPING BADGE ── */
+        .shipping-badge {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(16,185,129,.08);
+            border: 1px solid rgba(16,185,129,.2);
+            border-radius: 7px;
+            padding: 9px 13px;
+            font-size: .78rem;
+            color: #10b981;
+            font-weight: 600;
+            margin-bottom: 18px;
+        }
+        .shipping-badge i { font-size: .8rem; }
+
+        /* ── SECURE NOTE ── */
+        .secure-note {
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+            font-size: .72rem; color: var(--apex-muted);
+            margin-top: 12px;
+        }
+        .secure-note i { color: #10b981; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .cart-table thead th:nth-child(3),
+            .cart-table td:nth-child(3) { display: none; }
+            .cart-page { padding: 28px 0 60px; }
+        }
+    </style>
 </head>
-
 <body>
+    <?php include_once __DIR__ . '/includes/cookie_notif.php'; ?>
 
-    <?php include 'includes\navbar.php'; ?>
+    <!-- ── STATIC HEADER BAR ── -->
+    <div class="cart-header-bar">
+        <div class="container">
+            <div class="cart-header-inner">
+                <a href="index.php" class="cart-header-logo">
+                    <img src="assets/images/ApeX Logo.png" alt="ApeX Gear">
+                    <span class="logo-wordmark">ApeX<span>Gear</span></span>
+                </a>
+                <span class="cart-header-label">Cart Items</span>
+            </div>
+        </div>
+    </div>
 
-    <section class="inner-page">
+    <!-- ── CART PAGE ── -->
+    <div class="cart-page">
         <div class="container">
 
-            <h2 class="sec-title mb-4">Your <span>Shopping Cart</span></h2>
+            <!-- Back button -->
+            <button class="back-link" onclick="history.back()">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
 
-            <div class="row g-5">
+            <!-- Heading -->
+            <h2 class="cart-heading">Your <span>Shopping Cart</span></h2>
+            <p class="cart-subtext">
+                <?php if ($item_count > 0): ?>
+                    <?php echo $item_count; ?> item<?php echo $item_count !== 1 ? 's' : ''; ?> in your cart
+                <?php else: ?>
+                    Your cart is currently empty
+                <?php endif; ?>
+            </p>
 
+            <div class="row g-4">
+
+                <!-- ── ITEMS ── -->
                 <div class="col-lg-8">
                     <?php if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])): ?>
-                        <div class="apex-card text-center p-5">
-                            <div class="mb-4"><i class="fas fa-shopping-cart fa-4x text-muted opacity-50"></i></div>
-                            <h4 class="text-muted mb-3">Your cart is currently empty.</h4>
-                            <p class="text-muted mb-4">Looks like you haven't added any premium gear yet.</p>
-                            <a href="store.php" class="btn-apex">Continue Shopping</a>
+                        <div class="cart-card empty-cart">
+                            <div class="empty-icon"><i class="fas fa-shopping-cart"></i></div>
+                            <h4>No items yet</h4>
+                            <p>You haven't added any premium gear yet.<br>Browse our collection and level up your setup.</p>
+                            <a href="store.php" class="btn-apex-sm">
+                                <i class="fas fa-store"></i> Browse Store
+                            </a>
                         </div>
                     <?php else: ?>
-                        <div class="apex-card p-0 overflow-hidden">
+                        <div class="cart-card">
                             <div class="table-responsive">
-                                <table class="table table-borderless align-middle mb-0">
-                                    <thead class="bg-light text-muted small text-uppercase">
+                                <table class="cart-table">
+                                    <thead>
                                         <tr>
-                                            <th scope="col" style="width: 50%; padding-left: 20px;">Product</th>
-                                            <th scope="col" style="width: 20%;">Price</th>
-                                            <th scope="col" style="width: 20%;">Qty</th>
-                                            <th scope="col" style="width: 10%; padding-right: 20px;"></th>
+                                            <th style="width:46%">Product</th>
+                                            <th style="width:22%">Price</th>
+                                            <th style="width:22%">Qty</th>
+                                            <th style="width:10%; text-align:right; padding-right:24px;"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -101,107 +484,125 @@ $grand_total = $subtotal + $tax;
                                             $originalPrice  = floatval($item['original_price'] ?? $item['price']);
                                             $isOnSale = $effectivePrice < $originalPrice;
                                         ?>
-                                            <tr class="border-bottom">
-                                                <td class="py-4" style="padding-left: 20px;">
-                                                    <div class="d-flex align-items-center gap-3">
-                                                        <div style="width: 60px; height: 60px; border-radius: 8px; background: var(--apex-grey); display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                                                            <?php
-                                                            if (strpos($item['image'], '<svg') !== false) {
-                                                                echo $item['image'];
-                                                            } else {
-                                                                echo '<img src="' . htmlspecialchars($item['image']) . '" style="max-width: 100%; object-fit: contain;">';
-                                                            }
-                                                            ?>
-                                                        </div>
-                                                        <div>
-                                                            <h6 class="mb-0 fw-bold text-dark"><?php echo htmlspecialchars($item['name']); ?></h6>
-                                                            <small class="text-muted">Standard Edition</small>
-                                                        </div>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <div class="product-thumb">
+                                                        <?php
+                                                        if (strpos($item['image'], '<svg') !== false) {
+                                                            echo $item['image'];
+                                                        } else {
+                                                            echo '<img src="' . htmlspecialchars($item['image']) . '">';
+                                                        }
+                                                        ?>
                                                     </div>
-                                                </td>
-                                                <td class="fw-bold text-apex-blue">
-                                                    ₱<?php echo number_format($effectivePrice, 2); ?>
-                                                    <?php if ($isOnSale): ?>
-                                                        <br><small style="text-decoration:line-through;color:var(--apex-muted);font-weight:400;">₱<?php echo number_format($originalPrice, 2); ?></small>
-                                                        <br><small style="color:#ff3b5c;font-weight:700;"><?php echo intval($item['sale_percent'] ?? 0); ?>% OFF</small>
-                                                        <?php if (!empty($item['sale_expiry'])): ?>
-                                                            <br><small class="sale-countdown-cart" data-expiry="<?php echo strtotime($item['sale_expiry']); ?>" style="color:#ff3b5c;font-size:.68rem;"></small>
-                                                        <?php endif; ?>
+                                                    <div>
+                                                        <div class="product-name"><?php echo htmlspecialchars($item['name']); ?></div>
+                                                        <div class="product-sub">Standard Edition</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="price-main">₱<?php echo number_format($effectivePrice, 2); ?></div>
+                                                <?php if ($isOnSale): ?>
+                                                    <div class="price-original">₱<?php echo number_format($originalPrice, 2); ?></div>
+                                                    <span class="badge-sale"><?php echo intval($item['discount_percent'] ?? $item['sale_percent'] ?? 0); ?>% OFF</span>
+                                                    <?php if (!empty($item['sale_expiry'])): ?>
+                                                        <div class="sale-timer sale-countdown-cart" data-expiry="<?php echo strtotime($item['sale_expiry']); ?>"></div>
                                                     <?php endif; ?>
-                                                </td>
-                                                <td>
-                                                    <form method="POST" action="cart.php" class="d-flex align-items-center gap-2">
-                                                        <input type="hidden" name="action" value="update">
-                                                        <input type="hidden" name="product_id" value="<?php echo $id; ?>">
-                                                        <input type="number" name="qty" value="<?php echo $item['qty']; ?>" class="form-control form-control-sm text-center fw-bold bg-light" style="width: 60px;" min="1">
-                                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Update Qty"><i class="fas fa-sync-alt"></i></button>
-                                                    </form>
-                                                </td>
-                                                <td class="text-end" style="padding-right: 20px;">
-                                                    <form method="POST" action="cart.php">
-                                                        <input type="hidden" name="action" value="remove">
-                                                        <input type="hidden" name="product_id" value="<?php echo $id; ?>">
-                                                        <button type="submit" class="btn btn-sm text-danger fw-bold border-0 bg-transparent"><i class="fas fa-trash"></i></button>
-                                                    </form>
-                                                </td>
-                                            </tr>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <form method="POST" action="cart.php" class="qty-wrap">
+                                                    <input type="hidden" name="action" value="update">
+                                                    <input type="hidden" name="product_id" value="<?php echo $id; ?>">
+                                                    <input type="number" name="qty" value="<?php echo $item['qty']; ?>" class="qty-input" min="1">
+                                                    <button type="submit" class="btn-qty-update" title="Update quantity">
+                                                        <i class="fas fa-sync-alt"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                            <td style="text-align:right; padding-right:24px;">
+                                                <form method="POST" action="cart.php">
+                                                    <input type="hidden" name="action" value="remove">
+                                                    <input type="hidden" name="product_id" value="<?php echo $id; ?>">
+                                                    <button type="submit" class="btn-remove" title="Remove item">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
+
+                        <div class="mt-3 d-flex justify-content-end">
+                            <a href="store.php" class="continue-link">
+                                <i class="fas fa-arrow-left" style="font-size:.72rem;"></i> Continue Shopping
+                            </a>
+                        </div>
                     <?php endif; ?>
                 </div>
 
+                <!-- ── ORDER SUMMARY ── -->
                 <div class="col-lg-4">
-                    <div class="apex-card overflow-hidden" style="top: 100px;">
-                        <h5 class="fw-bold mb-4 font-monospace text-uppercase" style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem;">Order Summary</h5>
+                    <div class="summary-card">
+                        <div class="summary-title">Order Summary</div>
 
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Subtotal (<?php echo $item_count; ?> items)</span>
-                            <span class="fw-bold text-dark">₱<?php echo number_format($subtotal, 2); ?></span>
+                        <?php if ($item_count > 0): ?>
+                        <div class="shipping-badge">
+                            <i class="fas fa-truck"></i>
+                            You qualify for <strong>FREE shipping!</strong>
+                        </div>
+                        <?php endif; ?>
+
+                        <div class="summary-row">
+                            <span class="lbl">Subtotal (<?php echo $item_count; ?> item<?php echo $item_count !== 1 ? 's' : ''; ?>)</span>
+                            <span class="val">₱<?php echo number_format($subtotal, 2); ?></span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="lbl">Estimated Tax (8%)</span>
+                            <span class="val">₱<?php echo number_format($tax, 2); ?></span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="lbl">Shipping</span>
+                            <span class="val free"><i class="fas fa-check-circle" style="font-size:.72rem;margin-right:3px;"></i> FREE</span>
                         </div>
 
-                        <div class="d-flex justify-content-between mb-3">
-                            <span class="text-muted">Estimated Tax (8%)</span>
-                            <span class="fw-bold text-dark">₱<?php echo number_format($tax, 2); ?></span>
-                        </div>
+                        <hr class="summary-divider">
 
-                        <div class="d-flex justify-content-between mb-4">
-                            <span class="text-muted">Shipping</span>
-                            <span class="fw-bold text-success">FREE</span>
-                        </div>
-
-                        <hr class="mb-4">
-
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <span class="fw-bold fs-5 text-dark">Total</span>
-                            <span class="fw-bold fs-4 text-apex-blue">₱<?php echo number_format($grand_total, 2); ?></span>
+                        <div class="summary-total">
+                            <span class="tot-lbl">Grand Total</span>
+                            <span class="tot-amt">₱<?php echo number_format($grand_total, 2); ?></span>
                         </div>
 
                         <?php if ($item_count > 0): ?>
-                            <a href="checkout.php" class="btn-apex w-100 text-center">Proceed to Checkout</a>
+                            <a href="checkout.php" class="btn-checkout">
+                                <i class="fas fa-lock" style="font-size:.8rem; margin-right:5px;"></i>
+                                Proceed to Checkout
+                            </a>
                         <?php else: ?>
-                            <button class="btn btn-secondary w-100 py-3 fw-bold font-monospace text-uppercase" style="font-family: 'Barlow Condensed', sans-serif;" disabled>Proceed to Checkout</button>
+                            <span class="btn-checkout btn-checkout-disabled">Proceed to Checkout</span>
                         <?php endif; ?>
 
-                        <div class="text-center mt-3">
-                            <small class="text-muted"><i class="fas fa-lock text-success"></i> Secure AES 256-bit encryption</small>
+                        <div class="secure-note">
+                            <i class="fas fa-shield-alt"></i>
+                            AES 256-bit encrypted checkout
                         </div>
                     </div>
                 </div>
 
             </div>
         </div>
-    </section>
+    </div>
 
     <a href="#" id="btt"><i class="fas fa-arrow-up"></i></a>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/navbar.js"></script>
-    <script src="assets/js/main.js"></script>
     <script>
-    // ── Sale countdown in cart ────────────────────────────────────────────────
+    // Sale countdown
     function updateCartCountdowns() {
         document.querySelectorAll('.sale-countdown-cart[data-expiry]').forEach(el => {
             const exp = parseInt(el.dataset.expiry) * 1000;
@@ -211,14 +612,13 @@ $grand_total = $subtotal + $tax;
             const h = Math.floor((diff % 86400000) / 3600000);
             const m = Math.floor((diff % 3600000) / 60000);
             const s = Math.floor((diff % 60000) / 1000);
-            if (d > 0) el.textContent = `⏱ Sale: ${d}d ${h}h ${m}m left`;
-            else if (h > 0) el.textContent = `⏱ Sale: ${h}h ${m}m ${s}s left`;
-            else el.textContent = `⏱ Sale: ${m}m ${s}s left`;
+            if (d > 0) el.textContent = `⏱ ${d}d ${h}h ${m}m left`;
+            else if (h > 0) el.textContent = `⏱ ${h}h ${m}m ${s}s left`;
+            else el.textContent = `⏱ ${m}m ${s}s left`;
         });
     }
     updateCartCountdowns();
     setInterval(updateCartCountdowns, 1000);
     </script>
 </body>
-
 </html>

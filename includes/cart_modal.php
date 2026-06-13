@@ -1,4 +1,14 @@
 <!-- ── Cart Offcanvas ── -->
+<?php
+if (!isset($inventoryManager)) {
+    require_once __DIR__ . '/../classes/Inventory.php';
+    /** @var Inventory $inventoryManager */
+    $inventoryManager = new Inventory();
+}
+if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
+    $_SESSION['cart'] = $inventoryManager->refreshCartItemsWithLivePricing($_SESSION['cart']);
+}
+?>
 <div class="offcanvas offcanvas-end" tabindex="-1" id="cartOffcanvas" aria-labelledby="cartOffcanvasLabel" style="width: 400px; border-left: none; box-shadow: -4px 0 24px rgba(0,0,0,0.1);">
     <div class="offcanvas-header border-bottom pb-3 pt-4 px-4">
         <h6 class="offcanvas-title fw-bold text-dark d-flex align-items-center" id="cartOffcanvasLabel">
@@ -21,18 +31,9 @@
         <?php else: ?>
             <div class="cart-items flex-grow-1 overflow-auto pe-2">
                 <?php
-                // Helper: compute effective (live sale) price
-                function getEffectivePriceModal($item) {
-                    $basePrice  = floatval($item['original_price'] ?? $item['price']);
-                    $salePct    = intval($item['sale_percent'] ?? 0);
-                    $saleExpiry = $item['sale_expiry'] ?? '';
-                    $saleActive = $salePct > 0 && (!empty($saleExpiry) ? strtotime($saleExpiry) > time() : true);
-                    return $saleActive ? round($basePrice * (1 - $salePct / 100), 2) : $basePrice;
-                }
-
                 $subtotal = 0;
                 foreach ($_SESSION['cart'] as $id => $item):
-                    $effectivePrice = getEffectivePriceModal($item);
+                    $effectivePrice = Inventory::getCartItemEffectivePrice($item);
                     $originalPrice  = floatval($item['original_price'] ?? $item['price']);
                     $isOnSale = $effectivePrice < $originalPrice;
                     $subtotal += ($effectivePrice * $item['qty']);
@@ -51,7 +52,7 @@
                             <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: .85rem;"><?php echo htmlspecialchars($item['name']); ?></h6>
                             <div class="text-muted small mt-1">
                                 <?php echo $item['qty']; ?> x ₱<?php echo number_format($effectivePrice, 2); ?>
-                                <?php if ($isOnSale): ?><br><small style="color:#ff3b5c;font-weight:700;"><?php echo intval($item['sale_percent']); ?>% OFF</small><?php endif; ?>
+                                <?php if ($isOnSale): ?><br><small style="color:#ff3b5c;font-weight:700;"><?php echo intval($item['discount_percent'] ?? $item['sale_percent'] ?? 0); ?>% OFF</small><?php endif; ?>
                             </div>
                         </div>
                     </div>

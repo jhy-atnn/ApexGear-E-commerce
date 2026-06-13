@@ -2,6 +2,13 @@
 session_start();
 
 require_once __DIR__ . '/database/db_connect.php';
+require_once __DIR__ . '/classes/Inventory.php';
+
+/** @var Inventory $inventoryManager */
+$inventoryManager = new Inventory();
+if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
+    $_SESSION['cart'] = $inventoryManager->refreshCartItemsWithLivePricing($_SESSION['cart']);
+}
 
 $cart_items = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? $_SESSION['cart'] : [];
 
@@ -13,11 +20,7 @@ if (empty($cart_items) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
 // ── Helper: compute the effective (live-sale) price for a cart item ──────────
 // Called at order placement time — if the sale is still running, it applies.
 function getEffectiveCheckoutPrice($item) {
-    $basePrice  = floatval($item['original_price'] ?? $item['price']);
-    $salePct    = intval($item['sale_percent'] ?? 0);
-    $saleExpiry = $item['sale_expiry'] ?? '';
-    $saleActive = $salePct > 0 && (!empty($saleExpiry) ? strtotime($saleExpiry) > time() : true);
-    return $saleActive ? round($basePrice * (1 - $salePct / 100), 2) : $basePrice;
+    return Inventory::getCartItemEffectivePrice($item);
 }
 
 $order_successful = false;
@@ -76,8 +79,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     // 4. Calculate Totals using live sale prices at checkout time
     $subtotal = 0;
     $item_count = 0;
-    foreach ($cart_items as $item) {
+    foreach ($cart_items as $cartKey => $item) {
         $effectivePrice = getEffectiveCheckoutPrice($item);
+        $cart_items[$cartKey]['effective_price'] = $effectivePrice;
+        $cart_items[$cartKey]['price_at_checkout'] = $effectivePrice;
         $subtotal += ($effectivePrice * $item['qty']);
         $item_count += $item['qty'];
     }
@@ -90,6 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     $receipt_data['tax'] = $tax;
     $receipt_data['grandTotal'] = $grand_total;
     $receipt_data['receiptNumber'] = $receipt_number;
+    $receipt_data['items'] = $cart_items;
 
     // ==========================================
     // DATABASE INSERTIONS START HERE
@@ -389,7 +395,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                                     <tr style="border-bottom: 1px solid #f0f0f0;">
                                                         <td class="py-2 text-dark">
                                                             <?php echo htmlspecialchars($item['name']); ?>
-                                                            <?php if ($rcptSale): ?><br><small style="color:#ff3b5c;font-weight:700;"><?php echo intval($item['sale_percent'] ?? 0); ?>% OFF applied</small><?php endif; ?>
+                                                            <?php if ($rcptSale): ?><br><small style="color:#ff3b5c;font-weight:700;"><?php echo intval($item['discount_percent'] ?? $item['sale_percent'] ?? 0); ?>% OFF applied</small><?php endif; ?>
                                                         </td>
                                                         <td class="text-center py-2 text-dark"><?php echo $item['qty']; ?></td>
                                                         <td class="text-end py-2 text-dark">
@@ -611,7 +617,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                     <div class="d-flex justify-content-between align-items-center mb-2 small">
                                         <span class="text-muted text-truncate me-2" style="max-width: 200px;">
                                             <span class="text-apex-blue fw-bold"><?php echo $item['qty']; ?>x</span> <?php echo htmlspecialchars($item['name']); ?>
-                                            <?php if ($chkSale): ?><span style="color:#ff3b5c;font-weight:700;font-size:.7rem;display:block;"><?php echo intval($item['sale_percent']); ?>% OFF</span><?php endif; ?>
+                                            <?php if ($chkSale): ?><span style="color:#ff3b5c;font-weight:700;font-size:.7rem;display:block;"><?php echo intval($item['discount_percent'] ?? $item['sale_percent'] ?? 0); ?>% OFF</span><?php endif; ?>
                                         </span>
                                         <span class="fw-bold text-dark">₱<?php echo number_format($chkPrice * $item['qty'], 2); ?></span>
                                     </div>
@@ -842,7 +848,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             </div>
                             <div class="flex-grow-1 min-width-0">
                                 <h6 class="mb-1 fw-bold text-dark text-truncate" style="font-size: .9rem;"><?php echo htmlspecialchars($item['name']); ?></h6>
-                                <?php if ($ocSale): ?><small style="color:#ff3b5c;font-weight:700;"><?php echo intval($item['sale_percent']); ?>% OFF</small><?php endif; ?>
+                                <?php if ($ocSale): ?><small style="color:#ff3b5c;font-weight:700;"><?php echo intval($item['discount_percent'] ?? $item['sale_percent'] ?? 0); ?>% OFF</small><?php endif; ?>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="text-muted small">Qty: <?php echo $item['qty']; ?></span>
                                     <span class="fw-bold text-apex-blue">₱<?php echo number_format($ocPrice * $item['qty'], 2); ?></span>
