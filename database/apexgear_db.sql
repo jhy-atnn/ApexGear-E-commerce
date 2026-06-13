@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 12, 2026 at 07:12 PM
+-- Generation Time: Jun 13, 2026 at 07:19 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -255,7 +255,7 @@ CREATE TABLE `notifications_tbl` (
 DROP TABLE IF EXISTS `orders_tbl`;
 CREATE TABLE `orders_tbl` (
   `order_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
   `order_ref_code` varchar(50) NOT NULL,
   `coupon_id` int(11) DEFAULT NULL,
   `subtotal` decimal(10,2) NOT NULL,
@@ -459,15 +459,16 @@ CREATE TABLE `users_profiles_tbl` (
   `city` varchar(100) DEFAULT NULL,
   `zip_code` varchar(20) DEFAULT NULL,
   `phone_number` varchar(20) DEFAULT NULL,
-  `image_path` varchar(255) DEFAULT NULL
+  `image_path` varchar(255) DEFAULT NULL,
+  `birthday` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users_profiles_tbl`
 --
 
-INSERT INTO `users_profiles_tbl` (`profile_id`, `user_id`, `bio`, `street_address`, `city`, `zip_code`, `phone_number`, `image_path`) VALUES
-(1, 1, 'hello its me test', '0616 Purok 2 Turbina, Laguna', 'Calamba City', '4027', '09976829526', 'assets/images/profiles/profile_1_1781275585.png');
+INSERT INTO `users_profiles_tbl` (`profile_id`, `user_id`, `bio`, `street_address`, `city`, `zip_code`, `phone_number`, `image_path`, `birthday`) VALUES
+(1, 1, 'hello its me test', '0616 Purok 2 Turbina, Laguna', 'Calamba City', '4027', '09976829526', 'assets/images/profiles/profile_1_1781327573.png', NULL);
 
 -- --------------------------------------------------------
 
@@ -837,7 +838,7 @@ ALTER TABLE `notifications_tbl`
 -- Constraints for table `orders_tbl`
 --
 ALTER TABLE `orders_tbl`
-  ADD CONSTRAINT `orders_tbl_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users_tbl` (`user_id`),
+  ADD CONSTRAINT `orders_tbl_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users_tbl` (`user_id`) ON DELETE SET NULL,
   ADD CONSTRAINT `orders_tbl_ibfk_2` FOREIGN KEY (`coupon_id`) REFERENCES `coupon_code` (`coupon_id`);
 
 --
