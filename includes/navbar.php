@@ -1,9 +1,10 @@
 <?php
-// Default to empty if the variable isn't set on the main page
-$currentPage = $currentPage ?? '';
+if (!isset($inventoryManager)) {
+    require_once __DIR__ . '/../classes/Inventory.php';
+    /** @var Inventory $inventoryManager */
+    $inventoryManager = new Inventory();
+}
 ?>
-<?php include_once __DIR__ . '/order_status.php'; ?>
-<?php include_once __DIR__ . '/user_profile_modal.php'; ?>
 
 <!-- ── Topbar ── -->
 <div class="topbar">

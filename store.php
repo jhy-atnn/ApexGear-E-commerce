@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/includes/storage.php';
-require_once 'classes/Inventory.php';
+session_start();
+require_once __DIR__ . '/classes/Inventory.php';
 
 /** @var Inventory $inventoryManager */
 $inventoryManager = new Inventory();
@@ -29,7 +29,9 @@ if ($searchQuery !== '') {
 
 // Category filter
 if ($activeCategory !== '') {
-    $products = array_filter($products, fn($p) =>
+    $products = array_filter(
+        $products,
+        fn($p) =>
         mb_strtolower($p['category'] ?? '') === mb_strtolower($activeCategory)
     );
     $products = array_values($products);
@@ -87,8 +89,7 @@ sort($allCategories);
                         name="q"
                         placeholder="Search products, brands…"
                         value="<?php echo htmlspecialchars($searchQuery); ?>"
-                        autocomplete="off"
-                    />
+                        autocomplete="off" />
                     <button type="submit"><i class="fas fa-search me-1"></i> Search</button>
                 </form>
             </div>
@@ -143,7 +144,7 @@ sort($allCategories);
                                 <?php foreach ($categoryOptions as $val => $label): ?>
                                     <li>
                                         <a href="#" class="apex-sort-item <?php echo $activeCategory === $val ? 'active' : ''; ?>"
-                                           onclick="applyCategory('<?php echo $val; ?>'); return false;">
+                                            onclick="applyCategory('<?php echo $val; ?>'); return false;">
                                             <?php echo htmlspecialchars($label); ?>
                                             <?php if ($activeCategory === $val): ?>
                                                 <i class="fas fa-check ms-auto"></i>
@@ -161,8 +162,8 @@ sort($allCategories);
                             <?php
                             $sortOptions = [
                                 ''           => ['label' => 'Featured',          'icon' => 'fa-star'],
-                                'price_asc'  => ['label' => 'Price: Low to High','icon' => 'fa-arrow-up'],
-                                'price_desc' => ['label' => 'Price: High to Low','icon' => 'fa-arrow-down'],
+                                'price_asc'  => ['label' => 'Price: Low to High', 'icon' => 'fa-arrow-up'],
+                                'price_desc' => ['label' => 'Price: High to Low', 'icon' => 'fa-arrow-down'],
                             ];
                             $currentLabel = $sortOptions[$activeSort]['label'] ?? 'Featured';
                             $currentIcon  = $sortOptions[$activeSort]['icon'] ?? 'fa-star';
@@ -176,7 +177,7 @@ sort($allCategories);
                                 <?php foreach ($sortOptions as $val => $opt): ?>
                                     <li>
                                         <a href="#" class="apex-sort-item <?php echo $activeSort === $val ? 'active' : ''; ?>"
-                                           onclick="applySort('<?php echo $val; ?>'); return false;">
+                                            onclick="applySort('<?php echo $val; ?>'); return false;">
                                             <i class="fas <?php echo $opt['icon']; ?> me-2"></i>
                                             <?php echo $opt['label']; ?>
                                             <?php if ($activeSort === $val): ?>
@@ -213,7 +214,7 @@ sort($allCategories);
 
                                 <?php
                                 $badgeType = $product['badge_type'] ?? 'normal';
-                                $badgeClass = match($badgeType) {
+                                $badgeClass = match ($badgeType) {
                                     'sale'   => 'sale',
                                     'new'    => 'new',
                                     'ribbon' => 'sale',
@@ -346,4 +347,5 @@ sort($allCategories);
     </script>
 
 </body>
+
 </html>

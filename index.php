@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/includes/storage.php';
+session_start(); // ADDED: Restores session for the navbar, cart, and user logins
+require_once __DIR__ . '/classes/Inventory.php';
 
-require_once 'classes/Inventory.php';
 /** @var Inventory $inventoryManager */
 $inventoryManager = new Inventory();
 $products = $inventoryManager->getAllProducts();

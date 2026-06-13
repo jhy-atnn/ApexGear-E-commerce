@@ -1,5 +1,13 @@
 <?php
-require_once __DIR__ . '/../includes/storage.php';
+session_start();
+
+// 1. Secure the admin page
+if (!isset($_SESSION['admin'])) {
+    header("Location: ../admingear.php");
+    exit;
+}
+
+// 2. Completely remove storage.php dependency
 require_once __DIR__ . '/../classes/Inventory.php';
 
 $status_message = '';
@@ -12,57 +20,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $name          = trim($_POST['name']          ?? '');
         $brand         = trim($_POST['brand']         ?? '');
         $category      = trim($_POST['category']      ?? '');
-        $price         = $_POST['price']              ?? 0;
-        $stock         = $_POST['stock']              ?? 0;
-        $sale_percent  = trim($_POST['sale_percent']  ?? '');
+        $price         = floatval($_POST['price']     ?? 0);
+        $stock         = intval($_POST['stock']       ?? 0);
+        $sale_percent  = intval($_POST['sale_percent']?? 0);
         $sale_expiry   = trim($_POST['sale_expiry']   ?? '');
         $shipping_time = trim($_POST['shipping_time'] ?? '');
         $desc          = trim($_POST['desc']          ?? '');
         $image         = '';
         $image_source  = $_POST['image_source'] ?? 'upload';
 
+        // Securely handle image uploads and set the path for the DB
         if ($image_source === 'upload' && isset($_FILES['image_upload']) && $_FILES['image_upload']['error'] === 0) {
             $target_dir = __DIR__ . "/../assets/images/products/";
             if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
+            
             $clean  = preg_replace("/[^a-zA-Z0-9.]/", "_", basename($_FILES["image_upload"]["name"]));
             $unique = time() . "_" . $clean;
             $target = $target_dir . $unique;
+            
             if (move_uploaded_file($_FILES["image_upload"]["tmp_name"], $target)) {
                 $image = "assets/images/products/" . $unique;
             }
         } elseif ($image_source === 'url' && !empty($_POST['image'])) {
-            $image = $_POST['image'];
+            $image = trim($_POST['image']);
         }
 
         $inv = new Inventory();
+        
+        // Pass data to the OOP database methods
         if ($action === 'add') {
             $inv->addProduct($name, $brand, $category, $price, '', $stock, '', '', '', $image, $desc, $shipping_time, $sale_percent, $sale_expiry);
-            $status_message = 'Product published to store.';
+            $status_message = 'Product successfully published to store.';
             $status_class   = 'success';
         } else {
             $product_id = intval($_POST['product_id'] ?? 0);
+            
+            // Retain old image if no new one was uploaded
             if (empty($image)) {
                 $tmp = $inv->getAllProducts();
-                if (isset($tmp[$product_id])) $image = $tmp[$product_id]['image'];
+                if (isset($tmp[$product_id])) {
+                    $image = $tmp[$product_id]['image'];
+                }
             }
+            
             $inv->editProduct($product_id, $name, $brand, $category, $price, '', $stock, '', '', '', $image, $desc, $shipping_time, $sale_percent, $sale_expiry);
-            $status_message = 'Product updated.';
+            $status_message = 'Product updated successfully.';
             $status_class   = 'info';
         }
     } elseif ($action === 'archive') {
         $product_id = intval($_POST['product_id'] ?? 0);
         $inv = new Inventory();
         $inv->archiveProduct($product_id);
-        $status_message = 'Product archived.';
+        $status_message = 'Product moved to archives.';
         $status_class   = 'warn';
     }
 }
 
+// Fetch live database data for the UI tables
 $inv           = new Inventory();
 $products      = $inv->getAllProducts();
 $totalProducts = count($products);
 
-// Separate active sales
+// Separate active sales for the "Active Deals" tab
 $onSale = array_filter(
     $products,
     fn($p) =>
@@ -70,6 +89,7 @@ $onSale = array_filter(
 );
 usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percent']));
 ?>
+    
 <!DOCTYPE html>
 <html lang="en">
 

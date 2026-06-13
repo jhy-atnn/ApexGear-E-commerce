@@ -193,10 +193,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             'birthday' => $found['birthday'] ?? null
         ];
 
+        // ── SYNC FAVORITES ──
+        // Fetch user's saved favorites from the database into the session
+        $_SESSION['favorites'] = [];
+        $favStmt = $conn->prepare("
+            SELECT f.product_id, p.name, p.price 
+            FROM favorites_tbl f 
+            JOIN products_tbl p ON f.product_id = p.product_id 
+            WHERE f.user_id = ? AND p.archived_at IS NULL
+        ");
+        $favStmt->bind_param("i", $found['user_id']);
+        $favStmt->execute();
+        $favRes = $favStmt->get_result();
+
+        while ($favRow = $favRes->fetch_assoc()) {
+            $_SESSION['favorites'][$favRow['product_id']] = [
+                'name' => $favRow['name'],
+                'price' => $favRow['price']
+            ];
+        }
+
         setcookie('apex_logged_in', (string)time(), time() + 60, '/');
         echo json_encode(['success' => true, 'message' => 'Welcome back, ' . htmlspecialchars($found['username']) . '!']);
         exit;
     }
+
+
 
     // ── SOCIAL LOGIN (Simulated DB entry) ──
     if ($action === 'social') {
@@ -219,6 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             'avatar' => strtoupper(substr($fakeName, 0, 1)),
             'provider' => $provider
         ];
+
 
         setcookie('apex_logged_in', (string)time(), time() + 60, '/');
         echo json_encode(['success' => true, 'message' => 'Signed in with ' . ucfirst($provider) . '!']);

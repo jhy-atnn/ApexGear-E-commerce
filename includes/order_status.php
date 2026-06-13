@@ -1,5 +1,4 @@
 ﻿<?php
-require_once __DIR__ . '/storage.php';
 
 $orders = [];
 $order_items_map = [];
@@ -8,12 +7,19 @@ $order_ids = [];
 if (isset($_SESSION['user']['id'])) {
     require_once __DIR__ . '/../classes/Inventory.php';
     $userId = intval($_SESSION['user']['id']);
+
     /** @var Inventory $inv */
     $inv = new Inventory();
-    $orders = $inv->getOrdersByUser($userId);
-    foreach ($orders as $ord) {
-        $order_ids[] = intval($ord['order_id']);
-        $order_items_map[intval($ord['order_id'])] = $inv->getOrderItems($ord['order_id']);
+
+    // Check if methods exist before calling to prevent fatal errors
+    if (method_exists($inv, 'getOrdersByUser')) {
+        $orders = $inv->getOrdersByUser($userId);
+        foreach ($orders as $ord) {
+            $order_ids[] = intval($ord['order_id']);
+            if (method_exists($inv, 'getOrderItems')) {
+                $order_items_map[intval($ord['order_id'])] = $inv->getOrderItems($ord['order_id']);
+            }
+        }
     }
 }
 
@@ -116,14 +122,14 @@ function orderSummaryTitle($status)
 
     #orderStatusModal .order-card {
         background: #17182f;
-        border: 1px solid rgba(255,255,255,0.08);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 20px;
         padding: 1.4rem;
         margin-bottom: 1rem;
         color: #fff;
     }
 
-    #orderStatusModal .order-card + .order-card {
+    #orderStatusModal .order-card+.order-card {
         margin-top: 0.75rem;
     }
 
@@ -142,7 +148,7 @@ function orderSummaryTitle($status)
     }
 
     #orderStatusModal .order-card-header .order-meta {
-        color: rgba(255,255,255,0.72);
+        color: rgba(255, 255, 255, 0.72);
         font-size: 0.86rem;
         line-height: 1.5;
     }
@@ -159,11 +165,30 @@ function orderSummaryTitle($status)
         letter-spacing: 0.08em;
     }
 
-    #orderStatusModal .order-status-pill.delivered { background: rgba(40,167,69,0.15); color: #28a745; }
-    #orderStatusModal .order-status-pill.canceled { background: rgba(220,53,69,0.15); color: #dc3545; }
-    #orderStatusModal .order-status-pill.shipped { background: rgba(13,110,253,0.15); color: #0d6efd; }
-    #orderStatusModal .order-status-pill.process { background: rgba(255,193,7,0.15); color: #ffc107; }
-    #orderStatusModal .order-status-pill.pending { background: rgba(94, 94, 94, 0.16); color: #ced4da; }
+    #orderStatusModal .order-status-pill.delivered {
+        background: rgba(40, 167, 69, 0.15);
+        color: #28a745;
+    }
+
+    #orderStatusModal .order-status-pill.canceled {
+        background: rgba(220, 53, 69, 0.15);
+        color: #dc3545;
+    }
+
+    #orderStatusModal .order-status-pill.shipped {
+        background: rgba(13, 110, 253, 0.15);
+        color: #0d6efd;
+    }
+
+    #orderStatusModal .order-status-pill.process {
+        background: rgba(255, 193, 7, 0.15);
+        color: #ffc107;
+    }
+
+    #orderStatusModal .order-status-pill.pending {
+        background: rgba(94, 94, 94, 0.16);
+        color: #ced4da;
+    }
 
     #orderStatusModal .order-progress {
         display: grid;
@@ -179,19 +204,19 @@ function orderSummaryTitle($status)
         gap: 0.35rem;
         text-align: center;
         font-size: 0.75rem;
-        color: rgba(255,255,255,0.55);
+        color: rgba(255, 255, 255, 0.55);
     }
 
     #orderStatusModal .order-step .step-dot {
         width: 12px;
         height: 12px;
         border-radius: 50%;
-        background: rgba(255,255,255,0.18);
+        background: rgba(255, 255, 255, 0.18);
     }
 
     #orderStatusModal .order-step.active .step-dot {
         background: #00c2ff;
-        box-shadow: 0 0 0 5px rgba(0,194,255,0.12);
+        box-shadow: 0 0 0 5px rgba(0, 194, 255, 0.12);
     }
 
     #orderStatusModal .order-step.active {
@@ -208,7 +233,7 @@ function orderSummaryTitle($status)
     }
 
     #orderStatusModal .summary-label {
-        color: rgba(255,255,255,0.72);
+        color: rgba(255, 255, 255, 0.72);
         font-size: 0.82rem;
         text-transform: uppercase;
         letter-spacing: 0.08em;
@@ -224,7 +249,7 @@ function orderSummaryTitle($status)
         list-style: none;
         margin: 0;
         padding: 0;
-        border-top: 1px solid rgba(255,255,255,0.08);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     #orderStatusModal .order-items-list li {
@@ -232,7 +257,7 @@ function orderSummaryTitle($status)
         justify-content: space-between;
         gap: 1rem;
         padding: 0.95rem 0;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         font-size: 0.93rem;
         align-items: center;
     }
@@ -250,7 +275,7 @@ function orderSummaryTitle($status)
         border-radius: 16px;
         overflow: hidden;
         flex-shrink: 0;
-        background: rgba(255,255,255,0.06);
+        background: rgba(255, 255, 255, 0.06);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -288,7 +313,7 @@ function orderSummaryTitle($status)
         gap: 0.75rem;
         margin-top: 1rem;
         padding-top: 1rem;
-        border-top: 1px solid rgba(255,255,255,0.08);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     #orderStatusModal .order-card-footer .footer-item {
@@ -302,7 +327,7 @@ function orderSummaryTitle($status)
 
     #orderStatusModal .empty-state i {
         font-size: 3rem;
-        color: rgba(255,255,255,0.4);
+        color: rgba(255, 255, 255, 0.4);
         margin-bottom: 1rem;
     }
 
@@ -313,7 +338,7 @@ function orderSummaryTitle($status)
     }
 
     #orderStatusModal .order-status-subtitle {
-        color: rgba(255,255,255,0.65);
+        color: rgba(255, 255, 255, 0.65);
         font-size: 0.82rem;
         margin: 0;
     }
@@ -393,7 +418,7 @@ function orderSummaryTitle($status)
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         const orderStatusModal = document.getElementById('orderStatusModal');
         const orderStatusLinks = document.querySelectorAll('.order-status-link');
         const closeButtons = orderStatusModal ? orderStatusModal.querySelectorAll('.btn-close-modal') : [];
@@ -403,7 +428,7 @@ function orderSummaryTitle($status)
         }
 
         orderStatusLinks.forEach(link => {
-            link.addEventListener('click', function (event) {
+            link.addEventListener('click', function(event) {
                 event.preventDefault();
                 orderStatusModal.classList.add('open');
                 const profilePanel = document.getElementById('profilePanel');
@@ -414,16 +439,15 @@ function orderSummaryTitle($status)
         });
 
         closeButtons.forEach(button => {
-            button.addEventListener('click', function () {
+            button.addEventListener('click', function() {
                 orderStatusModal.classList.remove('open');
             });
         });
 
-        orderStatusModal.addEventListener('click', function (event) {
+        orderStatusModal.addEventListener('click', function(event) {
             if (event.target === orderStatusModal) {
                 orderStatusModal.classList.remove('open');
             }
         });
     });
 </script>
-
