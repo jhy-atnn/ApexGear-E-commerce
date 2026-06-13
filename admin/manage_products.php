@@ -15,6 +15,7 @@ $status_class   = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
+    $admin_id = isset($_SESSION['admin']['id']) ? intval($_SESSION['admin']['id']) : null;
 
     if ($action === 'add' || $action === 'edit') {
         $name          = trim($_POST['name']          ?? '');
@@ -49,7 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         
         // Pass data to the OOP database methods
         if ($action === 'add') {
-            $inv->addProduct($name, $brand, $category, $price, '', $stock, '', '', '', $image, $desc, $shipping_time, $sale_percent, $sale_expiry);
+            $newId = $inv->addProduct($name, $brand, $category, $price, '', $stock, '', '', '', $image, $desc, $shipping_time, $sale_percent, $sale_expiry);
+            $inv->logAdminActivity('product_add', "Added product: {$name} (ID {$newId}).", $admin_id);
             $status_message = 'Product successfully published to store.';
             $status_class   = 'success';
         } else {
@@ -64,6 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             }
             
             $inv->editProduct($product_id, $name, $brand, $category, $price, '', $stock, '', '', '', $image, $desc, $shipping_time, $sale_percent, $sale_expiry);
+            $inv->logAdminActivity('product_edit', "Edited product: {$name} (ID {$product_id}).", $admin_id);
             $status_message = 'Product updated successfully.';
             $status_class   = 'info';
         }
@@ -71,6 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $product_id = intval($_POST['product_id'] ?? 0);
         $inv = new Inventory();
         $inv->archiveProduct($product_id);
+        $inv->logAdminActivity('product_archive', "Archived product ID {$product_id}.", $admin_id);
         $status_message = 'Product moved to archives.';
         $status_class   = 'warn';
     }

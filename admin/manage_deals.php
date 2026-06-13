@@ -22,6 +22,7 @@ $conn = $db->getConnection();
 $msg = ''; $msgType = 'success';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
+    $admin_id = isset($_SESSION['admin']['id']) ? intval($_SESSION['admin']['id']) : null;
 
     // 1. ADD PROMO
     if ($action === 'add_promo') {
@@ -37,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("sis", $code, $discount, $expiry_db);
             
             if ($stmt->execute()) {
+                $inv->logAdminActivity('deal_add', "Added promo code {$code} ({$discount}% off).", $admin_id);
                 $msg = 'Promo code successfully added!';
                 $msgType = 'success';
             } else {
@@ -57,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param("i", $coupon_id);
         
         if ($stmt->execute()) {
+            $inv->logAdminActivity('deal_delete', "Deleted promo code ID {$coupon_id}.", $admin_id);
             $msg = 'Promo code deleted from database.';
             $msgType = 'success';
         } else {

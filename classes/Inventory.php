@@ -51,21 +51,24 @@ class Inventory
     }
 
     // ── 1. FETCH ALL PRODUCTS FOR INDEX & STORE ──
-    public function getAllProducts()
+    public function getAllProducts($includeArchived = false)
     {
         // We use aliases (AS) to map your DB columns to the names the frontend expects
         $query = "
             SELECT p.product_id as id, p.name, p.price, p.`desc`, p.stock_qty as stock,
                    p.sale_percent, p.sale_valid_until as sale_expiry,
                    p.badge, p.badge_type, p.est_shipping_time as shipping_time,
+                   p.archived_at, IF(p.archived_at IS NULL, 0, 1) AS archived,
                    b.brand_name as brand, c.category_name as category,
                    (SELECT image_path FROM product_images_tbl WHERE product_id = p.product_id LIMIT 1) as image
             FROM products_tbl p
             LEFT JOIN brand_tbl b ON p.brand_id = b.brand_id
             LEFT JOIN category_tbl c ON p.category_id = c.category_id
-            WHERE p.archived_at IS NULL
-            ORDER BY p.product_id DESC
         ";
+        if (!$includeArchived) {
+            $query .= " WHERE p.archived_at IS NULL";
+        }
+        $query .= " ORDER BY p.product_id DESC";
 
         $result = $this->conn->query($query);
         $products = [];
@@ -144,6 +147,100 @@ class Inventory
     }
 
     // ── 5. HELPER FOR IMAGES ──
+    public function restoreProduct($id)
+    {
+        $stmt = $this->conn->prepare("UPDATE products_tbl SET archived_at = NULL WHERE product_id = ?");
+        $stmt->bind_param("i", $id);
+        return $stmt->execute();
+    }
+
+    public function deleteProduct($id)
+    {
+        $stmt = $this->conn->prepare("DELETE FROM products_tbl WHERE product_id = ?");
+        $stmt->bind_param("i", $id);
+        return $stmt->execute();
+    }
+
+    private function ensureAdminActivityTable()
+    {
+        $this->conn->query("
+            CREATE TABLE IF NOT EXISTS admin_activity_tbl (
+                activity_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                admin_id INT NULL,
+                activity_type VARCHAR(50) NOT NULL,
+                message TEXT NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                KEY idx_created_at (created_at),
+                KEY idx_activity_type (activity_type)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+        ");
+    }
+
+    public function logAdminActivity($type, $message, $adminId = null)
+    {
+        $this->ensureAdminActivityTable();
+
+        if ($adminId !== null) {
+            $stmt = $this->conn->prepare("INSERT INTO admin_activity_tbl (admin_id, activity_type, message) VALUES (?, ?, ?)");
+            $stmt->bind_param("iss", $adminId, $type, $message);
+        } else {
+            $stmt = $this->conn->prepare("INSERT INTO admin_activity_tbl (admin_id, activity_type, message) VALUES (NULL, ?, ?)");
+            $stmt->bind_param("ss", $type, $message);
+        }
+
+        return $stmt->execute();
+    }
+
+    public function getAdminActivityFeed($limit = 12)
+    {
+        $this->ensureAdminActivityTable();
+        $limit = max(1, min(50, intval($limit)));
+
+        $stmt = $this->conn->prepare("
+            SELECT activity_id, admin_id, activity_type, message, created_at
+            FROM admin_activity_tbl
+            ORDER BY created_at DESC, activity_id DESC
+            LIMIT ?
+        ");
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $activities = [];
+        while ($row = $result->fetch_assoc()) {
+            $activities[] = $row;
+        }
+        $stmt->close();
+
+        return $activities;
+    }
+
+    public function getRecentOrderNotifications($limit = 8)
+    {
+        $limit = max(1, min(30, intval($limit)));
+
+        $stmt = $this->conn->prepare("
+            SELECT o.order_id, o.order_ref_code AS reference_number, o.total_amount, o.order_status, o.created_at,
+                   u.username, u.email,
+                   (SELECT SUM(quantity) FROM order_items_tbl WHERE order_id = o.order_id) AS items_count
+            FROM orders_tbl o
+            LEFT JOIN users_tbl u ON o.user_id = u.user_id
+            ORDER BY o.created_at DESC
+            LIMIT ?
+        ");
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $orders = [];
+        while ($row = $result->fetch_assoc()) {
+            $orders[] = $row;
+        }
+        $stmt->close();
+
+        return $orders;
+    }
+
     public static function getProductImageSrc($imagePath, $prefix = '')
     {
         if (empty($imagePath)) return 'https://via.placeholder.com/300';
@@ -154,12 +251,18 @@ class Inventory
     // Temporary mock for Orders to prevent crashes until we do the Orders module
 // 1. FOR ADMIN: Fetch all orders for the management dashboard
     public function getAllOrders() {
-        // Fetch orders, user details, and the total item count in one query
+        // Fetch orders, user details, payment details, and the total item count in one query.
         $query = "
-            SELECT o.*, u.first_name, u.last_name, u.email, u.username,
+            SELECT o.*, o.order_ref_code AS reference_number,
+                   u.first_name, u.last_name, u.email, u.username,
+                   p.method AS payment_method,
+                   p.status AS payment_status,
+                   p.qr_screenshot_path AS payment_screenshot,
+                   p.transaction_id,
                    (SELECT SUM(quantity) FROM order_items_tbl WHERE order_id = o.order_id) as items_count
             FROM orders_tbl o
             LEFT JOIN users_tbl u ON o.user_id = u.user_id
+            LEFT JOIN payments_tbl p ON o.order_id = p.order_id
             ORDER BY o.created_at DESC
         ";
 
@@ -171,7 +274,7 @@ class Inventory
                 // Fetch the specific products inside this order for the Admin Modal UI
                 $orderId = $row['order_id'];
                 $itemQuery = "
-                    SELECT oi.quantity as qty, p.name, oi.price 
+                    SELECT oi.quantity as qty, p.name, oi.price_at_checkout AS price
                     FROM order_items_tbl oi
                     LEFT JOIN products_tbl p ON oi.product_id = p.product_id
                     WHERE oi.order_id = ?
@@ -197,6 +300,38 @@ class Inventory
             }
         }
         return $orders;
+    }
+
+    public function updateOrderStatus($orderId, $orderStatus, $remarks = '', $adminId = null)
+    {
+        $this->conn->begin_transaction();
+
+        try {
+            $stmt = $this->conn->prepare("UPDATE orders_tbl SET order_status = ? WHERE order_id = ?");
+            $stmt->bind_param("si", $orderStatus, $orderId);
+            $stmt->execute();
+
+            if ($stmt->affected_rows < 0) {
+                throw new Exception('Unable to update order status.');
+            }
+            $stmt->close();
+
+            if ($adminId !== null) {
+                $stmtLog = $this->conn->prepare("INSERT INTO order_status_tbl (order_id, order_status, payment_remarks, updated_by_admin) VALUES (?, ?, ?, ?)");
+                $stmtLog->bind_param("issi", $orderId, $orderStatus, $remarks, $adminId);
+            } else {
+                $stmtLog = $this->conn->prepare("INSERT INTO order_status_tbl (order_id, order_status, payment_remarks, updated_by_admin) VALUES (?, ?, ?, NULL)");
+                $stmtLog->bind_param("iss", $orderId, $orderStatus, $remarks);
+            }
+            $stmtLog->execute();
+            $stmtLog->close();
+
+            $this->conn->commit();
+            return true;
+        } catch (Throwable $e) {
+            $this->conn->rollback();
+            return false;
+        }
     }
 
 
@@ -232,12 +367,56 @@ class Inventory
 
     public function getOrdersByUser($userId)
     {
-        return [];
+        $query = "
+            SELECT o.*, o.order_ref_code AS reference_number,
+                   p.method AS payment_method,
+                   p.status AS payment_status,
+                   p.transaction_id
+            FROM orders_tbl o
+            LEFT JOIN payments_tbl p ON o.order_id = p.order_id
+            WHERE o.user_id = ?
+            ORDER BY o.created_at DESC
+        ";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $orders = [];
+        while ($row = $result->fetch_assoc()) {
+            $orders[] = $row;
+        }
+        $stmt->close();
+
+        return $orders;
     }
 
     public function getOrderItems($orderId)
     {
-        return [];
+        $query = "
+            SELECT oi.quantity AS qty,
+                   oi.price_at_checkout AS price,
+                   p.name,
+                   (SELECT image_path FROM product_images_tbl WHERE product_id = p.product_id LIMIT 1) AS image
+            FROM order_items_tbl oi
+            LEFT JOIN products_tbl p ON oi.product_id = p.product_id
+            WHERE oi.order_id = ?
+        ";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $orderId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $items = [];
+        while ($row = $result->fetch_assoc()) {
+            $row['image'] = self::getProductImageSrc($row['image'] ?? '');
+            $items[] = $row;
+        }
+        $stmt->close();
+
+        return $items;
     }
 
 }

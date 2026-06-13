@@ -14,6 +14,7 @@ $inventoryManager = new Inventory();
 // Handle POST actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
+    $admin_id = isset($_SESSION['admin']['id']) ? intval($_SESSION['admin']['id']) : null;
 
     if ($action === 'add' || $action === 'edit') {
         $name          = trim($_POST['name']          ?? '');
@@ -42,7 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
 
         if ($action === 'add') {
-            $inventoryManager->addProduct($name, $brand, $category, $price, '', $stock, '', '', '', $image, $desc, $shipping_time, $sale_percent, $sale_expiry);
+            $newId = $inventoryManager->addProduct($name, $brand, $category, $price, '', $stock, '', '', '', $image, $desc, $shipping_time, $sale_percent, $sale_expiry);
+            $inventoryManager->logAdminActivity('product_add', "Added product: {$name} (ID {$newId}).", $admin_id);
             header("Location: apex26admin.php?success=added");
             exit;
         } else {
@@ -52,12 +54,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 if (isset($products_temp[$product_id])) $image = $products_temp[$product_id]['image'];
             }
             $inventoryManager->editProduct($product_id, $name, $brand, $category, $price, '', $stock, '', '', '', $image, $desc, $shipping_time, $sale_percent, $sale_expiry);
+            $inventoryManager->logAdminActivity('product_edit', "Edited product: {$name} (ID {$product_id}).", $admin_id);
             header("Location: apex26admin.php?success=edited");
             exit;
         }
     } elseif ($action === 'archive') {
         $product_id = $_POST['product_id'] ?? 0;
         $inventoryManager->archiveProduct($product_id);
+        $inventoryManager->logAdminActivity('product_archive', "Archived product ID {$product_id}.", $admin_id);
         header("Location: apex26admin.php?success=archived");
         exit;
     }
@@ -72,6 +76,8 @@ $lowStock      = count(array_filter($products, fn($p) => isset($p['stock']) && $
 $inv2 = new Inventory();
 $allOrders = $inv2->getAllOrders();
 $pendingOrders = count(array_filter($allOrders, fn($o) => strtolower($o['order_status'] ?? '') === 'on process'));
+$adminActivities = $inventoryManager->getAdminActivityFeed(10);
+$recentOrderNotifications = $inventoryManager->getRecentOrderNotifications(6);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -354,6 +360,30 @@ $pendingOrders = count(array_filter($allOrders, fn($o) => strtolower($o['order_s
                 }
                 if ($expiringSoon > 0)
                     $notifs[] = ['warn', "fas fa-tag", "{$expiringSoon} sale(s) expire within 3 days — review your deals.", date('M d')];
+
+                foreach ($recentOrderNotifications as $orderNotif) {
+                    $buyer = $orderNotif['username'] ?: ($orderNotif['email'] ?: 'Guest');
+                    $ref = $orderNotif['reference_number'] ?: ('#' . $orderNotif['order_id']);
+                    $amount = number_format($orderNotif['total_amount'] ?? 0, 2);
+                    $notifs[] = ['success', 'fas fa-receipt', "{$buyer} placed order {$ref} worth ₱{$amount}.", date('M d, h:i A', strtotime($orderNotif['created_at']))];
+                }
+
+                $activityStyleMap = [
+                    'product_add' => ['success', 'fas fa-plus-circle'],
+                    'product_edit' => ['info', 'fas fa-pen'],
+                    'product_archive' => ['warn', 'fas fa-archive'],
+                    'product_restore' => ['success', 'fas fa-undo'],
+                    'product_delete' => ['danger', 'fas fa-trash-alt'],
+                    'order_status' => ['info', 'fas fa-truck'],
+                    'order_completed' => ['success', 'fas fa-check-double'],
+                    'deal_add' => ['success', 'fas fa-ticket-alt'],
+                    'deal_delete' => ['danger', 'fas fa-ticket-alt'],
+                    'user_archive' => ['warn', 'fas fa-user-slash'],
+                ];
+                foreach ($adminActivities as $activity) {
+                    [$type, $icon] = $activityStyleMap[$activity['activity_type']] ?? ['info', 'fas fa-bell'];
+                    $notifs[] = [$type, $icon, $activity['message'], date('M d, h:i A', strtotime($activity['created_at']))];
+                }
 
                 if (empty($notifs)):
                 ?>

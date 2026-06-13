@@ -3,6 +3,7 @@ require_once __DIR__ . '/../includes/storage.php';
 require_once __DIR__ . '/../classes/Inventory.php';
 
 $inv = new Inventory();
+$admin_id = isset($_SESSION['admin']['id']) ? intval($_SESSION['admin']['id']) : null;
 
 // Handle restore / permanent delete
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
@@ -11,11 +12,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
     if ($action === 'restore' && $product_id) {
         $inv->restoreProduct($product_id);
+        $inv->logAdminActivity('product_restore', "Restored product ID {$product_id} from archives.", $admin_id);
         header('Location: manage_archives.php?success=restored');
         exit;
     }
     if ($action === 'delete_permanent' && $product_id) {
         $inv->deleteProduct($product_id);
+        $inv->logAdminActivity('product_delete', "Permanently deleted product ID {$product_id}.", $admin_id);
         header('Location: manage_archives.php?success=deleted');
         exit;
     }
@@ -26,7 +29,7 @@ $allProducts    = $inv->getAllProducts(true);   // pass true to include archived
 $archivedProducts = array_filter($allProducts ?? [], fn($p) => !empty($p['archived']));
 
 $allOrders      = $inv->getAllOrders();
-$completedOrders = array_filter($allOrders ?? [], fn($o) => strtolower($o['order_status'] ?? '') === 'delivered');
+$completedOrders = array_filter($allOrders ?? [], fn($o) => strtolower($o['order_status'] ?? '') === 'completed');
 
 $pendingOrders = count(array_filter($allOrders, fn($o) => strtolower($o['order_status'] ?? '') === 'on process'));
 ?>
@@ -464,7 +467,7 @@ $pendingOrders = count(array_filter($allOrders, fn($o) => strtolower($o['order_s
                                 <tbody>
                                     <?php foreach ($completedOrders as $o): ?>
                                         <tr>
-                                            <td style="font-weight:700;font-family:'Barlow Condensed',sans-serif;">#<?php echo intval($o['id'] ?? 0); ?></td>
+                                            <td style="font-weight:700;font-family:'Barlow Condensed',sans-serif;"><?php echo htmlspecialchars($o['reference_number'] ?? ('#' . intval($o['order_id'] ?? 0))); ?></td>
                                             <td>
                                                 <div class="product-name"><?php echo htmlspecialchars($o['customer_name'] ?? $o['name'] ?? '—'); ?></div>
                                                 <div class="product-meta"><?php echo htmlspecialchars($o['customer_email'] ?? $o['email'] ?? ''); ?></div>

@@ -23,18 +23,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($order_id > 0 && in_array($order_status, $allowed, true)) {
             $inv = new Inventory();
-            $ok  = $inv->   ($order_id, $order_status, $remarks);
+            $admin_id = isset($_SESSION['admin']['id']) ? intval($_SESSION['admin']['id']) : null;
+            $ok  = $inv->updateOrderStatus($order_id, $order_status, $remarks, $admin_id);
             
             if ($ok) {
                 $status_message = 'Order status successfully updated to ' . htmlspecialchars($order_status) . '.';
                 $status_class   = 'alert-success';
+                $activityType = $order_status === 'Completed' ? 'order_completed' : 'order_status';
+                $inv->logAdminActivity($activityType, "Updated order #{$order_id} status to {$order_status}.", $admin_id);
                 
                 // ── NOTIFICATION SYSTEM TRIGGER ──
                 $db = new Database();
                 $conn = $db->getConnection();
                 
                 // Fetch the user_id and reference number for this specific order
-                $fetchStmt = $conn->prepare("SELECT user_id, reference_number FROM orders_tbl WHERE order_id = ?");
+                $fetchStmt = $conn->prepare("SELECT user_id, order_ref_code AS reference_number FROM orders_tbl WHERE order_id = ?");
                 $fetchStmt->bind_param("i", $order_id);
                 $fetchStmt->execute();
                 $res = $fetchStmt->get_result();

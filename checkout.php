@@ -141,9 +141,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         'maya' => 'Maya'
     ];
     $paymentMethodDB = $paymentMethodMap[$paymentMethodRaw] ?? ucfirst($paymentMethodRaw);
+    $paymentStatusDB = $paymentMethodRaw === 'cod' ? 'Pending' : 'Paid';
 
-    $stmtPayment = $conn->prepare("INSERT INTO payments_tbl (order_id, method, status, card_last_four, transaction_id) VALUES (?, ?, 'Pending', ?, ?)");
-    $stmtPayment->bind_param("isss", $orderId, $paymentMethodDB, $cardLast4, $transactionId);
+    $stmtPayment = $conn->prepare("INSERT INTO payments_tbl (order_id, method, status, card_last_four, transaction_id) VALUES (?, ?, ?, ?, ?)");
+    $stmtPayment->bind_param("issss", $orderId, $paymentMethodDB, $paymentStatusDB, $cardLast4, $transactionId);
     $stmtPayment->execute();
     $stmtPayment->close();
 
