@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 13, 2026 at 09:38 PM
+-- Generation Time: Jun 13, 2026 at 09:52 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -270,7 +270,8 @@ CREATE TABLE `favorites_tbl` (
 --
 
 INSERT INTO `favorites_tbl` (`favorite_id`, `user_id`, `product_id`) VALUES
-(1, 1, 1);
+(1, 1, 1),
+(3, 2, 2);
 
 -- --------------------------------------------------------
 
@@ -331,7 +332,9 @@ INSERT INTO `orders_tbl` (`order_id`, `user_id`, `order_ref_code`, `coupon_id`, 
 (3, 1, 'APX-6A2C21BED5C1E', NULL, 51998.00, 4159.84, 0.00, 56157.84, 'Canceled', '2026-06-12 15:56:35'),
 (4, 1, 'APX-6A2C21EF0B3A3', NULL, 0.00, 0.00, 0.00, 0.00, 'Canceled', '2026-06-12 15:56:35'),
 (5, 1, 'APX-6A2C21F0A8054', NULL, 0.00, 0.00, 0.00, 0.00, 'Canceled', '2026-06-12 15:56:35'),
-(6, 1, 'APX-6A2D8FACC4A77', NULL, 161998.20, 12959.86, 0.00, 174958.06, 'Completed', '2026-06-14 01:13:16');
+(6, 1, 'APX-6A2D8FACC4A77', NULL, 161998.20, 12959.86, 0.00, 174958.06, 'Completed', '2026-06-14 01:13:16'),
+(7, 2, 'APX-6A2DB3751570F', NULL, 80999.10, 6479.93, 0.00, 87479.03, 'Pending', '2026-06-14 03:45:57'),
+(8, 2, 'APX-6A2DB40EC769D', NULL, 118950.00, 9516.00, 0.00, 128466.00, 'Pending', '2026-06-14 03:48:30');
 
 -- --------------------------------------------------------
 
@@ -354,7 +357,9 @@ CREATE TABLE `order_items_tbl` (
 
 INSERT INTO `order_items_tbl` (`order_item_id`, `order_id`, `product_id`, `quantity`, `price_at_checkout`) VALUES
 (3, 3, 1, 2, 25999.00),
-(4, 6, 1, 2, 80999.10);
+(4, 6, 1, 2, 80999.10),
+(5, 7, 1, 1, 80999.10),
+(6, 8, 2, 1, 118950.00);
 
 -- --------------------------------------------------------
 
@@ -370,6 +375,14 @@ CREATE TABLE `order_status_tbl` (
   `payment_remarks` text DEFAULT NULL,
   `updated_by_admin` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `order_status_tbl`
+--
+
+INSERT INTO `order_status_tbl` (`status_log_id`, `order_id`, `order_status`, `payment_remarks`, `updated_by_admin`) VALUES
+(16, 7, 'Pending', NULL, NULL),
+(17, 8, 'Pending', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -396,7 +409,9 @@ INSERT INTO `payments_tbl` (`payment_id`, `order_id`, `method`, `status`, `qr_sc
 (1, 3, 'Cash on Delivery', 'Pending', NULL, NULL, NULL),
 (2, 4, 'Cash on Delivery', 'Pending', NULL, NULL, NULL),
 (3, 5, 'Cash on Delivery', 'Pending', NULL, NULL, NULL),
-(4, 6, 'Cash on Delivery', 'Pending', NULL, NULL, NULL);
+(4, 6, 'Cash on Delivery', 'Pending', NULL, NULL, NULL),
+(5, 7, 'GCash', 'Paid', NULL, NULL, '09632544756'),
+(6, 8, 'Cash on Delivery', 'Pending', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -426,8 +441,8 @@ CREATE TABLE `products_tbl` (
 --
 
 INSERT INTO `products_tbl` (`product_id`, `brand_id`, `category_id`, `name`, `desc`, `price`, `sale_percent`, `sale_valid_until`, `stock_qty`, `badge`, `badge_type`, `est_shipping_time`, `archived_at`) VALUES
-(1, 1, 4, 'iPhone 17 Pro Max Cosmic Orange', 'Apple’s latest flagship smartphone featuring the A19 Bionic chip, 6.9-inch Super Retina XDR display, titanium frame, and exclusive Copper Orange finish. Includes advanced triple-lens camera system, MagSafe support, and up to 1TB storage.', 89999.00, 10, '2026-07-31 00:00:00', 23, 'New Arrival', 'highlight', '3–5 business days', NULL),
-(2, 6, 1, 'Legion 5 Pro — RTX 4070, 16\" QHD 165Hz', 'Intel® Core™ i7-13700HX DISPLAY: 16\" WQXGA (2560x1600) IPS 500nits Anti-glare \r\nMEMORY: 2x 8GB SO-DIMM DDR5-4800 \r\nSTORAGE: 1TB SSD M.2 2280 PCIe® 4.0x4 NVMe® \r\nGPU: NVIDIA® GeForce RTX™ 4070 8GB GDDR6 \r\nOS: Windows 11 Home \r\nCOLOR: Onyx Grey   13th Gen Intel® Core', 118950.00, 0, NULL, 19, '', '', '5-10 business days', NULL),
+(1, 1, 4, 'iPhone 17 Pro Max Cosmic Orange', 'Apple’s latest flagship smartphone featuring the A19 Bionic chip, 6.9-inch Super Retina XDR display, titanium frame, and exclusive Copper Orange finish. Includes advanced triple-lens camera system, MagSafe support, and up to 1TB storage.', 89999.00, 10, '2026-07-31 00:00:00', 22, 'New Arrival', 'highlight', '3–5 business days', NULL),
+(2, 6, 1, 'Legion 5 Pro — RTX 4070, 16\" QHD 165Hz', 'Intel® Core™ i7-13700HX DISPLAY: 16\" WQXGA (2560x1600) IPS 500nits Anti-glare \r\nMEMORY: 2x 8GB SO-DIMM DDR5-4800 \r\nSTORAGE: 1TB SSD M.2 2280 PCIe® 4.0x4 NVMe® \r\nGPU: NVIDIA® GeForce RTX™ 4070 8GB GDDR6 \r\nOS: Windows 11 Home \r\nCOLOR: Onyx Grey   13th Gen Intel® Core', 118950.00, 0, NULL, 18, '', '', '5-10 business days', NULL),
 (3, 12, 9, 'Razer BlackWidow V4 Pro', 'Designed to provide secure support for long hours of play, the soft, cushioned wrist rest also features Razer Chroma™ RGB—which perfectly lines up with the keyboard’s underglow. Using a doubleshot molding process to ensure the labelling never wears off, the keycaps also have extra-thick walls which make them extremely tough to withstand intense gaming.', 30818.00, 0, NULL, 10, '', '', '3–5 business days', NULL);
 
 -- --------------------------------------------------------
@@ -502,7 +517,9 @@ INSERT INTO `shipping_address_tbl` (`address_id`, `user_id`, `order_ref_code`, `
 (1, 1, 'APX-6A2C21BED5C1E', 'Jhody', 'Atinon', '09976829526', '0616 Purok 2 Turbina, Laguna', 'Calamba City', '4027'),
 (2, 1, 'APX-6A2C21EF0B3A3', 'Jhody', 'Atinon', '09976829526', '0616 Purok 2 Turbina, Laguna', 'Calamba City', '4027'),
 (3, 1, 'APX-6A2C21F0A8054', 'Jhody', 'Atinon', '09976829526', '0616 Purok 2 Turbina, Laguna', 'Calamba City', '4027'),
-(4, 1, 'APX-6A2D8FACC4A77', 'Jhody', 'Atinon', '09976829526', '0616 Purok 2 Turbina, Laguna', 'Calamba City', '4027');
+(4, 1, 'APX-6A2D8FACC4A77', 'Jhody', 'Atinon', '09976829526', '0616 Purok 2 Turbina, Laguna', 'Calamba City', '4027'),
+(5, 2, 'APX-6A2DB3751570F', 'Sebastian Luis', 'Raymundo', '09634425756', 'Sesame Straight', 'SAiss city', '1234'),
+(6, 2, 'APX-6A2DB40EC769D', 'Sebastian Luis', 'Raymundo', '09634425756', 'Sesame Straight', 'SAiss city', '1234');
 
 -- --------------------------------------------------------
 
@@ -528,7 +545,8 @@ CREATE TABLE `users_profiles_tbl` (
 --
 
 INSERT INTO `users_profiles_tbl` (`profile_id`, `user_id`, `bio`, `street_address`, `city`, `zip_code`, `phone_number`, `image_path`, `birthday`) VALUES
-(1, 1, 'hello its me test', '0616 Purok 2 Turbina, Laguna', 'Calamba City', '4027', '09976829526', 'assets/images/profiles/profile_1_1781327573.png', NULL);
+(1, 1, 'hello its me test', '0616 Purok 2 Turbina, Laguna', 'Calamba City', '4027', '09976829526', 'assets/images/profiles/profile_1_1781327573.png', NULL),
+(2, 2, '', 'Sesame Straight', 'SAiss city', '1234', '09634425756', 'assets/images/profiles/profile_2_1781379852.jpg', '2005-07-22');
 
 -- --------------------------------------------------------
 
@@ -805,7 +823,7 @@ ALTER TABLE `coupon_usage_tbl`
 -- AUTO_INCREMENT for table `favorites_tbl`
 --
 ALTER TABLE `favorites_tbl`
-  MODIFY `favorite_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `favorite_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `notifications_tbl`
@@ -817,25 +835,25 @@ ALTER TABLE `notifications_tbl`
 -- AUTO_INCREMENT for table `orders_tbl`
 --
 ALTER TABLE `orders_tbl`
-  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `order_items_tbl`
 --
 ALTER TABLE `order_items_tbl`
-  MODIFY `order_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `order_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `order_status_tbl`
 --
 ALTER TABLE `order_status_tbl`
-  MODIFY `status_log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `status_log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `payments_tbl`
 --
 ALTER TABLE `payments_tbl`
-  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `products_tbl`
@@ -859,13 +877,13 @@ ALTER TABLE `reviews_tbl`
 -- AUTO_INCREMENT for table `shipping_address_tbl`
 --
 ALTER TABLE `shipping_address_tbl`
-  MODIFY `address_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `address_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `users_profiles_tbl`
 --
 ALTER TABLE `users_profiles_tbl`
-  MODIFY `profile_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `profile_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `users_tbl`
