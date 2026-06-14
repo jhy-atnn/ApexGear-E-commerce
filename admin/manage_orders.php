@@ -1142,7 +1142,8 @@ $orders = $inv->getAllOrders();
             const streetAddress = order.street_address || '';
             const city = order.city || '';
             const postalCode = order.zip_code || '';
-            const hasShippingAddress = streetAddress || city || postalCode;
+            const phone = order.phone_number || '';
+            const hasShippingAddress = streetAddress || city || postalCode || phone;
             const shippingHtml = hasShippingAddress ? `
     <hr class="section-divider">
     <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Shipping Address</div>
@@ -1158,6 +1159,10 @@ $orders = $inv->getAllOrders();
         <div class="detail-item">
             <label>Postal Code</label>
             <span>${escHtml(postalCode || 'N/A')}</span>
+        </div>
+        <div class="detail-item">
+            <label>Phone Number</label>
+            <span>${escHtml(phone || 'N/A')}</span>
         </div>
     </div>` : `
     <hr class="section-divider">
