@@ -767,6 +767,23 @@
     box-shadow: 0 0 0 3px rgba(0,194,255,.08);
 }
 
+.otp-expiry {
+    margin: -10px 0 4px;
+    text-align: center;
+    color: rgba(255,255,255,.55);
+    font-size: .84rem;
+}
+
+.otp-expiry strong {
+    color: #00c2ff;
+    font-variant-numeric: tabular-nums;
+}
+
+.auth-switch a.disabled {
+    opacity: .45;
+    pointer-events: none;
+}
+
 /* Responsive */
 @media (max-width: 991px) {
     .auth-body { overflow-y: auto; }

@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '\database\db_connect.php';
+require_once __DIR__ . '\includes\otp_mailer.php';
 
 // If already logged in, redirect home
 if (isset($_SESSION['user'])) {
@@ -37,6 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             echo json_encode(['success' => false, 'message' => 'Please enter a valid email address.']);
             exit;
         }
+        if (strlen($username) > 50 || strlen($email) > 100) {
+            echo json_encode(['success' => false, 'message' => 'Username or email is too long.']);
+            exit;
+        }
+        if (strlen($password) < 8 || !preg_match('/[A-Z]/', $password) || !preg_match('/[^a-zA-Z0-9]/', $password)) {
+            echo json_encode(['success' => false, 'message' => 'Password must have 8+ characters, an uppercase letter, and a special character.']);
+            exit;
+        }
 
         // Check existing username in Database
         $stmt = $conn->prepare("SELECT user_id FROM users_tbl WHERE username = ?");
@@ -56,27 +65,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             exit;
         }
 
-        // Generate 6-digit verification code
-        $code = str_pad((string)rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        $code = (string) random_int(100000, 999999);
+        $token = bin2hex(random_bytes(32));
+        $otpHash = password_hash($code, PASSWORD_DEFAULT);
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
-        // Store pending registration in session (Plain text password for presentation)
-        $_SESSION['pending_register'] = [
-            'username'     => $username,
-            'email'        => $email,
-            'password'     => $password,
-            'last_name'    => $lastName,
-            'first_name'   => $firstName,
-            'middle_name'  => $middleName,
-            'gender'       => $gender,
-            'code'         => $code,
-            'expires'      => time() + 600, // 10 min
-        ];
+        $conn->query("DELETE FROM pending_registrations_tbl WHERE expires_at < NOW()");
+        $stmt = $conn->prepare(
+            "INSERT INTO pending_registrations_tbl
+                (token, first_name, last_name, m_name, gender, username, email, password_hash, otp_hash, expires_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))
+             ON DUPLICATE KEY UPDATE
+                token = VALUES(token), first_name = VALUES(first_name), last_name = VALUES(last_name),
+                m_name = VALUES(m_name), gender = VALUES(gender), username = VALUES(username),
+                password_hash = VALUES(password_hash), otp_hash = VALUES(otp_hash),
+                expires_at = VALUES(expires_at), attempts = 0, last_sent_at = NOW()"
+        );
+        $stmt->bind_param(
+            "sssssssss",
+            $token,
+            $firstName,
+            $lastName,
+            $middleName,
+            $gender,
+            $username,
+            $email,
+            $passwordHash,
+            $otpHash
+        );
 
-        echo json_encode([
-            'success'  => true,
-            'message'  => 'Verification code sent to ' . htmlspecialchars($email),
-            'demo_code' => $code  // REMOVE IN PRODUCTION
-        ]);
+        if (!$stmt->execute()) {
+            echo json_encode(['success' => false, 'message' => 'Could not start email verification. Please try again.']);
+            exit;
+        }
+
+        try {
+            sendRegistrationOtpEmail($email, $firstName, $code);
+        } catch (Throwable $e) {
+            $delete = $conn->prepare("DELETE FROM pending_registrations_tbl WHERE token = ?");
+            $delete->bind_param("s", $token);
+            $delete->execute();
+            error_log('ApeX OTP email error: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            exit;
+        }
+
+        $_SESSION['pending_registration_token'] = $token;
+        echo json_encode(['success' => true, 'message' => 'Verification code sent to ' . $email]);
         exit;
     }
 
@@ -84,24 +119,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
     if ($action === 'verify') {
         $code = trim($_POST['code'] ?? '');
 
-        if (!isset($_SESSION['pending_register'])) {
+        if (!preg_match('/^\d{6}$/', $code) || empty($_SESSION['pending_registration_token'])) {
             echo json_encode(['success' => false, 'message' => 'No pending registration. Please register first.']);
             exit;
         }
 
-        $pending = $_SESSION['pending_register'];
+        $token = $_SESSION['pending_registration_token'];
+        $stmt = $conn->prepare("SELECT * FROM pending_registrations_tbl WHERE token = ? LIMIT 1");
+        $stmt->bind_param("s", $token);
+        $stmt->execute();
+        $pending = $stmt->get_result()->fetch_assoc();
 
-        if (time() > $pending['expires']) {
-            unset($_SESSION['pending_register']);
-            echo json_encode(['success' => false, 'message' => 'Code expired. Please register again.']);
+        if (!$pending) {
+            unset($_SESSION['pending_registration_token']);
+            echo json_encode(['success' => false, 'message' => 'This verification request is no longer available. Please register again.']);
             exit;
         }
-        if ($code !== $pending['code']) {
+        if (strtotime($pending['expires_at']) < time()) {
+            echo json_encode(['success' => false, 'message' => 'The code has expired. Request a new code below.', 'expired' => true]);
+            exit;
+        }
+        if ((int) $pending['attempts'] >= 5) {
+            echo json_encode(['success' => false, 'message' => 'Too many incorrect attempts. Request a new code.', 'expired' => true]);
+            exit;
+        }
+        if (!password_verify($code, $pending['otp_hash'])) {
+            $attempt = $conn->prepare("UPDATE pending_registrations_tbl SET attempts = attempts + 1 WHERE pending_id = ?");
+            $attempt->bind_param("i", $pending['pending_id']);
+            $attempt->execute();
             echo json_encode(['success' => false, 'message' => 'Incorrect code. Please try again.']);
             exit;
         }
 
-        // Insert new user into Database
+        $conn->begin_transaction();
         $stmt = $conn->prepare("INSERT INTO users_tbl (first_name, last_name, m_name, gender, username, email, password) VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param(
             "sssssss",
@@ -111,10 +161,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             $pending['gender'],
             $pending['username'],
             $pending['email'],
-            $pending['password']
+            $pending['password_hash']
         );
 
-        if ($stmt->execute()) {
+        try {
+            $stmt->execute();
             $user_id = $stmt->insert_id;
 
             // Initialize an empty profile in the dependent table
@@ -122,7 +173,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             $profStmt->bind_param("i", $user_id);
             $profStmt->execute();
 
-            unset($_SESSION['pending_register']);
+            $delete = $conn->prepare("DELETE FROM pending_registrations_tbl WHERE pending_id = ?");
+            $delete->bind_param("i", $pending['pending_id']);
+            $delete->execute();
+            $conn->commit();
+            unset($_SESSION['pending_registration_token']);
 
             // Log them in immediately
             $_SESSION['user'] = [
@@ -137,8 +192,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
 
             setcookie('apex_logged_in', (string)time(), time() + 60, '/');
             echo json_encode(['success' => true, 'message' => 'Account created! Welcome to ApeX Gear.']);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Database error during registration.']);
+        } catch (Throwable $e) {
+            $conn->rollback();
+            error_log('ApeX registration error: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Could not create the account. The username or email may already be in use.']);
+        }
+        exit;
+    }
+
+    if ($action === 'resend_otp') {
+        if (empty($_SESSION['pending_registration_token'])) {
+            echo json_encode(['success' => false, 'message' => 'No pending registration. Please register again.']);
+            exit;
+        }
+
+        $token = $_SESSION['pending_registration_token'];
+        $stmt = $conn->prepare("SELECT * FROM pending_registrations_tbl WHERE token = ? LIMIT 1");
+        $stmt->bind_param("s", $token);
+        $stmt->execute();
+        $pending = $stmt->get_result()->fetch_assoc();
+
+        if (!$pending) {
+            unset($_SESSION['pending_registration_token']);
+            echo json_encode(['success' => false, 'message' => 'Please register again to request a new code.']);
+            exit;
+        }
+        if (strtotime($pending['last_sent_at']) > time() - 60) {
+            echo json_encode(['success' => false, 'message' => 'Please wait 60 seconds before requesting another code.']);
+            exit;
+        }
+
+        $code = (string) random_int(100000, 999999);
+        $otpHash = password_hash($code, PASSWORD_DEFAULT);
+
+        try {
+            sendRegistrationOtpEmail($pending['email'], $pending['first_name'], $code);
+            $update = $conn->prepare(
+                "UPDATE pending_registrations_tbl
+                 SET otp_hash = ?, expires_at = DATE_ADD(NOW(), INTERVAL 10 MINUTE), attempts = 0, last_sent_at = NOW()
+                 WHERE pending_id = ?"
+            );
+            $update->bind_param("si", $otpHash, $pending['pending_id']);
+            $update->execute();
+            echo json_encode(['success' => true, 'message' => 'A new verification code was sent.']);
+        } catch (Throwable $e) {
+            error_log('ApeX OTP resend error: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
         exit;
     }
@@ -169,7 +268,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
 
         $found = $result->fetch_assoc();
 
-        if ($password !== $found['password']) {
+        $passwordInfo = password_get_info($found['password']);
+        $isLegacyPlaintext = $passwordInfo['algo'] === null || $passwordInfo['algo'] === 0;
+        $passwordValid = password_verify($password, $found['password'])
+            || ($isLegacyPlaintext && hash_equals($found['password'], $password));
+        if (!$passwordValid) {
             echo json_encode(['success' => false, 'message' => 'Incorrect password.']);
             exit;
         }
@@ -512,11 +615,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
 
                     <div id="verifyAlert" class="auth-alert d-none"></div>
 
-                    <!-- Demo code display -->
-                    <div id="demoCodeBox" class="demo-code-box d-none">
-                        <i class="fas fa-info-circle me-2"></i> Demo code: <strong id="demoCode"></strong>
-                    </div>
-
                     <div class="otp-wrap">
                         <input class="otp-box" type="text" maxlength="1" inputmode="numeric" />
                         <input class="otp-box" type="text" maxlength="1" inputmode="numeric" />
@@ -531,7 +629,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                         <span class="btn-spinner d-none"><i class="fas fa-circle-notch fa-spin"></i></span>
                     </button>
 
-                    <p class="auth-switch mt-2">Wrong email? <a href="#" onclick="showTab('register'); return false;">Go back</a></p>
+                    <p class="otp-expiry" style="margin-top: 20px;">Code expires in <strong id="otpTimer">10:00</strong></p>
+                    <p class="auth-switch mt-2" style="margin-top: 20px;">Didn't receive it? <a href="#" id="resendOtpLink" onclick="resendOtp(); return false;">Send a new code</a></p>
+                    <p class="auth-switch mt-2" style="margin-top: 20px;">Wrong email? <a href="#" onclick="showTab('register'); return false;">Go back</a></p>
                 </div>
 
             </div>
@@ -643,15 +743,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             });
             setLoading('registerBtn', false);
             if (r.success) {
-                // Show verify panel
                 document.getElementById('verifySubtext').textContent = 'We sent a 6-digit code to ' + e + '.';
-                // Demo: show the code
-                if (r.demo_code) {
-                    document.getElementById('demoCodeBox').classList.remove('d-none');
-                    document.getElementById('demoCode').textContent = r.demo_code;
-                }
                 showTab('verify');
                 initOtp();
+                startOtpTimer();
             } else {
                 showAlert('registerAlert', r.message);
             }
@@ -682,6 +777,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             }
         }
 
+        async function resendOtp() {
+            const link = document.getElementById('resendOtpLink');
+            link.classList.add('disabled');
+            hideAlert('verifyAlert');
+            const r = await apexPost({ action: 'resend_otp' });
+            link.classList.remove('disabled');
+
+            if (r.success) {
+                showAlert('verifyAlert', r.message, 'success');
+                initOtp();
+                startOtpTimer();
+            } else {
+                showAlert('verifyAlert', r.message);
+            }
+        }
+
+        let otpTimerInterval;
+        function startOtpTimer() {
+            clearInterval(otpTimerInterval);
+            let remaining = 600;
+            const timer = document.getElementById('otpTimer');
+
+            const render = () => {
+                const minutes = Math.floor(remaining / 60);
+                const seconds = String(remaining % 60).padStart(2, '0');
+                timer.textContent = minutes + ':' + seconds;
+                if (remaining <= 0) {
+                    clearInterval(otpTimerInterval);
+                    timer.textContent = 'Expired';
+                }
+                remaining--;
+            };
+
+            render();
+            otpTimerInterval = setInterval(render, 1000);
+        }
+
         // ── SOCIAL ────────────────────────────────────────────────────────────────────
         async function doSocial(provider) {
             const r = await apexPost({
@@ -698,13 +830,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             const boxes = document.querySelectorAll('.otp-box');
             boxes.forEach((box, i) => {
                 box.value = '';
-                box.addEventListener('input', () => {
+                box.oninput = () => {
                     box.value = box.value.replace(/\D/g, '').slice(0, 1);
                     if (box.value && i < boxes.length - 1) boxes[i + 1].focus();
-                });
-                box.addEventListener('keydown', e => {
+                };
+                box.onkeydown = e => {
                     if (e.key === 'Backspace' && !box.value && i > 0) boxes[i - 1].focus();
-                });
+                };
+                box.onpaste = e => {
+                    const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                    if (!digits) return;
+                    e.preventDefault();
+                    digits.split('').forEach((digit, index) => {
+                        if (boxes[index]) boxes[index].value = digit;
+                    });
+                    boxes[Math.min(digits.length, boxes.length) - 1].focus();
+                };
             });
             boxes[0].focus();
         }
