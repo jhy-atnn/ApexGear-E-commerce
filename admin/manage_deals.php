@@ -24,17 +24,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $admin_id = isset($_SESSION['admin']['id']) ? intval($_SESSION['admin']['id']) : null;
 
+    // Helper: is there currently an active (and not yet expired) promo?
+    $hasActivePromo = function () use ($conn) {
+        $res = $conn->query("SELECT coupon_id, code_name FROM coupon_code WHERE is_active = 1 AND valid_until > NOW() LIMIT 1");
+        return $res && $res->num_rows > 0 ? $res->fetch_assoc() : null;
+    };
+
     // 1. ADD PROMO
     if ($action === 'add_promo') {
         $code = strtoupper(trim($_POST['code'] ?? ''));
         $discount = intval($_POST['discount'] ?? 0);
         $expiry = trim($_POST['expiry'] ?? '');
 
-        if ($code && $discount > 0 && $expiry) {
+        $activePromo = $hasActivePromo();
+
+        if ($activePromo) {
+            $msg = 'Cannot create a new promo code while "' . htmlspecialchars($activePromo['code_name']) . '" is still active. Deactivate or delete it first.';
+            $msgType = 'danger';
+        } elseif ($code && $discount > 0 && $expiry) {
             // Convert HTML datetime-local (YYYY-MM-DDTHH:MM) to MySQL DATETIME (YYYY-MM-DD HH:MM:00)
             $expiry_db = str_replace('T', ' ', $expiry) . ':00';
 
-            $stmt = $conn->prepare("INSERT INTO coupon_code (code_name, discount_percentage, valid_until) VALUES (?, ?, ?)");
+            $stmt = $conn->prepare("INSERT INTO coupon_code (code_name, discount_percentage, valid_until, is_active) VALUES (?, ?, ?, 1)");
             $stmt->bind_param("sis", $code, $discount, $expiry_db);
             
             if ($stmt->execute()) {
@@ -67,14 +78,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $msgType = 'danger';
         }
     }
+
+    // 3. TOGGLE ACTIVE STATUS
+    elseif ($action === 'toggle_active') {
+        $coupon_id = intval($_POST['coupon_id'] ?? 0);
+        $newStatus = intval($_POST['new_status'] ?? 0);
+
+        if ($newStatus === 1) {
+            $activePromo = $hasActivePromo();
+            if ($activePromo && (int)$activePromo['coupon_id'] !== $coupon_id) {
+                $msg = 'Cannot activate this promo while "' . htmlspecialchars($activePromo['code_name']) . '" is still active. Deactivate it first.';
+                $msgType = 'danger';
+            } else {
+                $stmt = $conn->prepare("UPDATE coupon_code SET is_active = 1 WHERE coupon_id = ?");
+                $stmt->bind_param("i", $coupon_id);
+                if ($stmt->execute()) {
+                    $inv->logAdminActivity('deal_activate', "Activated promo code ID {$coupon_id}.", $admin_id);
+                    $msg = 'Promo code activated.';
+                    $msgType = 'success';
+                } else {
+                    $msg = 'Failed to activate promo code.';
+                    $msgType = 'danger';
+                }
+            }
+        } else {
+            $stmt = $conn->prepare("UPDATE coupon_code SET is_active = 0 WHERE coupon_id = ?");
+            $stmt->bind_param("i", $coupon_id);
+            if ($stmt->execute()) {
+                $inv->logAdminActivity('deal_deactivate', "Deactivated promo code ID {$coupon_id}.", $admin_id);
+                $msg = 'Promo code deactivated.';
+                $msgType = 'success';
+            } else {
+                $msg = 'Failed to deactivate promo code.';
+                $msgType = 'danger';
+            }
+        }
+    }
 }
 
 // ── FETCH PROMOS FROM DB ──
 $promoCodes = [];
-$res = $conn->query("SELECT * FROM coupon_code ORDER BY valid_until ASC");
+$res = $conn->query("SELECT * FROM coupon_code ORDER BY is_active DESC, valid_until ASC");
 if ($res) {
     while ($row = $res->fetch_assoc()) {
         $promoCodes[] = $row;
+    }
+}
+
+// Currently active, non-expired promo (enforces the "one active promo" rule on the form)
+$currentActivePromo = null;
+foreach ($promoCodes as $p) {
+    if ((int)$p['is_active'] === 1 && strtotime($p['valid_until']) > time()) {
+        $currentActivePromo = $p;
+        break;
     }
 }
 ?>
@@ -121,6 +177,7 @@ if ($res) {
         .deal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--border); }
         .deal-badge { font-size: .65rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; padding: 4px 10px; border-radius: 20px; }
         .deal-badge.active { background: rgba(0,214,143,.1); color: #009c60; }
+        .deal-badge.inactive { background: rgba(107,122,153,.12); color: var(--text-muted); }
         .deal-badge.expired { background: rgba(255,59,92,.1); color: var(--danger); }
         
         .act-btn { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 6px; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); transition: all .2s; }
@@ -204,25 +261,31 @@ if ($res) {
                         <span class="panel-title"><i class="fas fa-plus-circle" style="color:var(--accent);"></i> Add Promo Code</span>
                     </div>
                     <div class="panel-body">
+                        <?php if ($currentActivePromo): ?>
+                            <div style="background:rgba(245,197,24,.1); border:1px solid rgba(245,197,24,.3); border-radius:10px; padding:14px 16px; margin-bottom:18px; font-size:.83rem; color:#9a7d00; display:flex; gap:10px; align-items:flex-start;">
+                                <i class="fas fa-exclamation-triangle" style="margin-top:2px;"></i>
+                                <span>Promo <strong><?php echo htmlspecialchars($currentActivePromo['code_name']); ?></strong> is currently active. Deactivate or delete it before adding a new one.</span>
+                            </div>
+                        <?php endif; ?>
                         <form method="POST">
                             <input type="hidden" name="action" value="add_promo">
                             
                             <div class="form-group">
                                 <label class="form-label" for="promo_code">Code Name (e.g. SUMMER20)</label>
-                                <input type="text" class="apex-input" id="promo_code" name="code" placeholder="Enter code" required style="text-transform:uppercase;">
+                                <input type="text" class="apex-input" id="promo_code" name="code" placeholder="Enter code" required style="text-transform:uppercase;" <?php echo $currentActivePromo ? 'disabled' : ''; ?>>
                             </div>
                             
                             <div class="form-group">
                                 <label class="form-label" for="promo_disc">Discount Percentage (%)</label>
-                                <input type="number" class="apex-input" id="promo_disc" name="discount" placeholder="e.g. 15" required min="1" max="100">
+                                <input type="number" class="apex-input" id="promo_disc" name="discount" placeholder="e.g. 15" required min="1" max="100" <?php echo $currentActivePromo ? 'disabled' : ''; ?>>
                             </div>
                             
                             <div class="form-group">
                                 <label class="form-label" for="promo_expiry">Expiration Date & Time</label>
-                                <input type="datetime-local" class="apex-input" id="promo_expiry" name="expiry" required min="<?php echo date('Y-m-d\TH:i'); ?>">
+                                <input type="datetime-local" class="apex-input" id="promo_expiry" name="expiry" required min="<?php echo date('Y-m-d\TH:i'); ?>" <?php echo $currentActivePromo ? 'disabled' : ''; ?>>
                             </div>
                             
-                            <button type="submit" class="apex-btn"><i class="fas fa-check"></i> Save Promo Code</button>
+                            <button type="submit" class="apex-btn" <?php echo $currentActivePromo ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''; ?>><i class="fas fa-check"></i> Save Promo Code</button>
                         </form>
                     </div>
                 </div>
@@ -245,19 +308,40 @@ if ($res) {
                         <?php else: ?>
                             <div class="row g-3">
                             <?php foreach ($promoCodes as $p): 
-                                $isActive = strtotime($p['valid_until']) > time();
-                                $statusClass = $isActive ? 'active' : 'expired';
-                                $statusText  = $isActive ? 'Active' : 'Expired';
+                                $notExpired = strtotime($p['valid_until']) > time();
+                                $isActive = $notExpired && (int)$p['is_active'] === 1;
+                                if (!$notExpired) {
+                                    $statusClass = 'expired';
+                                    $statusText  = 'Expired';
+                                } elseif ($isActive) {
+                                    $statusClass = 'active';
+                                    $statusText  = 'Active';
+                                } else {
+                                    $statusClass = 'inactive';
+                                    $statusText  = 'Inactive';
+                                }
                             ?>
                                 <div class="col-md-6">
                                     <div class="deal-card">
                                         <div class="deal-header">
-                                            <span class="deal-badge <?php echo $statusClass; ?>"><?php echo $statusText; ?></span>
-                                            <form method="POST" style="margin:0;" onsubmit="return confirm('Delete this promo code from the database?');">
-                                                <input type="hidden" name="action" value="delete_promo">
-                                                <input type="hidden" name="coupon_id" value="<?php echo $p['coupon_id']; ?>">
-                                                <button type="submit" class="act-btn btn-del" title="Delete Promo"><i class="fas fa-trash-alt"></i></button>
-                                            </form>
+                                            <span class="deal-badge <?php echo $statusClass; ?>" id="badge-<?php echo $p['coupon_id']; ?>" data-expiry="<?php echo strtotime($p['valid_until']); ?>"><?php echo $statusText; ?></span>
+                                            <div style="display:flex; gap:8px;">
+                                                <?php if ($notExpired): ?>
+                                                <form method="POST" style="margin:0;">
+                                                    <input type="hidden" name="action" value="toggle_active">
+                                                    <input type="hidden" name="coupon_id" value="<?php echo $p['coupon_id']; ?>">
+                                                    <input type="hidden" name="new_status" value="<?php echo $isActive ? 0 : 1; ?>">
+                                                    <button type="submit" class="act-btn" title="<?php echo $isActive ? 'Deactivate' : 'Activate'; ?> Promo">
+                                                        <i class="fas <?php echo $isActive ? 'fa-toggle-on' : 'fa-toggle-off'; ?>"></i>
+                                                    </button>
+                                                </form>
+                                                <?php endif; ?>
+                                                <form method="POST" style="margin:0;" onsubmit="return confirm('Delete this promo code from the database?');">
+                                                    <input type="hidden" name="action" value="delete_promo">
+                                                    <input type="hidden" name="coupon_id" value="<?php echo $p['coupon_id']; ?>">
+                                                    <button type="submit" class="act-btn btn-del" title="Delete Promo"><i class="fas fa-trash-alt"></i></button>
+                                                </form>
+                                            </div>
                                         </div>
                                         <div class="deal-body">
                                             <div class="deal-code"><?php echo htmlspecialchars($p['code_name']); ?></div>
@@ -309,6 +393,25 @@ function updateTimers() {
         el.querySelector('[data-part="h"]').textContent = String(h).padStart(2,'0');
         el.querySelector('[data-part="m"]').textContent = String(m).padStart(2,'0');
         el.querySelector('[data-part="s"]').textContent = String(s).padStart(2,'0');
+    });
+
+    // ── Auto-flip status badges to "Expired" when their countdown reaches zero ──
+    document.querySelectorAll('.deal-badge[data-expiry]').forEach(badge => {
+        const exp = parseInt(badge.dataset.expiry) * 1000;
+        if (Date.now() >= exp && !badge.classList.contains('expired')) {
+            badge.classList.remove('active', 'inactive');
+            badge.classList.add('expired');
+            badge.innerHTML = 'Expired';
+
+            // Hide the activate/deactivate toggle button since the promo is no longer valid
+            const card = badge.closest('.deal-card');
+            if (card) {
+                const toggleForm = card.querySelector('form[method="POST"] input[name="action"][value="toggle_active"]');
+                if (toggleForm) {
+                    toggleForm.closest('form').style.display = 'none';
+                }
+            }
+        }
     });
 }
 updateTimers();

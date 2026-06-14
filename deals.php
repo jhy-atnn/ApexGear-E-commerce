@@ -41,6 +41,9 @@ $bundles = [
 ];
 
 $flash_deal_ids = [];
+
+// Active promo code (for the copy-code banner)
+$activePromo = $inventoryManager->getActivePromo();
 ?>
 
 <!DOCTYPE html>
@@ -99,6 +102,33 @@ $flash_deal_ids = [];
             </div>
         </div>
     </section>
+
+    <?php if ($activePromo): ?>
+    <!-- ── ACTIVE PROMO CODE BANNER ── -->
+    <section class="container" style="margin-top: 28px;">
+        <div style="background: linear-gradient(135deg, var(--apex-blue) 0%, var(--apex-dark) 100%); border-radius: 12px; padding: 22px 28px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px;">
+            <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                <div style="font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:.95rem; text-transform:uppercase; letter-spacing:.08em; color:#fff;">
+                    <i class="fas fa-ticket-alt me-2" style="color:var(--apex-accent);"></i>Use Code
+                </div>
+                <div id="promoCode" style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:1.6rem; letter-spacing:.1em; background:rgba(255,255,255,.12); border:1px dashed rgba(255,255,255,.4); border-radius:8px; padding:6px 18px; color:var(--apex-accent);">
+                    <?php echo htmlspecialchars($activePromo['code_name']); ?>
+                </div>
+                <div style="color:rgba(255,255,255,.7); font-size:.9rem; font-weight:600;">
+                    for <span style="color:#fff;"><?php echo (int)$activePromo['discount_percentage']; ?>% OFF</span> your order
+                </div>
+                <div style="color:rgba(255,255,255,.65); font-size:.82rem; font-weight:600; display:flex; align-items:center; gap:6px;">
+                    <i class="fas fa-clock"></i> Expires: <?php echo date('M d, Y h:i A', strtotime($activePromo['valid_until'])); ?>
+                </div>
+
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span id="copiedMsg" style="display:none; color:var(--apex-accent); font-size:.82rem; font-weight:700;"><i class="fas fa-check me-1"></i>Copied!</span>
+                <button type="button" class="btn-apex" onclick="copyCode()"><i class="fas fa-copy me-2"></i>Copy Code</button>
+            </div>
+        </div>
+    </section>
+    <?php endif; ?>
 
     <!-- ── FLASH DEALS ── -->
     <section class="sale-section" id="flash-deals">

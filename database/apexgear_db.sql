@@ -229,15 +229,16 @@ CREATE TABLE `coupon_code` (
   `coupon_id` int(11) NOT NULL,
   `code_name` varchar(50) NOT NULL,
   `discount_percentage` int(11) NOT NULL,
-  `valid_until` datetime NOT NULL
+  `valid_until` datetime NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `coupon_code`
 --
 
-INSERT INTO `coupon_code` (`coupon_id`, `code_name`, `discount_percentage`, `valid_until`) VALUES
-(1, 'LAUNCHAPX26', 15, '2026-06-30 20:34:00');
+INSERT INTO `coupon_code` (`coupon_id`, `code_name`, `discount_percentage`, `valid_until`, `is_active`) VALUES
+(1, 'LAUNCHAPX26', 15, '2026-06-30 20:34:00', 1);
 
 -- --------------------------------------------------------
 
@@ -314,6 +315,8 @@ CREATE TABLE `orders_tbl` (
   `user_id` int(11) DEFAULT NULL,
   `order_ref_code` varchar(50) NOT NULL,
   `coupon_id` int(11) DEFAULT NULL,
+  `coupon_code` varchar(50) DEFAULT NULL,
+  `discount_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
   `subtotal` decimal(10,2) NOT NULL,
   `tax` decimal(10,2) NOT NULL,
   `shipping_fee` decimal(10,2) NOT NULL,
@@ -653,7 +656,8 @@ ALTER TABLE `coupon_code`
 ALTER TABLE `coupon_usage_tbl`
   ADD PRIMARY KEY (`usage_id`),
   ADD KEY `coupon_id` (`coupon_id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD KEY `user_id` (`user_id`),
+  ADD UNIQUE KEY `uniq_coupon_user` (`coupon_id`, `user_id`);
 
 --
 -- Indexes for table `favorites_tbl`
@@ -946,3 +950,20 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+
+-- --------------------------------------------------------
+-- MIGRATION: add `is_active` flag to coupon_code
+-- Run this only if your existing database does NOT already
+-- have the `is_active` column (i.e. the table was created
+-- before this update).
+-- --------------------------------------------------------
+-- ALTER TABLE `coupon_code` ADD `is_active` TINYINT(1) NOT NULL DEFAULT 1;
+
+-- --------------------------------------------------------
+-- MIGRATION: add coupon snapshot columns to orders_tbl
+-- Run this only if your existing database does NOT already
+-- have these columns.
+-- --------------------------------------------------------
+-- ALTER TABLE `orders_tbl` ADD `coupon_code` VARCHAR(50) DEFAULT NULL AFTER `coupon_id`;
+-- ALTER TABLE `orders_tbl` ADD `discount_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER `coupon_code`;

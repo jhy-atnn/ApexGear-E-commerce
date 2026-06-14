@@ -113,6 +113,12 @@ if (isset($_SESSION['user']['id'])) {
                             </div>
                             <div class="text-end">
                                 <div class="text-muted small"><?php echo date('M d, Y', strtotime($order['created_at'])); ?></div>
+                                <?php if (!empty($order['coupon_code'])): ?>
+                                    <div class="small text-success" style="font-weight:600;">
+                                        <i class="fas fa-tag me-1"></i><?php echo htmlspecialchars($order['coupon_code']); ?>
+                                        (&minus;₱<?php echo number_format($order['discount_amount'] ?? 0, 2); ?>)
+                                    </div>
+                                <?php endif; ?>
                                 <div class="fw-bold text-dark">₱<?php echo number_format($order['total_amount'], 2); ?></div>
                             </div>
                         </div>

@@ -460,6 +460,7 @@ $pendingOrders = count(array_filter($allOrders, fn($o) => strtolower($o['order_s
                                         <th>Customer</th>
                                         <th>Items</th>
                                         <th>Order Details</th>
+                                        <th>Promo</th>
                                         <th>Total</th>
                                         <th>Completed On</th>
                                         <th>Remarks</th>
@@ -496,9 +497,20 @@ $pendingOrders = count(array_filter($allOrders, fn($o) => strtolower($o['order_s
                                             </td>
                                             <td style="font-size:.8rem;color:var(--text-muted);min-width:180px;">
                                                 <div>Subtotal: ₱<?php echo number_format($o['subtotal'] ?? 0, 2); ?></div>
+                                                <?php if (!empty($o['coupon_code'])): ?>
+                                                    <div style="color:var(--success);">Discount: &minus;₱<?php echo number_format($o['discount_amount'] ?? 0, 2); ?></div>
+                                                <?php endif; ?>
                                                 <div>Tax: ₱<?php echo number_format($o['tax'] ?? 0, 2); ?></div>
                                                 <div>Shipping: ₱<?php echo number_format($o['shipping_fee'] ?? 0, 2); ?></div>
                                                 <div>Status: <span class="status-pill status-delivered"><?php echo htmlspecialchars($o['order_status'] ?? 'Completed'); ?></span></div>
+                                            </td>
+                                            <td>
+                                                <?php if (!empty($o['coupon_code'])): ?>
+                                                    <div style="font-weight:700;font-family:'Barlow Condensed',sans-serif;font-size:.85rem;"><?php echo htmlspecialchars($o['coupon_code']); ?></div>
+                                                    <div style="font-size:.76rem;color:var(--success);font-weight:600;">&minus;₱<?php echo number_format($o['discount_amount'] ?? 0, 2); ?></div>
+                                                <?php else: ?>
+                                                    <span style="color:var(--text-muted);font-size:.8rem;">&mdash;</span>
+                                                <?php endif; ?>
                                             </td>
                                             <td style="font-weight:600;">₱<?php echo number_format($o['total_amount'] ?? $o['total'] ?? 0, 2); ?></td>
                                             <td style="color:var(--text-muted);font-size:.8rem;">

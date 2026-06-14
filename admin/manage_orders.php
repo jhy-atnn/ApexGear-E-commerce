@@ -742,6 +742,7 @@ $orders = $inv->getAllOrders();
                                     <th>Reference</th>
                                     <th>Customer</th>
                                     <th>Items</th>
+                                    <th>Promo</th>
                                     <th>Amount</th>
                                     <th>Payment</th>
                                     <th>Pay Status</th>
@@ -800,6 +801,14 @@ $orders = $inv->getAllOrders();
                                             <div style="font-size:.75rem;color:var(--text-muted);"><?php echo htmlspecialchars($order['email'] ?: '—'); ?></div>
                                         </td>
                                         <td style="text-align:center;"><?php echo intval($order['items_count'] ?? 0); ?></td>
+                                        <td>
+                                            <?php if (!empty($order['coupon_code'])): ?>
+                                                <span class="ref-code" style="font-size:.72rem;"><?php echo htmlspecialchars($order['coupon_code']); ?></span>
+                                                <div style="font-size:.72rem;color:var(--success);font-weight:700;">&minus;₱<?php echo number_format($order['discount_amount'] ?? 0, 2); ?></div>
+                                            <?php else: ?>
+                                                <span style="color:var(--text-muted);font-size:.78rem;">&mdash;</span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td style="font-weight:700;color:var(--blue);">₱<?php echo number_format($order['total_amount'] ?? 0, 2); ?></td>
                                         <td><?php echo htmlspecialchars($payMethod); ?></td>
                                         <td><span class="pay-badge <?php echo $payClass; ?>"><i class="fas fa-circle" style="font-size:.45rem;"></i><?php echo $payLabel; ?></span></td>
@@ -971,6 +980,19 @@ $orders = $inv->getAllOrders();
             <label>Order Status</label>
             <span>${statusBadgeHtml(order.order_status)}</span>
         </div>
+        <div class="detail-item">
+            <label>Subtotal</label>
+            <span>₱${parseFloat(order.subtotal||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</span>
+        </div>
+        ${order.coupon_code ? `
+        <div class="detail-item">
+            <label>Promo Code</label>
+            <span style="font-family:'Barlow Condensed',monospace;">${escHtml(order.coupon_code)}</span>
+        </div>
+        <div class="detail-item">
+            <label>Discount</label>
+            <span style="color:var(--success);">&minus;₱${parseFloat(order.discount_amount||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</span>
+        </div>` : ''}
         <div class="detail-item">
             <label>Total Amount</label>
             <span style="color:var(--blue);font-size:1rem;">₱${parseFloat(order.total_amount||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</span>

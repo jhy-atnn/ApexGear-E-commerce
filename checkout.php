@@ -17,6 +17,20 @@ if (empty($cart_items) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
+// ── Applied promo code (carried over from cart.php) ──────────────────────────
+$appliedCoupon = null;
+$couponExpiredNotice = '';
+if (isset($_SESSION['applied_coupon'])) {
+    $checkoutUserId = isset($_SESSION['user']['id']) ? (int)$_SESSION['user']['id'] : null;
+    $revalidated = $inventoryManager->validatePromoCode($_SESSION['applied_coupon']['code'], $checkoutUserId);
+    if ($revalidated) {
+        $appliedCoupon = $_SESSION['applied_coupon'];
+    } else {
+        $couponExpiredNotice = 'Promo code "' . htmlspecialchars($_SESSION['applied_coupon']['code']) . '" has expired and was removed. Totals below no longer include this discount.';
+        unset($_SESSION['applied_coupon']);
+    }
+}
+
 // ── Helper: compute the effective (live-sale) price for a cart item ──────────
 // Called at order placement time — if the sale is still running, it applies.
 function getEffectiveCheckoutPrice($item) {
@@ -86,12 +100,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         $subtotal += ($effectivePrice * $item['qty']);
         $item_count += $item['qty'];
     }
-    $tax = $subtotal * 0.08;
+
+    // Apply promo code discount (if any) to the subtotal before tax
+    $discount_amount = 0.00;
+    $couponCodeForOrder = null;
+    $couponIdForOrder = null;
+    if ($appliedCoupon) {
+        $discount_amount = round($subtotal * ((int)$appliedCoupon['discount'] / 100), 2);
+        $couponCodeForOrder = $appliedCoupon['code'];
+        $couponIdForOrder = $appliedCoupon['coupon_id'] ?? null;
+    }
+    $discounted_subtotal = $subtotal - $discount_amount;
+
+    $tax = $discounted_subtotal * 0.08;
     $shipping_fee = 0.00; // Assuming free shipping as stated in UI
-    $grand_total = $subtotal + $tax + $shipping_fee;
+    $grand_total = $discounted_subtotal + $tax + $shipping_fee;
 
     $receipt_data['itemCount'] = $item_count;
     $receipt_data['subtotal'] = $subtotal;
+    $receipt_data['discountAmount'] = $discount_amount;
+    $receipt_data['couponCode'] = $couponCodeForOrder;
     $receipt_data['tax'] = $tax;
     $receipt_data['grandTotal'] = $grand_total;
     $receipt_data['receiptNumber'] = $receipt_number;
@@ -110,8 +138,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     $dbUserId = isset($_SESSION['user']['id']) ? intval($_SESSION['user']['id']) : 0;
 
     // A. Insert into `orders_tbl`
-    $stmtOrder = $conn->prepare("INSERT INTO orders_tbl (user_id, order_ref_code, subtotal, tax, shipping_fee, total_amount, order_status) VALUES (?, ?, ?, ?, ?, ?, 'Pending')");
-    $stmtOrder->bind_param("isdddd", $dbUserId, $receipt_number, $subtotal, $tax, $shipping_fee, $grand_total);
+    $stmtOrder = $conn->prepare("INSERT INTO orders_tbl (user_id, order_ref_code, coupon_id, coupon_code, discount_amount, subtotal, tax, shipping_fee, total_amount, order_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')");
+    $stmtOrder->bind_param("isisddddd", $dbUserId, $receipt_number, $couponIdForOrder, $couponCodeForOrder, $discount_amount, $subtotal, $tax, $shipping_fee, $grand_total);
     $stmtOrder->execute();
     $orderId = $stmtOrder->insert_id; // Capture the new Order ID
     $stmtOrder->close();
@@ -181,8 +209,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     // DATABASE INSERTIONS END HERE
     // ==========================================
 
+    // Record one-time promo code usage so this user can't reuse it
+    if ($appliedCoupon && !empty($appliedCoupon['coupon_id']) && $dbUserId > 0) {
+        $inventoryManager->recordCouponUsage($appliedCoupon['coupon_id'], $dbUserId);
+    }
+
     // Clear the cart session
     unset($_SESSION['cart']);
+    unset($_SESSION['applied_coupon']);
     $order_successful = true;
 } else {
     // Only calculate totals for display on the form
@@ -193,8 +227,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         $subtotal += ($effectivePrice * $item['qty']);
         $item_count += $item['qty'];
     }
-    $tax = $subtotal * 0.08;
-    $grand_total = $subtotal + $tax;
+
+    $discount_amount = 0.00;
+    if ($appliedCoupon) {
+        $discount_amount = round($subtotal * ((int)$appliedCoupon['discount'] / 100), 2);
+    }
+    $discounted_subtotal = $subtotal - $discount_amount;
+
+    $tax = $discounted_subtotal * 0.08;
+    $grand_total = $discounted_subtotal + $tax;
 }
 ?>
 
@@ -418,6 +459,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                         <span class="text-muted">Subtotal</span>
                                         <span class="text-dark">₱<?php echo number_format($receipt_data['subtotal'], 2); ?></span>
                                     </div>
+                                    <?php if (!empty($receipt_data['discountAmount'])): ?>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Promo (<?php echo htmlspecialchars($receipt_data['couponCode']); ?>)</span>
+                                        <span class="text-success">&minus;₱<?php echo number_format($receipt_data['discountAmount'], 2); ?></span>
+                                    </div>
+                                    <?php endif; ?>
                                     <div class="d-flex justify-content-between mb-3">
                                         <span class="text-muted">Tax (8%)</span>
                                         <span class="text-dark">₱<?php echo number_format($receipt_data['tax'], 2); ?></span>
@@ -460,6 +507,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                 </div>
 
                 <h2 class="sec-title mb-4">Complete <span>Your Order</span></h2>
+
+                <?php if ($couponExpiredNotice): ?>
+                    <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span><?php echo $couponExpiredNotice; ?></span>
+                    </div>
+                <?php endif; ?>
 
                 <form method="POST" action="checkout.php" class="row g-5">
 
@@ -628,6 +682,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                 <span class="text-muted">Subtotal</span>
                                 <span class="fw-bold">₱<?php echo number_format($subtotal, 2); ?></span>
                             </div>
+
+                            <?php if (!empty($appliedCoupon)): ?>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Promo (<?php echo htmlspecialchars($appliedCoupon['code']); ?>)</span>
+                                <span class="fw-bold text-success">&minus;₱<?php echo number_format($discount_amount, 2); ?></span>
+                            </div>
+                            <?php endif; ?>
 
                             <div class="d-flex justify-content-between mb-3">
                                 <span class="text-muted">Tax</span>

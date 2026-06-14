@@ -3,6 +3,12 @@ session_start();
 require_once __DIR__ . '/classes/Inventory.php';
 $currentPage = 'cart';
 
+/** @var Inventory $inventoryManager */
+$inventoryManager = new Inventory();
+
+$couponMsg = '';
+$couponMsgType = 'success';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $product_id = $_POST['product_id'] ?? 0;
     if ($_POST['action'] === 'remove') {
@@ -14,9 +20,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         } else {
             unset($_SESSION['cart'][$product_id]);
         }
+    } elseif ($_POST['action'] === 'apply_coupon') {
+        $code = strtoupper(trim($_POST['coupon_code'] ?? ''));
+        $userId = isset($_SESSION['user']['id']) ? (int)$_SESSION['user']['id'] : null;
+        $promo = $inventoryManager->validatePromoCode($code, $userId);
+        if ($promo) {
+            $_SESSION['applied_coupon'] = [
+                'code'       => $promo['code_name'],
+                'discount'   => (int)$promo['discount_percentage'],
+                'coupon_id'  => $promo['coupon_id'],
+            ];
+            $_SESSION['coupon_msg'] = ['type' => 'success', 'text' => 'Coupon "' . $promo['code_name'] . '" applied!'];
+        } else {
+            unset($_SESSION['applied_coupon']);
+            $activeForCode = $inventoryManager->getActivePromo();
+            if ($userId !== null && $activeForCode && strtoupper($activeForCode['code_name']) === $code && $inventoryManager->hasUserUsedCoupon((int)$activeForCode['coupon_id'], $userId)) {
+                $_SESSION['coupon_msg'] = ['type' => 'danger', 'text' => 'You have already used this promo code on a previous order.'];
+            } else {
+                $_SESSION['coupon_msg'] = ['type' => 'danger', 'text' => 'Invalid or expired coupon code.'];
+            }
+        }
+        header("Location: cart.php");
+        exit();
+    } elseif ($_POST['action'] === 'remove_coupon') {
+        unset($_SESSION['applied_coupon']);
+        $_SESSION['coupon_msg'] = ['type' => 'success', 'text' => 'Coupon removed.'];
+        header("Location: cart.php");
+        exit();
     }
     header("Location: cart.php");
     exit();
+}
+
+// One-time flash message for coupon actions
+if (isset($_SESSION['coupon_msg'])) {
+    $couponMsgType = $_SESSION['coupon_msg']['type'];
+    $couponMsg     = $_SESSION['coupon_msg']['text'];
+    unset($_SESSION['coupon_msg']);
 }
 
 function getEffectivePriceForCart($item)
@@ -24,8 +64,6 @@ function getEffectivePriceForCart($item)
     return Inventory::getCartItemEffectivePrice($item);
 }
 
-/** @var Inventory $inventoryManager */
-$inventoryManager = new Inventory();
 if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
     $_SESSION['cart'] = $inventoryManager->refreshCartItemsWithLivePricing($_SESSION['cart']);
 }
@@ -39,8 +77,29 @@ if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
         $item_count += $item['qty'];
     }
 }
+
+// ── APPLIED COUPON / DISCOUNT ──
+$appliedCoupon = null;
+$couponDiscountAmount = 0;
+if (isset($_SESSION['applied_coupon'])) {
+    // Re-validate every load in case the admin deactivated/deleted/expired it
+    $userId = isset($_SESSION['user']['id']) ? (int)$_SESSION['user']['id'] : null;
+    $revalidated = $inventoryManager->validatePromoCode($_SESSION['applied_coupon']['code'], $userId);
+    if ($revalidated) {
+        $appliedCoupon = $_SESSION['applied_coupon'];
+        $couponDiscountAmount = $subtotal * ((int)$appliedCoupon['discount'] / 100);
+    } else {
+        $expiredCode = $_SESSION['applied_coupon']['code'];
+        unset($_SESSION['applied_coupon']);
+        if (!$couponMsg) {
+            $couponMsg = 'Promo code "' . $expiredCode . '" has expired and was removed from your cart.';
+            $couponMsgType = 'danger';
+        }
+    }
+}
+
 $tax = $subtotal * 0.08;
-$grand_total = $subtotal + $tax;
+$grand_total = ($subtotal - $couponDiscountAmount) + $tax;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -809,6 +868,12 @@ $grand_total = $subtotal + $tax;
                             <span class="lbl">Subtotal (<?php echo $item_count; ?> item<?php echo $item_count !== 1 ? 's' : ''; ?>)</span>
                             <span class="val">₱<?php echo number_format($subtotal, 2); ?></span>
                         </div>
+                        <?php if ($appliedCoupon): ?>
+                        <div class="summary-row" style="color:var(--apex-accent, #00c2ff);">
+                            <span class="lbl">Promo (<?php echo htmlspecialchars($appliedCoupon['code']); ?> &minus;<?php echo (int)$appliedCoupon['discount']; ?>%)</span>
+                            <span class="val">&minus;₱<?php echo number_format($couponDiscountAmount, 2); ?></span>
+                        </div>
+                        <?php endif; ?>
                         <div class="summary-row">
                             <span class="lbl">Estimated Tax (8%)</span>
                             <span class="val">₱<?php echo number_format($tax, 2); ?></span>
@@ -823,18 +888,38 @@ $grand_total = $subtotal + $tax;
                             <div class="coupon-label">
                                 <i class="fas fa-tag"></i> Apply a Coupon
                             </div>
-                            <div class="coupon-input-wrap">
-                                <input
-                                    type="text"
-                                    class="coupon-input"
-                                    id="couponCode"
-                                    placeholder="Enter code"
-                                    maxlength="20"
-                                    oninput="this.value = this.value.toUpperCase()"
-                                    autocomplete="off"
-                                    spellcheck="false">
-                                <button type="button" class="coupon-btn">Apply</button>
-                            </div>
+
+                            <?php if ($couponMsg): ?>
+                                <div class="coupon-note" style="color: <?php echo $couponMsgType === 'success' ? '#009c60' : '#d62842'; ?>; margin-bottom:8px;">
+                                    <i class="fas <?php echo $couponMsgType === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; ?>"></i> <?php echo htmlspecialchars($couponMsg); ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if ($appliedCoupon): ?>
+                                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:rgba(0,194,255,.08); border:1px dashed rgba(0,194,255,.4); border-radius:8px; padding:8px 12px;">
+                                    <span style="font-weight:700; font-size:.85rem;"><i class="fas fa-ticket-alt me-1"></i> <?php echo htmlspecialchars($appliedCoupon['code']); ?> applied</span>
+                                    <form method="POST" action="cart.php" style="margin:0;">
+                                        <input type="hidden" name="action" value="remove_coupon">
+                                        <button type="submit" class="coupon-btn" style="padding:4px 10px; font-size:.75rem;">Remove</button>
+                                    </form>
+                                </div>
+                            <?php else: ?>
+                                <form method="POST" action="cart.php" class="coupon-input-wrap">
+                                    <input type="hidden" name="action" value="apply_coupon">
+                                    <input
+                                        type="text"
+                                        class="coupon-input"
+                                        id="couponCode"
+                                        name="coupon_code"
+                                        placeholder="Enter code"
+                                        maxlength="20"
+                                        oninput="this.value = this.value.toUpperCase()"
+                                        autocomplete="off"
+                                        spellcheck="false">
+                                    <button type="submit" class="coupon-btn">Apply</button>
+                                </form>
+                            <?php endif; ?>
+
                             <div class="coupon-note">
                                 <i class="fas fa-info-circle"></i> Coupon codes are case-insensitive.
                             </div>

@@ -483,6 +483,22 @@ class Inventory
         $this->conn->begin_transaction();
 
         try {
+            // Fetch the order's coupon/user info before updating, in case we
+            // need to restore coupon usage on cancellation.
+            $couponId = null;
+            $orderUserId = null;
+            $prevStatus = null;
+            $stmtInfo = $this->conn->prepare("SELECT coupon_id, user_id, order_status FROM orders_tbl WHERE order_id = ?");
+            $stmtInfo->bind_param("i", $orderId);
+            $stmtInfo->execute();
+            $resInfo = $stmtInfo->get_result();
+            if ($resInfo && ($row = $resInfo->fetch_assoc())) {
+                $couponId = $row['coupon_id'];
+                $orderUserId = $row['user_id'];
+                $prevStatus = $row['order_status'];
+            }
+            $stmtInfo->close();
+
             $stmt = $this->conn->prepare("UPDATE orders_tbl SET order_status = ? WHERE order_id = ?");
             $stmt->bind_param("si", $orderStatus, $orderId);
             $stmt->execute();
@@ -501,6 +517,12 @@ class Inventory
             }
             $stmtLog->execute();
             $stmtLog->close();
+
+            // If the order is being canceled and it had a promo code applied,
+            // restore the user's ability to use that promo code again.
+            if ($orderStatus === 'Canceled' && $prevStatus !== 'Canceled' && !empty($couponId) && !empty($orderUserId)) {
+                $this->removeCouponUsage($couponId, $orderUserId);
+            }
 
             $this->conn->commit();
             return true;
@@ -695,6 +717,99 @@ class Inventory
 
         $stmt = $this->conn->prepare("DELETE FROM order_status_tbl WHERE order_id = ?");
         $stmt->bind_param("i", $orderId);
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
+    }
+
+    /**
+     * Returns the single currently active, non-expired promo code, or null if none.
+     */
+    public function getActivePromo()
+    {
+        $res = $this->conn->query("SELECT * FROM coupon_code WHERE is_active = 1 AND valid_until > NOW() ORDER BY valid_until ASC LIMIT 1");
+        if ($res && $res->num_rows > 0) {
+            return $res->fetch_assoc();
+        }
+        return null;
+    }
+
+    /**
+     * Validates a user-submitted promo code string against the active promo.
+     * If $userId is provided and that user already used this coupon on a
+     * completed/active (non-canceled) order, the code is treated as invalid
+     * for that user (one-time-use enforcement).
+     * Returns the promo row on success, or null if invalid/inactive/expired/already used.
+     */
+    public function validatePromoCode($code, $userId = null)
+    {
+        $code = strtoupper(trim((string)$code));
+        if ($code === '') {
+            return null;
+        }
+
+        $active = $this->getActivePromo();
+        if ($active && strtoupper($active['code_name']) === $code) {
+            if ($userId !== null && $this->hasUserUsedCoupon((int)$active['coupon_id'], (int)$userId)) {
+                return null;
+            }
+            return $active;
+        }
+        return null;
+    }
+
+    /**
+     * Checks whether a user has already used the given coupon on a
+     * completed or active (i.e. not canceled) order.
+     */
+    public function hasUserUsedCoupon($couponId, $userId)
+    {
+        if ($couponId <= 0 || $userId <= 0) {
+            return false;
+        }
+        $stmt = $this->conn->prepare("SELECT usage_id FROM coupon_usage_tbl WHERE coupon_id = ? AND user_id = ? LIMIT 1");
+        $stmt->bind_param("ii", $couponId, $userId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $used = $res && $res->num_rows > 0;
+        $stmt->close();
+        return $used;
+    }
+
+    /**
+     * Records that a user has used a coupon (called when an order is placed
+     * with a promo code applied).
+     */
+    public function recordCouponUsage($couponId, $userId)
+    {
+        $couponId = (int)$couponId;
+        $userId = (int)$userId;
+        if ($couponId <= 0 || $userId <= 0) {
+            return false;
+        }
+        if ($this->hasUserUsedCoupon($couponId, $userId)) {
+            return true; // already recorded
+        }
+        $stmt = $this->conn->prepare("INSERT INTO coupon_usage_tbl (coupon_id, user_id) VALUES (?, ?)");
+        $stmt->bind_param("ii", $couponId, $userId);
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
+    }
+
+    /**
+     * Removes a user's coupon usage record (called when an order that used
+     * the coupon is canceled), restoring their ability to use the code again.
+     */
+    public function removeCouponUsage($couponId, $userId)
+    {
+        $couponId = (int)$couponId;
+        $userId = (int)$userId;
+        if ($couponId <= 0 || $userId <= 0) {
+            return false;
+        }
+        $stmt = $this->conn->prepare("DELETE FROM coupon_usage_tbl WHERE coupon_id = ? AND user_id = ?");
+        $stmt->bind_param("ii", $couponId, $userId);
         $ok = $stmt->execute();
         $stmt->close();
         return $ok;
