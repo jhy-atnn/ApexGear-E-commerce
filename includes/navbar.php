@@ -50,16 +50,7 @@ if (!isset($inventoryManager)) {
                         <input type="search" class="nav-product-search" name="q" value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" placeholder="Search products..." autocomplete="off">
                     </div>
                     <div class="nav-search-panel" aria-label="Search products">
-                        <?php
-                        if (!isset($inventoryManager)) {
-                            require_once __DIR__ . '/../classes/Inventory.php';
-                            /** @var Inventory $inventoryManager */
-                            $inventoryManager = new Inventory();
-                        }
-                        $navProducts = $inventoryManager->getAllProducts();
-                        if (!empty($navProducts)): ?>
-                            <!-- Search results can be injected here -->
-                        <?php endif; ?>
+                        <!-- AJAX results will be injected here -->
                     </div>
                 </div>
 
