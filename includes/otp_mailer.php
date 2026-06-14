@@ -8,9 +8,9 @@ const APEX_SMTP_PASSWORD = 'cvdj pjug mxou roqp';
 
 function sendRegistrationOtpEmail(string $recipientEmail, string $recipientName, string $otp): void
 {
-    $smtpPassword = getenv('APEX_SMTP_PASSWORD');
+    $smtpPassword = getenv('APEX_SMTP_PASSWORD') ?: APEX_SMTP_PASSWORD;
     if (!$smtpPassword) {
-        throw new RuntimeException('Email service is not configured. Set the APEX_SMTP_PASSWORD environment variable.');
+        throw new RuntimeException('Email service is not configured. Set the APEX_SMTP_PASSWORD environment variable or constant.');
     }
 
     $logoPath = dirname(__DIR__) . '/assets/images/Apex_Mail.png';
