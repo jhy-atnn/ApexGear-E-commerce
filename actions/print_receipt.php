@@ -28,12 +28,13 @@ $query = "
         s.first_name,
         s.last_name,
         s.phone_number,
-        s.email,
+        u.email,
         s.street_address,
         s.city,
         s.zip_code
     FROM orders_tbl o
     LEFT JOIN shipping_address_tbl s ON s.order_ref_code = o.order_ref_code
+    LEFT JOIN users_tbl u ON o.user_id = u.user_id
     WHERE o.order_id = ?
     LIMIT 1
 ";

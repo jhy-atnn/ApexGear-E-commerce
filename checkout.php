@@ -214,8 +214,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     $stmtStock->close();
 
     // C. Insert into `shipping_address_tbl`
-    $stmtShip = $conn->prepare("INSERT INTO shipping_address_tbl (user_id, order_ref_code, first_name, last_name, phone_number, email, street_address, city, zip_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmtShip->bind_param("issssssss", $dbUserId, $receipt_number, $firstName, $lastName, $phone, $email, $address, $city, $zipcode);
+    $stmtShip = $conn->prepare("INSERT INTO shipping_address_tbl (user_id, order_ref_code, first_name, last_name, phone_number, street_address, city, zip_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmtShip->bind_param("isssssss", $dbUserId, $receipt_number, $firstName, $lastName, $phone, $address, $city, $zipcode);
     $stmtShip->execute();
     $stmtShip->close();
 

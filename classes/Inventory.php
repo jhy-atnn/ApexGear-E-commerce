@@ -416,7 +416,7 @@ class Inventory
         $query = "
             SELECT o.*, o.order_ref_code AS reference_number,
                    u.first_name, u.last_name, u.username,
-                   COALESCE(NULLIF(sa.email, ''), NULLIF(u.email, '')) AS email,
+                   u.email,
                    TRIM(CONCAT_WS(' ', NULLIF(u.first_name, ''), NULLIF(u.last_name, ''))) AS customer_name,
                    TRIM(CONCAT_WS(' ', NULLIF(sa.first_name, ''), NULLIF(sa.last_name, ''))) AS shipping_name,
                    COALESCE(
