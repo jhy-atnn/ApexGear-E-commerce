@@ -1,4 +1,4 @@
-<?php $currentPage = 'warranty'; ?>
+<?php session_start(); $currentPage = 'warranty'; ?>
 <!DOCTYPE html>
 <html lang="en">
 

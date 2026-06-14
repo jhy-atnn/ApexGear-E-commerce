@@ -1,4 +1,4 @@
-<?php $currentPage = 'cookies'; ?>
+<?php session_start(); $currentPage = 'cookies'; ?>
 <!DOCTYPE html>
 <html lang="en">
 

@@ -1,4 +1,4 @@
-<?php $currentPage = 'privacy'; ?>
+<?php session_start(); $currentPage = 'privacy'; ?>
 <!DOCTYPE html>
 <html lang="en">
 

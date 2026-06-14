@@ -1,4 +1,4 @@
-<?php $currentPage = 'terms'; ?>
+<?php session_start(); $currentPage = 'terms'; ?>
 <!DOCTYPE html>
 <html lang="en">
 

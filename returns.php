@@ -1,4 +1,4 @@
-<?php $currentPage = 'returns'; ?>
+<?php session_start(); $currentPage = 'returns'; ?>
 <!DOCTYPE html>
 <html lang="en">
 

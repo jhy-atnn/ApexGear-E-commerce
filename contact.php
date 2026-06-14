@@ -1,4 +1,4 @@
-<?php $currentPage = 'contact'; ?>
+<?php session_start(); $currentPage = 'contact'; ?>
 <!DOCTYPE html>
 <html lang="en">
 

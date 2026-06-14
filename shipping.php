@@ -1,4 +1,4 @@
-<?php $currentPage = 'shipping'; ?>
+<?php session_start(); $currentPage = 'shipping'; ?>
 <!DOCTYPE html>
 <html lang="en">
 

@@ -1,4 +1,4 @@
-<?php $currentPage = 'order-tracking'; ?>
+<?php session_start(); $currentPage = 'order-tracking'; ?>
 <!DOCTYPE html>
 <html lang="en">
 

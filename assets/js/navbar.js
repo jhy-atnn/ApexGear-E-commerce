@@ -55,7 +55,7 @@ if (navSearchWrap && navSearchToggle && navSearchInput) {
             
             let resultsHTML = '';
             data.results.forEach(product => {
-                const image = product.image ? `assets/images/products/${product.image}` : 'assets/images/products/placeholder.png';
+                const image = product.image ? (product.image.includes('/') ? product.image : `assets/images/products/${product.image}`) : 'assets/images/products/placeholder.png';
                 resultsHTML += `
                     <a href="product.php?id=${product.id}" class="nav-search-result">
                         <img src="${image}" alt="${product.name}" class="nav-search-img">
