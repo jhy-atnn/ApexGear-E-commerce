@@ -22,39 +22,128 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $allowed      = ['Pending', 'On Process', 'Shipped', 'Delivered', 'Canceled', 'Completed'];
 
         if ($order_id > 0 && in_array($order_status, $allowed, true)) {
-            $inv = new Inventory();
-            $admin_id = isset($_SESSION['admin']['id']) ? intval($_SESSION['admin']['id']) : null;
-            $ok  = $inv->updateOrderStatus($order_id, $order_status, $remarks, $admin_id);
-            
-            if ($ok) {
-                $status_message = 'Order status successfully updated to ' . htmlspecialchars($order_status) . '.';
-                $status_class   = 'alert-success';
-                $activityType = $order_status === 'Completed' ? 'order_completed' : 'order_status';
-                $inv->logAdminActivity($activityType, "Updated order #{$order_id} status to {$order_status}.", $admin_id);
-                
-                // ── NOTIFICATION SYSTEM TRIGGER ──
-                $db = new Database();
+
+            $fulfillmentStatuses = ['On Process', 'Shipped', 'Delivered', 'Completed'];
+            $blockedByPayment    = false;
+
+            if (in_array($order_status, $fulfillmentStatuses, true)) {
+                $db   = new Database();
                 $conn = $db->getConnection();
-                
-                // Fetch the user_id and reference number for this specific order
+
+                $chk = $conn->prepare("SELECT status AS payment_status, method AS payment_method FROM payments_tbl WHERE order_id = ? LIMIT 1");
+                $chk->bind_param("i", $order_id);
+                $chk->execute();
+                $chkRow = $chk->get_result()->fetch_assoc();
+                $chk->close();
+                $db->closeConnection();
+
+                $pmStatus = strtolower(trim($chkRow['payment_status'] ?? 'pending'));
+                $pmMethod = strtolower(trim($chkRow['payment_method'] ?? ''));
+                $isCOD    = (strpos($pmMethod, 'cash on delivery') !== false || strpos($pmMethod, 'cod') !== false);
+
+                if (!$isCOD && $pmStatus !== 'paid') {
+                    $blockedByPayment = true;
+                }
+            }
+
+            if ($blockedByPayment) {
+                $status_message = 'This order\'s payment must be approved before its fulfillment status can be updated.';
+                $status_class   = 'alert-danger';
+            } else {
+                $inv = new Inventory();
+                $admin_id = isset($_SESSION['admin']['id']) ? intval($_SESSION['admin']['id']) : null;
+                $ok  = $inv->updateOrderStatus($order_id, $order_status, $remarks, $admin_id);
+
+                if ($ok) {
+                    $status_message = 'Order status successfully updated to ' . htmlspecialchars($order_status) . '.';
+                    $status_class   = 'alert-success';
+                    $activityType = $order_status === 'Completed' ? 'order_completed' : 'order_status';
+                    $inv->logAdminActivity($activityType, "Updated order #{$order_id} status to {$order_status}.", $admin_id);
+
+                    // ── NOTIFICATION SYSTEM TRIGGER ──
+                    $db = new Database();
+                    $conn = $db->getConnection();
+
+                    // Fetch the user_id and reference number for this specific order
+                    $fetchStmt = $conn->prepare("SELECT user_id, order_ref_code AS reference_number FROM orders_tbl WHERE order_id = ?");
+                    $fetchStmt->bind_param("i", $order_id);
+                    $fetchStmt->execute();
+                    $res = $fetchStmt->get_result();
+
+                    if ($row = $res->fetch_assoc()) {
+                        $user_id = $row['user_id'];
+                        $ref = $row['reference_number'];
+
+                        // Verify it is a registered user (not a guest checkout) before sending notification
+                        if (!empty($user_id)) {
+                            // Construct the notification message
+                            $msg = "Your order ({$ref}) status has been updated to: {$order_status}.";
+                            if (!empty($remarks)) {
+                                $msg .= " Note: " . $remarks;
+                            }
+
+                            // Insert directly into the notifications_tbl
+                            $notifStmt = $conn->prepare("INSERT INTO notifications_tbl (user_id, message) VALUES (?, ?)");
+                            $notifStmt->bind_param("is", $user_id, $msg);
+                            $notifStmt->execute();
+                        }
+                    }
+                    $db->closeConnection();
+                    // ─────────────────────────────────
+
+                } else {
+                    $status_message = 'Failed to update order.';
+                    $status_class   = 'alert-danger';
+                }
+            }
+        } else {
+            $status_message = 'Invalid order data or status.';
+            $status_class   = 'alert-danger';
+        }
+    } elseif (isset($_POST['update_payment_status'])) {
+        // ── APPROVE / REJECT PAYMENT (validates the uploaded QR/e-wallet receipt) ──
+        $order_id       = intval($_POST['order_id'] ?? 0);
+        $payment_status = trim($_POST['payment_status'] ?? '');
+        $allowedPay     = ['Pending', 'Paid', 'Rejected'];
+
+        if ($order_id > 0 && in_array($payment_status, $allowedPay, true)) {
+            $db   = new Database();
+            $conn = $db->getConnection();
+
+            $stmt = $conn->prepare("UPDATE payments_tbl SET status = ? WHERE order_id = ?");
+            $stmt->bind_param("si", $payment_status, $order_id);
+            $ok = $stmt->execute();
+            $stmt->close();
+
+            if ($ok) {
+                $status_message = 'Payment status updated to ' . htmlspecialchars($payment_status) . '.';
+                $status_class   = 'alert-success';
+
+                $admin_id = isset($_SESSION['admin']['id']) ? intval($_SESSION['admin']['id']) : null;
+                $inv = new Inventory();
+                if (method_exists($inv, 'logAdminActivity')) {
+                    $inv->logAdminActivity('payment_status', "Updated order #{$order_id} payment status to {$payment_status}.", $admin_id);
+                }
+
+                // ── NOTIFICATION SYSTEM TRIGGER ──
                 $fetchStmt = $conn->prepare("SELECT user_id, order_ref_code AS reference_number FROM orders_tbl WHERE order_id = ?");
                 $fetchStmt->bind_param("i", $order_id);
                 $fetchStmt->execute();
                 $res = $fetchStmt->get_result();
-                
+
                 if ($row = $res->fetch_assoc()) {
                     $user_id = $row['user_id'];
                     $ref = $row['reference_number'];
-                    
-                    // Verify it is a registered user (not a guest checkout) before sending notification
+
                     if (!empty($user_id)) {
-                        // Construct the notification message
-                        $msg = "Your order ({$ref}) status has been updated to: {$order_status}.";
-                        if (!empty($remarks)) {
-                            $msg .= " Note: " . $remarks;
+                        if ($payment_status === 'Paid') {
+                            $msg = "Good news! Your payment for order ({$ref}) has been verified and approved.";
+                        } elseif ($payment_status === 'Rejected') {
+                            $msg = "We couldn't verify your payment receipt for order ({$ref}). Please contact support or re-submit a valid receipt.";
+                        } else {
+                            $msg = "Your payment for order ({$ref}) is now pending verification.";
                         }
-                        
-                        // Insert directly into the notifications_tbl
+
                         $notifStmt = $conn->prepare("INSERT INTO notifications_tbl (user_id, message) VALUES (?, ?)");
                         $notifStmt->bind_param("is", $user_id, $msg);
                         $notifStmt->execute();
@@ -62,13 +151,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $db->closeConnection();
                 // ─────────────────────────────────
-                
             } else {
-                $status_message = 'Failed to update order.';
+                $status_message = 'Failed to update payment status.';
                 $status_class   = 'alert-danger';
             }
         } else {
-            $status_message = 'Invalid order data or status.';
+            $status_message = 'Invalid payment status update request.';
             $status_class   = 'alert-danger';
         }
     }
@@ -492,6 +580,89 @@ $orders = $inv->getAllOrders();
             border-color: var(--blue);
         }
 
+        /* Actions column */
+        .actions-cell {
+            min-width: 230px;
+            vertical-align: top;
+            padding-top: 14px;
+            padding-bottom: 14px;
+        }
+
+        .action-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .action-buttons-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        .action-buttons-row .btn-view {
+            flex: 1;
+            justify-content: center;
+            padding: 5px 8px;
+            white-space: nowrap;
+        }
+
+        .btn-view-receipt {
+            border-color: rgba(0, 194, 255, .3) !important;
+            color: #007aad !important;
+            background: rgba(0, 194, 255, .07) !important;
+        }
+
+        .btn-view-receipt:hover {
+            background: var(--accent) !important;
+            color: #fff !important;
+            border-color: var(--accent) !important;
+        }
+
+        .action-form {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .action-form .form-select {
+            flex: 1;
+            min-width: 0;
+            font-size: .74rem;
+            padding: 3px 6px;
+            height: auto;
+            line-height: 1.3;
+        }
+
+        .action-form .btn {
+            font-size: .72rem;
+            padding: 4px 12px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .action-divider {
+            border-top: 1px dashed var(--border);
+            margin: 2px 0;
+        }
+
+        .action-hint {
+            font-size: .68rem;
+            color: var(--text-muted);
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            line-height: 1.3;
+        }
+
+        .action-label {
+            font-size: .62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--text-muted);
+        }
+
         /* Modal styles */
         .modal-content {
             border: none;
@@ -777,18 +948,34 @@ $orders = $inv->getAllOrders();
                                     $payStatus = strtolower($order['payment_status'] ?? 'pending');
                                     $payClass  = match ($payStatus) {
                                         'success', 'paid', 'completed' => 'success',
-                                        'failed'                        => 'failed',
+                                        'failed', 'rejected'           => 'failed',
                                         default                         => 'pending',
                                     };
-                                    $payLabel  = match ($payClass) {
-                                        'success' => 'Paid',
-                                        'failed'  => 'Failed',
-                                        default   => 'Pending',
+                                    $payLabel  = match (true) {
+                                        $payClass === 'success'        => 'Paid',
+                                        $payStatus === 'rejected'       => 'Rejected',
+                                        $payClass === 'failed'          => 'Failed',
+                                        default                          => 'Pending',
                                     };
 
                                     // Payment method display (no card details)
                                     $payMethod = $order['payment_method'] ?? 'N/A';
                                     $isCard    = stripos($payMethod, 'card') !== false || stripos($payMethod, 'credit') !== false || stripos($payMethod, 'debit') !== false;
+                                    $isCOD     = stripos($payMethod, 'cash on delivery') !== false || stripos($payMethod, 'cod') !== false;
+
+                                    // Uploaded payment receipt (GCash / Maya / PayPal QR payments)
+                                    $receiptRaw = $order['qr_screenshot_path'] ?? $order['payment_screenshot'] ?? null;
+                                    $receiptUrl = null;
+                                    if (!empty($receiptRaw)) {
+                                        $receiptUrl = preg_match('#^(https?://|/|\.\./)#i', $receiptRaw) ? $receiptRaw : '../' . $receiptRaw;
+                                    }
+                                    $hasReceipt = !$isCard && !empty($receiptUrl);
+                                    // Normalize for the JS modal too
+                                    $order['payment_screenshot'] = $receiptUrl;
+
+                                    // Fulfillment status updates require an approved payment (COD is exempt)
+                                    $fulfillmentLocked = !$isCOD && $payStatus !== 'paid';
+
                                     $customerName = trim((string)($order['display_customer_name'] ?? $order['customer_name'] ?? $order['username'] ?? ''));
                                     if ($customerName === '') {
                                         $customerName = 'Guest';
@@ -832,22 +1019,53 @@ $orders = $inv->getAllOrders();
                                         </td>
                                         <td><span class="status-badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($order['order_status'] ?? '—'); ?></span></td>
                                         <td style="font-size:.78rem;color:var(--text-muted);white-space:nowrap;"><?php echo date('M d, Y', strtotime($order['created_at'] ?? 'now')); ?></td>
-                                        <td style="white-space:nowrap;">
-                                            <!-- View Details -->
-                                            <button type="button" class="btn-view mb-1"
-                                                onclick="openOrderModal(<?php echo htmlspecialchars(json_encode($order)); ?>)">
-                                                <i class="fas fa-eye"></i> View
-                                            </button>
-                                            <!-- Quick status update -->
-                                            <form method="POST" class="d-flex gap-1 align-items-center mt-1">
-                                                <input type="hidden" name="order_id" value="<?php echo intval($order['order_id']); ?>">
-                                                <select name="order_status" class="form-select form-select-sm" style="width:120px;font-size:.75rem;">
-                                                    <?php foreach (['On Process', 'Shipped', 'Delivered', 'Completed', 'Canceled'] as $s): ?>
-                                                        <option value="<?php echo $s; ?>" <?php echo $order['order_status'] === $s ? 'selected' : ''; ?>><?php echo $s; ?></option>
-                                                    <?php endforeach; ?>
-                                                </select>
-                                                <button type="submit" name="update_status" class="btn btn-primary btn-sm" style="font-size:.72rem;padding:4px 10px;">Update</button>
-                                            </form>
+                                        <td class="actions-cell">
+                                            <div class="action-stack">
+                                                <div class="action-buttons-row">
+                                                    <!-- View Details -->
+                                                    <button type="button" class="btn-view"
+                                                        onclick="openOrderModal(<?php echo htmlspecialchars(json_encode($order)); ?>)">
+                                                        <i class="fas fa-eye"></i> View
+                                                    </button>
+                                                    <!-- View uploaded payment receipt -->
+                                                    <?php if ($hasReceipt): ?>
+                                                        <a href="<?php echo htmlspecialchars($receiptUrl); ?>" target="_blank" rel="noopener" class="btn-view btn-view-receipt">
+                                                            <i class="fas fa-receipt"></i> Receipt
+                                                        </a>
+                                                    <?php endif; ?>
+                                                </div>
+
+                                                <?php if (!$isCOD): ?>
+                                                    <div class="action-divider"></div>
+                                                    <div class="action-label">Payment</div>
+                                                    <!-- Approve / Reject payment -->
+                                                    <form method="POST" class="action-form">
+                                                        <input type="hidden" name="order_id" value="<?php echo intval($order['order_id']); ?>">
+                                                        <select name="payment_status" class="form-select form-select-sm">
+                                                            <option value="Pending" <?php echo $payStatus === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                                            <option value="Paid" <?php echo $payStatus === 'paid' ? 'selected' : ''; ?>>Approve</option>
+                                                            <option value="Rejected" <?php echo $payStatus === 'rejected' ? 'selected' : ''; ?>>Reject</option>
+                                                        </select>
+                                                        <button type="submit" name="update_payment_status" class="btn btn-outline-primary btn-sm">Set</button>
+                                                    </form>
+                                                <?php endif; ?>
+
+                                                <div class="action-divider"></div>
+                                                <div class="action-label">Order Status</div>
+                                                <!-- Quick status update -->
+                                                <form method="POST" class="action-form">
+                                                    <input type="hidden" name="order_id" value="<?php echo intval($order['order_id']); ?>">
+                                                    <select name="order_status" class="form-select form-select-sm" <?php echo $fulfillmentLocked ? 'disabled' : ''; ?>>
+                                                        <?php foreach (['On Process', 'Shipped', 'Delivered', 'Completed', 'Canceled'] as $s): ?>
+                                                            <option value="<?php echo $s; ?>" <?php echo $order['order_status'] === $s ? 'selected' : ''; ?>><?php echo $s; ?></option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                    <button type="submit" name="update_status" class="btn btn-primary btn-sm" <?php echo $fulfillmentLocked ? 'disabled' : ''; ?>>Update</button>
+                                                </form>
+                                                <?php if ($fulfillmentLocked): ?>
+                                                    <div class="action-hint"><i class="fas fa-lock"></i>Approve payment to unlock</div>
+                                                <?php endif; ?>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -871,7 +1089,10 @@ $orders = $inv->getAllOrders();
                 <div class="modal-body-custom" id="orderDetailBody">
                     <!-- Populated by JS -->
                 </div>
-                <div class="modal-footer-custom">
+                <div class="modal-footer-custom" style="flex-wrap: wrap;">
+                    <div id="modal_lock_hint" class="action-hint" style="display:none; width:100%; margin-bottom:2px;">
+                        <i class="fas fa-lock"></i> Approve this order's payment before updating its fulfillment status.
+                    </div>
                     <!-- Dynamic update form -->
                     <form method="POST" id="modalUpdateForm" class="d-flex gap-2 align-items-center w-100">
                         <input type="hidden" name="order_id" id="modal_order_id">
@@ -903,10 +1124,21 @@ $orders = $inv->getAllOrders();
 
             const payMethod = order.payment_method || 'N/A';
             const isCard = /card|credit|debit/i.test(payMethod);
+            const isCOD = /cash on delivery|\bcod\b/i.test(payMethod);
             const payStatus = (order.payment_status || 'pending').toLowerCase();
-            const payClass = ['success', 'paid', 'completed'].includes(payStatus) ? 'success' : (payStatus === 'failed' ? 'failed' : 'pending');
-            const payLabel = payClass === 'success' ? 'Paid' : (payClass === 'failed' ? 'Failed' : 'Pending');
+            const payClass = ['success', 'paid', 'completed'].includes(payStatus) ? 'success' : (['failed', 'rejected'].includes(payStatus) ? 'failed' : 'pending');
+            const payLabel = payClass === 'success' ? 'Paid' : (payStatus === 'rejected' ? 'Rejected' : (payClass === 'failed' ? 'Failed' : 'Pending'));
             const customerName = order.display_customer_name || order.customer_name || order.username || 'Guest';
+
+            // Lock fulfillment status updates until the payment receipt is approved (COD is exempt)
+            const fulfillmentLocked = !isCOD && payStatus !== 'paid';
+            const modalStatusSelect = document.getElementById('modal_order_status');
+            const modalSaveBtn = document.querySelector('#modalUpdateForm button[name="update_status"]');
+            const modalLockHint = document.getElementById('modal_lock_hint');
+            modalStatusSelect.disabled = fulfillmentLocked;
+            modalSaveBtn.disabled = fulfillmentLocked;
+            modalLockHint.style.display = fulfillmentLocked ? 'flex' : 'none';
+
             const streetAddress = order.street_address || '';
             const city = order.city || '';
             const postalCode = order.zip_code || '';
