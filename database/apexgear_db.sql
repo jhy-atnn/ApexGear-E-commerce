@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 14, 2026 at 05:28 PM
+-- Generation Time: Jun 13, 2026 at 09:52 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -53,21 +53,7 @@ INSERT INTO `admin_activity_tbl` (`activity_id`, `admin_id`, `activity_type`, `m
 (8, 2, 'order_status', 'Updated order #1 status to Canceled.', '2026-06-14 03:29:38'),
 (9, 2, 'order_status', 'Updated order #1 status to Canceled.', '2026-06-14 03:29:40'),
 (10, 2, 'product_add', 'Added product: Legion 5 Pro — RTX 4070, 16\" QHD 165Hz (ID 2).', '2026-06-14 03:34:25'),
-(11, 2, 'product_add', 'Added product: Razer BlackWidow V4 Pro (ID 3).', '2026-06-14 03:36:56'),
-(12, 1, 'deal_delete', 'Deleted promo code ID 1.', '2026-06-14 11:40:59'),
-(13, 1, 'deal_delete', 'Deleted promo code ID 1.', '2026-06-14 11:41:02'),
-(14, 1, 'deal_add', 'Added promo code PITCHPERFECT13 (13% off).', '2026-06-14 11:42:05'),
-(15, 1, 'deal_add', 'Added promo code APXSUMMER (10% off).', '2026-06-14 11:47:46'),
-(16, 1, 'deal_deactivate', 'Deactivated promo code ID 3.', '2026-06-14 11:49:41'),
-(17, 1, 'order_status', 'Updated order #10 status to Canceled.', '2026-06-14 11:50:47'),
-(18, 1, 'order_completed', 'Updated order #9 status to Completed.', '2026-06-14 11:51:16'),
-(19, 1, 'order_completed', 'Updated order #10 status to Completed.', '2026-06-14 11:51:21'),
-(20, 1, 'order_status', 'Updated order #11 status to Canceled.', '2026-06-14 11:52:08'),
-(21, 1, 'order_status', 'Updated order #11 status to Canceled.', '2026-06-14 11:52:14'),
-(22, 1, 'order_completed', 'Updated order #12 status to Completed.', '2026-06-14 11:52:35'),
-(23, 1, 'order_completed', 'Updated order #13 status to Completed.', '2026-06-14 11:52:40'),
-(24, 1, 'order_status', 'Updated order #14 status to Delivered.', '2026-06-14 11:52:44'),
-(25, 1, 'order_completed', 'Updated order #14 status to Completed.', '2026-06-14 11:53:20');
+(11, 2, 'product_add', 'Added product: Razer BlackWidow V4 Pro (ID 3).', '2026-06-14 03:36:56');
 
 -- --------------------------------------------------------
 
@@ -324,16 +310,7 @@ INSERT INTO `notifications_tbl` (`notif_id`, `user_id`, `message`, `is_read`) VA
 (6, 1, 'Your order (APX-6A2C21F0A8054) status has been updated to: Canceled.', 0),
 (7, 1, 'Your order (APX-6A2C1F911BAD4) status has been updated to: Canceled.', 0),
 (8, 1, 'Your order (APX-6A2C1F911BAD4) status has been updated to: Canceled.', 0),
-(9, 1, 'Your order (APX-6A2C1F911BAD4) status has been updated to: Canceled.', 0),
-(10, 3, 'Your order (APX-6A2E2364C7A2F) status has been updated to: Canceled.', 0),
-(11, 3, 'Your order (APX-6A2E2341D71B8) status has been updated to: Completed.', 0),
-(12, 3, 'Your order (APX-6A2E2364C7A2F) status has been updated to: Completed.', 0),
-(13, 3, 'Your order (APX-6A2E243E5379A) status has been updated to: Canceled.', 0),
-(14, 3, 'Your order (APX-6A2E243E5379A) status has been updated to: Canceled.', 0),
-(15, 3, 'Your order (APX-6A2E248BDA1A2) status has been updated to: Completed.', 0),
-(16, 3, 'Your order (APX-6A2E24B3CAB2B) status has been updated to: Completed.', 0),
-(17, 3, 'Your order (APX-6A2E250366850) status has been updated to: Delivered.', 0),
-(18, 3, 'Your order (APX-6A2E250366850) status has been updated to: Completed.', 0);
+(9, 1, 'Your order (APX-6A2C1F911BAD4) status has been updated to: Canceled.', 0);
 
 -- --------------------------------------------------------
 
@@ -361,21 +338,15 @@ CREATE TABLE `orders_tbl` (
 -- Dumping data for table `orders_tbl`
 --
 
-INSERT INTO `orders_tbl` (`order_id`, `user_id`, `order_ref_code`, `coupon_id`, `coupon_code`, `discount_amount`, `subtotal`, `tax`, `shipping_fee`, `total_amount`, `order_status`, `created_at`) VALUES
-(1, 1, 'APX-6A2C1F911BAD4', NULL, NULL, 0.00, 51998.00, 4159.84, 0.00, 56157.84, 'Canceled', '2026-06-12 15:56:35'),
-(2, 1, 'APX-6A2C20A0D0FFC', NULL, NULL, 0.00, 51998.00, 4159.84, 0.00, 56157.84, 'Canceled', '2026-06-12 15:56:35'),
-(3, 1, 'APX-6A2C21BED5C1E', NULL, NULL, 0.00, 51998.00, 4159.84, 0.00, 56157.84, 'Canceled', '2026-06-12 15:56:35'),
-(4, 1, 'APX-6A2C21EF0B3A3', NULL, NULL, 0.00, 0.00, 0.00, 0.00, 0.00, 'Canceled', '2026-06-12 15:56:35'),
-(5, 1, 'APX-6A2C21F0A8054', NULL, NULL, 0.00, 0.00, 0.00, 0.00, 0.00, 'Canceled', '2026-06-12 15:56:35'),
-(6, 1, 'APX-6A2D8FACC4A77', NULL, NULL, 0.00, 161998.20, 12959.86, 0.00, 174958.06, 'Completed', '2026-06-14 01:13:16'),
-(7, 2, 'APX-6A2DB3751570F', NULL, NULL, 0.00, 80999.10, 6479.93, 0.00, 87479.03, 'Pending', '2026-06-14 03:45:57'),
-(8, 2, 'APX-6A2DB40EC769D', NULL, NULL, 0.00, 118950.00, 9516.00, 0.00, 128466.00, 'Pending', '2026-06-14 03:48:30'),
-(9, 3, 'APX-6A2E2341D71B8', 2, 'PITCHPERFECT13', 10529.88, 80999.10, 5637.54, 0.00, 76106.76, 'Completed', '2026-06-14 11:42:57'),
-(10, 3, 'APX-6A2E2364C7A2F', NULL, NULL, 0.00, 118950.00, 9516.00, 0.00, 128466.00, 'Completed', '2026-06-14 11:43:32'),
-(11, 3, 'APX-6A2E243E5379A', NULL, NULL, 0.00, 118950.00, 9516.00, 0.00, 128466.00, 'Canceled', '2026-06-14 11:47:10'),
-(12, 3, 'APX-6A2E248BDA1A2', 3, 'APXSUMMER', 8099.91, 80999.10, 5831.94, 0.00, 78731.13, 'Completed', '2026-06-14 11:48:27'),
-(13, 3, 'APX-6A2E24B3CAB2B', NULL, NULL, 0.00, 118950.00, 9516.00, 0.00, 128466.00, 'Completed', '2026-06-14 11:49:07'),
-(14, 3, 'APX-6A2E250366850', NULL, NULL, 0.00, 242997.30, 19439.78, 0.00, 262437.08, 'Completed', '2026-06-14 11:50:27');
+INSERT INTO `orders_tbl` (`order_id`, `user_id`, `order_ref_code`, `coupon_id`, `subtotal`, `tax`, `shipping_fee`, `total_amount`, `order_status`, `created_at`) VALUES
+(1, 1, 'APX-6A2C1F911BAD4', NULL, 51998.00, 4159.84, 0.00, 56157.84, 'Canceled', '2026-06-12 15:56:35'),
+(2, 1, 'APX-6A2C20A0D0FFC', NULL, 51998.00, 4159.84, 0.00, 56157.84, 'Canceled', '2026-06-12 15:56:35'),
+(3, 1, 'APX-6A2C21BED5C1E', NULL, 51998.00, 4159.84, 0.00, 56157.84, 'Canceled', '2026-06-12 15:56:35'),
+(4, 1, 'APX-6A2C21EF0B3A3', NULL, 0.00, 0.00, 0.00, 0.00, 'Canceled', '2026-06-12 15:56:35'),
+(5, 1, 'APX-6A2C21F0A8054', NULL, 0.00, 0.00, 0.00, 0.00, 'Canceled', '2026-06-12 15:56:35'),
+(6, 1, 'APX-6A2D8FACC4A77', NULL, 161998.20, 12959.86, 0.00, 174958.06, 'Completed', '2026-06-14 01:13:16'),
+(7, 2, 'APX-6A2DB3751570F', NULL, 80999.10, 6479.93, 0.00, 87479.03, 'Pending', '2026-06-14 03:45:57'),
+(8, 2, 'APX-6A2DB40EC769D', NULL, 118950.00, 9516.00, 0.00, 128466.00, 'Pending', '2026-06-14 03:48:30');
 
 -- --------------------------------------------------------
 
@@ -400,13 +371,7 @@ INSERT INTO `order_items_tbl` (`order_item_id`, `order_id`, `product_id`, `quant
 (3, 3, 1, 2, 25999.00),
 (4, 6, 1, 2, 80999.10),
 (5, 7, 1, 1, 80999.10),
-(6, 8, 2, 1, 118950.00),
-(7, 9, 1, 1, 80999.10),
-(8, 10, 2, 1, 118950.00),
-(9, 11, 2, 1, 118950.00),
-(10, 12, 1, 1, 80999.10),
-(11, 13, 2, 1, 118950.00),
-(12, 14, 1, 3, 80999.10);
+(6, 8, 2, 1, 118950.00);
 
 -- --------------------------------------------------------
 
@@ -429,17 +394,7 @@ CREATE TABLE `order_status_tbl` (
 
 INSERT INTO `order_status_tbl` (`status_log_id`, `order_id`, `order_status`, `payment_remarks`, `updated_by_admin`) VALUES
 (16, 7, 'Pending', NULL, NULL),
-(17, 8, 'Pending', NULL, NULL),
-(18, 9, 'Pending', NULL, NULL),
-(19, 10, 'Pending', NULL, NULL),
-(22, 13, 'Pending', NULL, NULL),
-(23, 14, 'Pending', NULL, NULL),
-(24, 10, 'Canceled', '', 1),
-(25, 9, 'Completed', '', 1),
-(26, 10, 'Completed', '', 1),
-(30, 13, 'Completed', '', 1),
-(31, 14, 'Delivered', '', 1),
-(32, 14, 'Completed', '', 1);
+(17, 8, 'Pending', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -468,37 +423,7 @@ INSERT INTO `payments_tbl` (`payment_id`, `order_id`, `method`, `status`, `qr_sc
 (3, 5, 'Cash on Delivery', 'Pending', NULL, NULL, NULL),
 (4, 6, 'Cash on Delivery', 'Pending', NULL, NULL, NULL),
 (5, 7, 'GCash', 'Paid', NULL, NULL, '09632544756'),
-(6, 8, 'Cash on Delivery', 'Pending', NULL, NULL, NULL),
-(7, 9, 'Cash on Delivery', 'Pending', NULL, NULL, NULL),
-(8, 10, 'Cash on Delivery', 'Pending', NULL, NULL, NULL),
-(9, 11, 'Cash on Delivery', 'Pending', NULL, NULL, NULL),
-(10, 12, 'Cash on Delivery', 'Pending', NULL, NULL, NULL),
-(11, 13, 'Cash on Delivery', 'Pending', NULL, NULL, NULL),
-(12, 14, 'Cash on Delivery', 'Pending', NULL, NULL, NULL);
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pending_registrations_tbl`
---
-
-DROP TABLE IF EXISTS `pending_registrations_tbl`;
-CREATE TABLE `pending_registrations_tbl` (
-  `pending_id` int(11) NOT NULL,
-  `token` char(64) NOT NULL,
-  `first_name` varchar(50) NOT NULL,
-  `last_name` varchar(50) NOT NULL,
-  `m_name` varchar(50) DEFAULT NULL,
-  `gender` varchar(20) NOT NULL,
-  `username` varchar(50) NOT NULL,
-  `email` varchar(100) NOT NULL,
-  `password_hash` varchar(255) NOT NULL,
-  `otp_hash` varchar(255) NOT NULL,
-  `expires_at` datetime NOT NULL,
-  `attempts` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
-  `last_sent_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `created_at` datetime NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+(6, 8, 'Cash on Delivery', 'Pending', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -528,8 +453,8 @@ CREATE TABLE `products_tbl` (
 --
 
 INSERT INTO `products_tbl` (`product_id`, `brand_id`, `category_id`, `name`, `desc`, `price`, `sale_percent`, `sale_valid_until`, `stock_qty`, `badge`, `badge_type`, `est_shipping_time`, `archived_at`) VALUES
-(1, 1, 4, 'iPhone 17 Pro Max Cosmic Orange', 'Apple’s latest flagship smartphone featuring the A19 Bionic chip, 6.9-inch Super Retina XDR display, titanium frame, and exclusive Copper Orange finish. Includes advanced triple-lens camera system, MagSafe support, and up to 1TB storage.', 89999.00, 10, '2026-07-31 00:00:00', 17, 'New Arrival', 'highlight', '3–5 business days', NULL),
-(2, 6, 1, 'Legion 5 Pro — RTX 4070, 16\" QHD 165Hz', 'Intel® Core™ i7-13700HX DISPLAY: 16\" WQXGA (2560x1600) IPS 500nits Anti-glare \r\nMEMORY: 2x 8GB SO-DIMM DDR5-4800 \r\nSTORAGE: 1TB SSD M.2 2280 PCIe® 4.0x4 NVMe® \r\nGPU: NVIDIA® GeForce RTX™ 4070 8GB GDDR6 \r\nOS: Windows 11 Home \r\nCOLOR: Onyx Grey   13th Gen Intel® Core', 118950.00, 0, NULL, 15, '', '', '5-10 business days', NULL),
+(1, 1, 4, 'iPhone 17 Pro Max Cosmic Orange', 'Apple’s latest flagship smartphone featuring the A19 Bionic chip, 6.9-inch Super Retina XDR display, titanium frame, and exclusive Copper Orange finish. Includes advanced triple-lens camera system, MagSafe support, and up to 1TB storage.', 89999.00, 10, '2026-07-31 00:00:00', 22, 'New Arrival', 'highlight', '3–5 business days', NULL),
+(2, 6, 1, 'Legion 5 Pro — RTX 4070, 16\" QHD 165Hz', 'Intel® Core™ i7-13700HX DISPLAY: 16\" WQXGA (2560x1600) IPS 500nits Anti-glare \r\nMEMORY: 2x 8GB SO-DIMM DDR5-4800 \r\nSTORAGE: 1TB SSD M.2 2280 PCIe® 4.0x4 NVMe® \r\nGPU: NVIDIA® GeForce RTX™ 4070 8GB GDDR6 \r\nOS: Windows 11 Home \r\nCOLOR: Onyx Grey   13th Gen Intel® Core', 118950.00, 0, NULL, 18, '', '', '5-10 business days', NULL),
 (3, 12, 9, 'Razer BlackWidow V4 Pro', 'Designed to provide secure support for long hours of play, the soft, cushioned wrist rest also features Razer Chroma™ RGB—which perfectly lines up with the keyboard’s underglow. Using a doubleshot molding process to ensure the labelling never wears off, the keycaps also have extra-thick walls which make them extremely tough to withstand intense gaming.', 30818.00, 0, NULL, 10, '', '', '3–5 business days', NULL);
 
 -- --------------------------------------------------------
@@ -607,13 +532,7 @@ INSERT INTO `shipping_address_tbl` (`address_id`, `user_id`, `order_ref_code`, `
 (3, 1, 'APX-6A2C21F0A8054', 'Jhody', 'Atinon', '09976829526', '0616 Purok 2 Turbina, Laguna', 'Calamba City', '4027'),
 (4, 1, 'APX-6A2D8FACC4A77', 'Jhody', 'Atinon', '09976829526', '0616 Purok 2 Turbina, Laguna', 'Calamba City', '4027'),
 (5, 2, 'APX-6A2DB3751570F', 'Sebastian Luis', 'Raymundo', '09634425756', 'Sesame Straight', 'SAiss city', '1234'),
-(6, 2, 'APX-6A2DB40EC769D', 'Sebastian Luis', 'Raymundo', '09634425756', 'Sesame Straight', 'SAiss city', '1234'),
-(7, 3, 'APX-6A2E2341D71B8', 'Justine Luige', 'Agojo', '+639924964022', 'Purok 2, Barangay Santiago', 'Santo Tomas City', '4234'),
-(8, 3, 'APX-6A2E2364C7A2F', 'Justine Luige', 'Agojo', '+639924964022', 'Purok 2, Barangay Santiago', 'Santo Tomas City', '4234'),
-(9, 3, 'APX-6A2E243E5379A', 'Justine Luige', 'Agojo', '+639924964022', 'Purok 2, Barangay Santiago', 'Santo Tomas City', '4234'),
-(10, 3, 'APX-6A2E248BDA1A2', 'Justine Luige', 'Agojo', '+639924964022', 'Purok 2, Barangay Santiago', 'Santo Tomas City', '4234'),
-(11, 3, 'APX-6A2E24B3CAB2B', 'Justine Luige', 'Agojo', '+639924964022', 'Purok 2, Barangay Santiago', 'Santo Tomas City', '4234'),
-(12, 3, 'APX-6A2E250366850', 'Justine Luige', 'Agojo', '+639924964022', 'Purok 2, Barangay Santiago', 'Santo Tomas City', '4234');
+(6, 2, 'APX-6A2DB40EC769D', 'Sebastian Luis', 'Raymundo', '09634425756', 'Sesame Straight', 'SAiss city', '1234');
 
 -- --------------------------------------------------------
 
@@ -937,13 +856,13 @@ ALTER TABLE `favorites_tbl`
 -- AUTO_INCREMENT for table `notifications_tbl`
 --
 ALTER TABLE `notifications_tbl`
-  MODIFY `notif_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `notif_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `orders_tbl`
 --
 ALTER TABLE `orders_tbl`
-  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `order_items_tbl`
@@ -955,19 +874,13 @@ ALTER TABLE `order_items_tbl`
 -- AUTO_INCREMENT for table `order_status_tbl`
 --
 ALTER TABLE `order_status_tbl`
-  MODIFY `status_log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `status_log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `payments_tbl`
 --
 ALTER TABLE `payments_tbl`
-  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
-
---
--- AUTO_INCREMENT for table `pending_registrations_tbl`
---
-ALTER TABLE `pending_registrations_tbl`
-  MODIFY `pending_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `products_tbl`
@@ -991,7 +904,7 @@ ALTER TABLE `reviews_tbl`
 -- AUTO_INCREMENT for table `shipping_address_tbl`
 --
 ALTER TABLE `shipping_address_tbl`
-  MODIFY `address_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `address_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `users_profiles_tbl`

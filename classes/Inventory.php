@@ -415,12 +415,13 @@ class Inventory
         // Fetch orders, user details, payment details, and the total item count in one query.
         $query = "
             SELECT o.*, o.order_ref_code AS reference_number,
-                   u.first_name, u.last_name, u.email, u.username,
+                   u.first_name, u.last_name, u.username,
+                   u.email,
                    TRIM(CONCAT_WS(' ', NULLIF(u.first_name, ''), NULLIF(u.last_name, ''))) AS customer_name,
                    TRIM(CONCAT_WS(' ', NULLIF(sa.first_name, ''), NULLIF(sa.last_name, ''))) AS shipping_name,
                    COALESCE(
-                       NULLIF(TRIM(CONCAT_WS(' ', NULLIF(u.first_name, ''), NULLIF(u.last_name, ''))), ''),
                        NULLIF(TRIM(CONCAT_WS(' ', NULLIF(sa.first_name, ''), NULLIF(sa.last_name, ''))), ''),
+                       NULLIF(TRIM(CONCAT_WS(' ', NULLIF(u.first_name, ''), NULLIF(u.last_name, ''))), ''),
                        NULLIF(u.username, ''),
                        'Guest'
                    ) AS display_customer_name,

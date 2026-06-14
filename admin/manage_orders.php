@@ -22,39 +22,128 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $allowed      = ['Pending', 'On Process', 'Shipped', 'Delivered', 'Canceled', 'Completed'];
 
         if ($order_id > 0 && in_array($order_status, $allowed, true)) {
-            $inv = new Inventory();
-            $admin_id = isset($_SESSION['admin']['id']) ? intval($_SESSION['admin']['id']) : null;
-            $ok  = $inv->updateOrderStatus($order_id, $order_status, $remarks, $admin_id);
-            
-            if ($ok) {
-                $status_message = 'Order status successfully updated to ' . htmlspecialchars($order_status) . '.';
-                $status_class   = 'alert-success';
-                $activityType = $order_status === 'Completed' ? 'order_completed' : 'order_status';
-                $inv->logAdminActivity($activityType, "Updated order #{$order_id} status to {$order_status}.", $admin_id);
-                
-                // ── NOTIFICATION SYSTEM TRIGGER ──
-                $db = new Database();
+
+            $fulfillmentStatuses = ['On Process', 'Shipped', 'Delivered', 'Completed'];
+            $blockedByPayment    = false;
+
+            if (in_array($order_status, $fulfillmentStatuses, true)) {
+                $db   = new Database();
                 $conn = $db->getConnection();
-                
-                // Fetch the user_id and reference number for this specific order
+
+                $chk = $conn->prepare("SELECT status AS payment_status, method AS payment_method FROM payments_tbl WHERE order_id = ? LIMIT 1");
+                $chk->bind_param("i", $order_id);
+                $chk->execute();
+                $chkRow = $chk->get_result()->fetch_assoc();
+                $chk->close();
+                $db->closeConnection();
+
+                $pmStatus = strtolower(trim($chkRow['payment_status'] ?? 'pending'));
+                $pmMethod = strtolower(trim($chkRow['payment_method'] ?? ''));
+                $isCOD    = (strpos($pmMethod, 'cash on delivery') !== false || strpos($pmMethod, 'cod') !== false);
+
+                if (!$isCOD && $pmStatus !== 'paid') {
+                    $blockedByPayment = true;
+                }
+            }
+
+            if ($blockedByPayment) {
+                $status_message = 'This order\'s payment must be approved before its fulfillment status can be updated.';
+                $status_class   = 'alert-danger';
+            } else {
+                $inv = new Inventory();
+                $admin_id = isset($_SESSION['admin']['id']) ? intval($_SESSION['admin']['id']) : null;
+                $ok  = $inv->updateOrderStatus($order_id, $order_status, $remarks, $admin_id);
+
+                if ($ok) {
+                    $status_message = 'Order status successfully updated to ' . htmlspecialchars($order_status) . '.';
+                    $status_class   = 'alert-success';
+                    $activityType = $order_status === 'Completed' ? 'order_completed' : 'order_status';
+                    $inv->logAdminActivity($activityType, "Updated order #{$order_id} status to {$order_status}.", $admin_id);
+
+                    // ── NOTIFICATION SYSTEM TRIGGER ──
+                    $db = new Database();
+                    $conn = $db->getConnection();
+
+                    // Fetch the user_id and reference number for this specific order
+                    $fetchStmt = $conn->prepare("SELECT user_id, order_ref_code AS reference_number FROM orders_tbl WHERE order_id = ?");
+                    $fetchStmt->bind_param("i", $order_id);
+                    $fetchStmt->execute();
+                    $res = $fetchStmt->get_result();
+
+                    if ($row = $res->fetch_assoc()) {
+                        $user_id = $row['user_id'];
+                        $ref = $row['reference_number'];
+
+                        // Verify it is a registered user (not a guest checkout) before sending notification
+                        if (!empty($user_id)) {
+                            // Construct the notification message
+                            $msg = "Your order ({$ref}) status has been updated to: {$order_status}.";
+                            if (!empty($remarks)) {
+                                $msg .= " Note: " . $remarks;
+                            }
+
+                            // Insert directly into the notifications_tbl
+                            $notifStmt = $conn->prepare("INSERT INTO notifications_tbl (user_id, message) VALUES (?, ?)");
+                            $notifStmt->bind_param("is", $user_id, $msg);
+                            $notifStmt->execute();
+                        }
+                    }
+                    $db->closeConnection();
+                    // ─────────────────────────────────
+
+                } else {
+                    $status_message = 'Failed to update order.';
+                    $status_class   = 'alert-danger';
+                }
+            }
+        } else {
+            $status_message = 'Invalid order data or status.';
+            $status_class   = 'alert-danger';
+        }
+    } elseif (isset($_POST['update_payment_status'])) {
+        // ── APPROVE / REJECT PAYMENT (validates the uploaded QR/e-wallet receipt) ──
+        $order_id       = intval($_POST['order_id'] ?? 0);
+        $payment_status = trim($_POST['payment_status'] ?? '');
+        $allowedPay     = ['Pending', 'Paid', 'Rejected'];
+
+        if ($order_id > 0 && in_array($payment_status, $allowedPay, true)) {
+            $db   = new Database();
+            $conn = $db->getConnection();
+
+            $stmt = $conn->prepare("UPDATE payments_tbl SET status = ? WHERE order_id = ?");
+            $stmt->bind_param("si", $payment_status, $order_id);
+            $ok = $stmt->execute();
+            $stmt->close();
+
+            if ($ok) {
+                $status_message = 'Payment status updated to ' . htmlspecialchars($payment_status) . '.';
+                $status_class   = 'alert-success';
+
+                $admin_id = isset($_SESSION['admin']['id']) ? intval($_SESSION['admin']['id']) : null;
+                $inv = new Inventory();
+                if (method_exists($inv, 'logAdminActivity')) {
+                    $inv->logAdminActivity('payment_status', "Updated order #{$order_id} payment status to {$payment_status}.", $admin_id);
+                }
+
+                // ── NOTIFICATION SYSTEM TRIGGER ──
                 $fetchStmt = $conn->prepare("SELECT user_id, order_ref_code AS reference_number FROM orders_tbl WHERE order_id = ?");
                 $fetchStmt->bind_param("i", $order_id);
                 $fetchStmt->execute();
                 $res = $fetchStmt->get_result();
-                
+
                 if ($row = $res->fetch_assoc()) {
                     $user_id = $row['user_id'];
                     $ref = $row['reference_number'];
-                    
-                    // Verify it is a registered user (not a guest checkout) before sending notification
+
                     if (!empty($user_id)) {
-                        // Construct the notification message
-                        $msg = "Your order ({$ref}) status has been updated to: {$order_status}.";
-                        if (!empty($remarks)) {
-                            $msg .= " Note: " . $remarks;
+                        if ($payment_status === 'Paid') {
+                            $msg = "Good news! Your payment for order ({$ref}) has been verified and approved.";
+                        } elseif ($payment_status === 'Rejected') {
+                            $msg = "We couldn't verify your payment receipt for order ({$ref}). Please contact support or re-submit a valid receipt.";
+                        } else {
+                            $msg = "Your payment for order ({$ref}) is now pending verification.";
                         }
-                        
-                        // Insert directly into the notifications_tbl
+
                         $notifStmt = $conn->prepare("INSERT INTO notifications_tbl (user_id, message) VALUES (?, ?)");
                         $notifStmt->bind_param("is", $user_id, $msg);
                         $notifStmt->execute();
@@ -62,13 +151,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $db->closeConnection();
                 // ─────────────────────────────────
-                
             } else {
-                $status_message = 'Failed to update order.';
+                $status_message = 'Failed to update payment status.';
                 $status_class   = 'alert-danger';
             }
         } else {
-            $status_message = 'Invalid order data or status.';
+            $status_message = 'Invalid payment status update request.';
             $status_class   = 'alert-danger';
         }
     }
@@ -77,6 +165,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Fetch all orders for the admin table
 $inv    = new Inventory();
 $orders = $inv->getAllOrders();
+
+$processingOrders = [];
+$completedOrders = [];
+$cancelledOrders = [];
+
+foreach ($orders as $order) {
+    $st = strtolower($order['order_status'] ?? '');
+    if (in_array($st, ['pending', 'on process', 'shipped'])) {
+        $processingOrders[] = $order;
+    } elseif (in_array($st, ['delivered', 'completed'])) {
+        $completedOrders[] = $order;
+    } elseif ($st === 'canceled') {
+        $cancelledOrders[] = $order;
+    } else {
+        $processingOrders[] = $order; // fallback
+    }
+}
+
+$tabs = [
+    'processing' => [
+        'id' => 'processing',
+        'label' => 'Processing Orders',
+        'orders' => $processingOrders,
+        'active' => true
+    ],
+    'completed' => [
+        'id' => 'completed',
+        'label' => 'Completed / Delivered',
+        'orders' => $completedOrders,
+        'active' => false
+    ],
+    'cancelled' => [
+        'id' => 'cancelled',
+        'label' => 'Cancelled Orders',
+        'orders' => $cancelledOrders,
+        'active' => false
+    ]
+];
 ?>
 
 <!DOCTYPE html>
@@ -353,6 +479,35 @@ $orders = $inv->getAllOrders();
             margin-bottom: 24px;
         }
 
+        /* Custom Tabs */
+        .custom-tabs {
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .custom-tabs .nav-link {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: .9rem;
+            padding: 12px 24px;
+            border: none;
+            border-bottom: 3px solid transparent;
+            border-radius: 0;
+            background: transparent;
+            transition: all .2s;
+        }
+
+        .custom-tabs .nav-link:hover {
+            color: var(--blue);
+            border-color: rgba(11, 47, 168, .2);
+        }
+
+        .custom-tabs .nav-link.active {
+            color: var(--blue);
+            border-bottom-color: var(--blue);
+            background: transparent;
+        }
+
         /* Progress stepper */
         .progress-stepper {
             display: flex;
@@ -490,6 +645,89 @@ $orders = $inv->getAllOrders();
             background: var(--blue);
             color: #fff;
             border-color: var(--blue);
+        }
+
+        /* Actions column */
+        .actions-cell {
+            min-width: 230px;
+            vertical-align: top;
+            padding-top: 14px;
+            padding-bottom: 14px;
+        }
+
+        .action-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .action-buttons-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        .action-buttons-row .btn-view {
+            flex: 1;
+            justify-content: center;
+            padding: 5px 8px;
+            white-space: nowrap;
+        }
+
+        .btn-view-receipt {
+            border-color: rgba(0, 194, 255, .3) !important;
+            color: #007aad !important;
+            background: rgba(0, 194, 255, .07) !important;
+        }
+
+        .btn-view-receipt:hover {
+            background: var(--accent) !important;
+            color: #fff !important;
+            border-color: var(--accent) !important;
+        }
+
+        .action-form {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .action-form .form-select {
+            flex: 1;
+            min-width: 0;
+            font-size: .74rem;
+            padding: 3px 6px;
+            height: auto;
+            line-height: 1.3;
+        }
+
+        .action-form .btn {
+            font-size: .72rem;
+            padding: 4px 12px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .action-divider {
+            border-top: 1px dashed var(--border);
+            margin: 2px 0;
+        }
+
+        .action-hint {
+            font-size: .68rem;
+            color: var(--text-muted);
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            line-height: 1.3;
+        }
+
+        .action-label {
+            font-size: .62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--text-muted);
         }
 
         /* Modal styles */
@@ -732,129 +970,193 @@ $orders = $inv->getAllOrders();
                     <a href="apex26admin.php" class="btn btn-outline-primary btn-sm"><i class="fas fa-arrow-left me-2"></i>Dashboard</a>
                 </div>
 
-                <?php if (empty($orders)): ?>
-                    <div class="alert alert-warning">No orders have been placed yet.</div>
-                <?php else: ?>
-                    <div class="order-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Reference</th>
-                                    <th>Customer</th>
-                                    <th>Items</th>
-                                    <th>Promo</th>
-                                    <th>Amount</th>
-                                    <th>Payment</th>
-                                    <th>Pay Status</th>
-                                    <th>Progress</th>
-                                    <th>Order Status</th>
-                                    <th>Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($orders as $order):
-                                    $st = strtolower($order['order_status'] ?? '');
-                                    $statusClass = match ($st) {
-                                        'completed'  => 'delivered',
-                                        'delivered'  => 'delivered',
-                                        'canceled'   => 'canceled',
-                                        'shipped'    => 'shipped',
-                                        'on process' => 'process',
-                                        default      => 'pending',
-                                    };
+                <ul class="nav nav-tabs custom-tabs" id="orderTabs" role="tablist">
+                    <?php foreach ($tabs as $tab): ?>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link <?php echo $tab['active'] ? 'active' : ''; ?>" id="<?php echo $tab['id']; ?>-tab" data-bs-toggle="tab" data-bs-target="#<?php echo $tab['id']; ?>" type="button" role="tab" aria-controls="<?php echo $tab['id']; ?>" aria-selected="<?php echo $tab['active'] ? 'true' : 'false'; ?>">
+                                <?php echo htmlspecialchars($tab['label']); ?>
+                                <span class="badge bg-secondary ms-2 rounded-pill" style="font-size: 0.7em;"><?php echo count($tab['orders']); ?></span>
+                            </button>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
 
-                                    // Determine progress steps
-                                    $steps      = ['On Process', 'Shipped', 'Delivered'];
-                                    $stepIndex  = match ($st) {
-                                        'on process' => 0,
-                                        'shipped'    => 1,
-                                        'delivered', 'completed' => 2,
-                                        default      => -1,
-                                    };
+                <div class="tab-content" id="orderTabsContent">
+                    <?php foreach ($tabs as $tab): ?>
+                        <div class="tab-pane fade <?php echo $tab['active'] ? 'show active' : ''; ?>" id="<?php echo $tab['id']; ?>" role="tabpanel" aria-labelledby="<?php echo $tab['id']; ?>-tab">
+                            <?php if (empty($tab['orders'])): ?>
+                                <div class="alert alert-warning">No orders found in this category.</div>
+                            <?php else: ?>
+                                <div class="order-table">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Reference</th>
+                                                <th>Customer</th>
+                                                <th>Items</th>
+                                                <th>Promo</th>
+                                                <th>Amount</th>
+                                                <th>Payment</th>
+                                                <th>Pay Status</th>
+                                                <th>Progress</th>
+                                                <th>Order Status</th>
+                                                <th>Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($tab['orders'] as $order):
+                                                $st = strtolower($order['order_status'] ?? '');
+                                                $statusClass = match ($st) {
+                                                    'completed'  => 'delivered',
+                                                    'delivered'  => 'delivered',
+                                                    'canceled'   => 'canceled',
+                                                    'shipped'    => 'shipped',
+                                                    'on process' => 'process',
+                                                    default      => 'pending',
+                                                };
 
-                                    // Payment status
-                                    $payStatus = strtolower($order['payment_status'] ?? 'pending');
-                                    $payClass  = match ($payStatus) {
-                                        'success', 'paid', 'completed' => 'success',
-                                        'failed'                        => 'failed',
-                                        default                         => 'pending',
-                                    };
-                                    $payLabel  = match ($payClass) {
-                                        'success' => 'Paid',
-                                        'failed'  => 'Failed',
-                                        default   => 'Pending',
-                                    };
+                                                // Determine progress steps
+                                                $steps      = ['On Process', 'Shipped', 'Delivered'];
+                                                $stepIndex  = match ($st) {
+                                                    'on process' => 0,
+                                                    'shipped'    => 1,
+                                                    'delivered', 'completed' => 2,
+                                                    default      => -1,
+                                                };
 
-                                    // Payment method display (no card details)
-                                    $payMethod = $order['payment_method'] ?? 'N/A';
-                                    $isCard    = stripos($payMethod, 'card') !== false || stripos($payMethod, 'credit') !== false || stripos($payMethod, 'debit') !== false;
-                                    $customerName = trim((string)($order['display_customer_name'] ?? $order['customer_name'] ?? $order['username'] ?? ''));
-                                    if ($customerName === '') {
-                                        $customerName = 'Guest';
-                                    }
-                                ?>
-                                    <tr>
-                                        <td><span class="ref-code"><?php echo htmlspecialchars($order['reference_number'] ?? '—'); ?></span></td>
-                                        <td>
-                                            <div style="font-weight:600;"><?php echo htmlspecialchars($customerName); ?></div>
-                                            <div style="font-size:.75rem;color:var(--text-muted);"><?php echo htmlspecialchars($order['email'] ?: '—'); ?></div>
-                                        </td>
-                                        <td style="text-align:center;"><?php echo intval($order['items_count'] ?? 0); ?></td>
-                                        <td>
-                                            <?php if (!empty($order['coupon_code'])): ?>
-                                                <span class="ref-code" style="font-size:.72rem;"><?php echo htmlspecialchars($order['coupon_code']); ?></span>
-                                                <div style="font-size:.72rem;color:var(--success);font-weight:700;">&minus;₱<?php echo number_format($order['discount_amount'] ?? 0, 2); ?></div>
-                                            <?php else: ?>
-                                                <span style="color:var(--text-muted);font-size:.78rem;">&mdash;</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td style="font-weight:700;color:var(--blue);">₱<?php echo number_format($order['total_amount'] ?? 0, 2); ?></td>
-                                        <td><?php echo htmlspecialchars($payMethod); ?></td>
-                                        <td><span class="pay-badge <?php echo $payClass; ?>"><i class="fas fa-circle" style="font-size:.45rem;"></i><?php echo $payLabel; ?></span></td>
-                                        <td style="min-width:160px;">
-                                            <?php if ($st === 'canceled'): ?>
-                                                <span style="font-size:.75rem;color:var(--danger);font-weight:600;"><i class="fas fa-times-circle me-1"></i>Canceled</span>
-                                            <?php else: ?>
-                                                <div class="progress-stepper">
-                                                    <?php foreach ($steps as $i => $stepLabel):
-                                                        $cls = '';
-                                                        if ($stepIndex > $i) $cls = 'done';
-                                                        elseif ($stepIndex === $i) $cls = 'active';
-                                                    ?>
-                                                        <div class="step <?php echo $cls; ?> <?php echo ($i < count($steps) - 1 && $stepIndex > $i) ? 'done' : ''; ?>">
-                                                            <div class="step-dot"><i class="fas fa-check" style="font-size:.55rem;"></i></div>
-                                                            <div class="step-lbl"><?php echo $stepLabel === 'On Process' ? 'Processing' : $stepLabel; ?></div>
+                                                // Payment status
+                                                $payStatus = strtolower($order['payment_status'] ?? 'pending');
+                                                $payClass  = match ($payStatus) {
+                                                    'success', 'paid', 'completed' => 'success',
+                                                    'failed', 'rejected'           => 'failed',
+                                                    default                         => 'pending',
+                                                };
+                                                $payLabel  = match (true) {
+                                                    $payClass === 'success'        => 'Paid',
+                                                    $payStatus === 'rejected'       => 'Rejected',
+                                                    $payClass === 'failed'          => 'Failed',
+                                                    default                          => 'Pending',
+                                                };
+
+                                                // Payment method display (no card details)
+                                                $payMethod = $order['payment_method'] ?? 'N/A';
+                                                $isCard    = stripos($payMethod, 'card') !== false || stripos($payMethod, 'credit') !== false || stripos($payMethod, 'debit') !== false;
+                                                $isCOD     = stripos($payMethod, 'cash on delivery') !== false || stripos($payMethod, 'cod') !== false;
+
+                                                // Uploaded payment receipt (GCash / Maya / PayPal QR payments)
+                                                $receiptRaw = $order['qr_screenshot_path'] ?? $order['payment_screenshot'] ?? null;
+                                                $receiptUrl = null;
+                                                if (!empty($receiptRaw)) {
+                                                    $receiptUrl = preg_match('#^(https?://|/|\.\./)#i', $receiptRaw) ? $receiptRaw : '../' . $receiptRaw;
+                                                }
+                                                $hasReceipt = !$isCard && !empty($receiptUrl);
+                                                // Normalize for the JS modal too
+                                                $order['payment_screenshot'] = $receiptUrl;
+
+                                                // Fulfillment status updates require an approved payment (COD is exempt)
+                                                $fulfillmentLocked = !$isCOD && $payStatus !== 'paid';
+
+                                                $customerName = trim((string)($order['display_customer_name'] ?? $order['customer_name'] ?? $order['username'] ?? ''));
+                                                if ($customerName === '') {
+                                                    $customerName = 'Guest';
+                                                }
+                                            ?>
+                                                <tr>
+                                                    <td><span class="ref-code"><?php echo htmlspecialchars($order['reference_number'] ?? '—'); ?></span></td>
+                                                    <td>
+                                                        <div style="font-weight:600;"><?php echo htmlspecialchars($customerName); ?></div>
+                                                        <div style="font-size:.75rem;color:var(--text-muted);"><?php echo htmlspecialchars($order['email'] ?: '—'); ?></div>
+                                                    </td>
+                                                    <td style="text-align:center;"><?php echo intval($order['items_count'] ?? 0); ?></td>
+                                                    <td>
+                                                        <?php if (!empty($order['coupon_code'])): ?>
+                                                            <span class="ref-code" style="font-size:.72rem;"><?php echo htmlspecialchars($order['coupon_code']); ?></span>
+                                                            <div style="font-size:.72rem;color:var(--success);font-weight:700;">&minus;₱<?php echo number_format($order['discount_amount'] ?? 0, 2); ?></div>
+                                                        <?php else: ?>
+                                                            <span style="color:var(--text-muted);font-size:.78rem;">&mdash;</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td style="font-weight:700;color:var(--blue);">₱<?php echo number_format($order['total_amount'] ?? 0, 2); ?></td>
+                                                    <td><?php echo htmlspecialchars($payMethod); ?></td>
+                                                    <td><span class="pay-badge <?php echo $payClass; ?>"><i class="fas fa-circle" style="font-size:.45rem;"></i><?php echo $payLabel; ?></span></td>
+                                                    <td style="min-width:160px;">
+                                                        <?php if ($st === 'canceled'): ?>
+                                                            <span style="font-size:.75rem;color:var(--danger);font-weight:600;"><i class="fas fa-times-circle me-1"></i>Canceled</span>
+                                                        <?php else: ?>
+                                                            <div class="progress-stepper">
+                                                                <?php foreach ($steps as $i => $stepLabel):
+                                                                    $cls = '';
+                                                                    if ($stepIndex > $i) $cls = 'done';
+                                                                    elseif ($stepIndex === $i) $cls = 'active';
+                                                                ?>
+                                                                    <div class="step <?php echo $cls; ?> <?php echo ($i < count($steps) - 1 && $stepIndex > $i) ? 'done' : ''; ?>">
+                                                                        <div class="step-dot"><i class="fas fa-check" style="font-size:.55rem;"></i></div>
+                                                                        <div class="step-lbl"><?php echo $stepLabel === 'On Process' ? 'Processing' : $stepLabel; ?></div>
+                                                                    </div>
+                                                                <?php endforeach; ?>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td><span class="status-badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($order['order_status'] ?? '—'); ?></span></td>
+                                                    <td style="font-size:.78rem;color:var(--text-muted);white-space:nowrap;"><?php echo date('M d, Y', strtotime($order['created_at'] ?? 'now')); ?></td>
+                                                    <td class="actions-cell">
+                                                        <div class="action-stack">
+                                                            <div class="action-buttons-row">
+                                                                <!-- View Details -->
+                                                                <button type="button" class="btn-view"
+                                                                    onclick="openOrderModal(<?php echo htmlspecialchars(json_encode($order)); ?>)">
+                                                                    <i class="fas fa-eye"></i> View
+                                                                </button>
+                                                                <!-- View uploaded payment receipt -->
+                                                                <?php if ($hasReceipt): ?>
+                                                                    <a href="<?php echo htmlspecialchars($receiptUrl); ?>" target="_blank" rel="noopener" class="btn-view btn-view-receipt">
+                                                                        <i class="fas fa-receipt"></i> Receipt
+                                                                    </a>
+                                                                <?php endif; ?>
+                                                            </div>
+
+                                                            <?php if (!$isCOD): ?>
+                                                                <div class="action-divider"></div>
+                                                                <div class="action-label">Payment</div>
+                                                                <!-- Approve / Reject payment -->
+                                                                <form method="POST" class="action-form">
+                                                                    <input type="hidden" name="order_id" value="<?php echo intval($order['order_id']); ?>">
+                                                                    <select name="payment_status" class="form-select form-select-sm">
+                                                                        <option value="Pending" <?php echo $payStatus === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                                                        <option value="Paid" <?php echo $payStatus === 'paid' ? 'selected' : ''; ?>>Approve</option>
+                                                                        <option value="Rejected" <?php echo $payStatus === 'rejected' ? 'selected' : ''; ?>>Reject</option>
+                                                                    </select>
+                                                                    <button type="submit" name="update_payment_status" class="btn btn-outline-primary btn-sm">Set</button>
+                                                                </form>
+                                                            <?php endif; ?>
+
+                                                            <div class="action-divider"></div>
+                                                            <div class="action-label">Order Status</div>
+                                                            <!-- Quick status update -->
+                                                            <form method="POST" class="action-form">
+                                                                <input type="hidden" name="order_id" value="<?php echo intval($order['order_id']); ?>">
+                                                                <select name="order_status" class="form-select form-select-sm" <?php echo $fulfillmentLocked ? 'disabled' : ''; ?>>
+                                                                    <?php foreach (['On Process', 'Shipped', 'Delivered', 'Completed', 'Canceled'] as $s): ?>
+                                                                        <option value="<?php echo $s; ?>" <?php echo $order['order_status'] === $s ? 'selected' : ''; ?>><?php echo $s; ?></option>
+                                                                    <?php endforeach; ?>
+                                                                </select>
+                                                                <button type="submit" name="update_status" class="btn btn-primary btn-sm" <?php echo $fulfillmentLocked ? 'disabled' : ''; ?>>Update</button>
+                                                            </form>
+                                                            <?php if ($fulfillmentLocked): ?>
+                                                                <div class="action-hint"><i class="fas fa-lock"></i>Approve payment to unlock</div>
+                                                            <?php endif; ?>
                                                         </div>
-                                                    <?php endforeach; ?>
-                                                </div>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td><span class="status-badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($order['order_status'] ?? '—'); ?></span></td>
-                                        <td style="font-size:.78rem;color:var(--text-muted);white-space:nowrap;"><?php echo date('M d, Y', strtotime($order['created_at'] ?? 'now')); ?></td>
-                                        <td style="white-space:nowrap;">
-                                            <!-- View Details -->
-                                            <button type="button" class="btn-view mb-1"
-                                                onclick="openOrderModal(<?php echo htmlspecialchars(json_encode($order)); ?>)">
-                                                <i class="fas fa-eye"></i> View
-                                            </button>
-                                            <!-- Quick status update -->
-                                            <form method="POST" class="d-flex gap-1 align-items-center mt-1">
-                                                <input type="hidden" name="order_id" value="<?php echo intval($order['order_id']); ?>">
-                                                <select name="order_status" class="form-select form-select-sm" style="width:120px;font-size:.75rem;">
-                                                    <?php foreach (['On Process', 'Shipped', 'Delivered', 'Completed', 'Canceled'] as $s): ?>
-                                                        <option value="<?php echo $s; ?>" <?php echo $order['order_status'] === $s ? 'selected' : ''; ?>><?php echo $s; ?></option>
-                                                    <?php endforeach; ?>
-                                                </select>
-                                                <button type="submit" name="update_status" class="btn btn-primary btn-sm" style="font-size:.72rem;padding:4px 10px;">Update</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
 
         </main>
@@ -871,7 +1173,10 @@ $orders = $inv->getAllOrders();
                 <div class="modal-body-custom" id="orderDetailBody">
                     <!-- Populated by JS -->
                 </div>
-                <div class="modal-footer-custom">
+                <div class="modal-footer-custom" style="flex-wrap: wrap;">
+                    <div id="modal_lock_hint" class="action-hint" style="display:none; width:100%; margin-bottom:2px;">
+                        <i class="fas fa-lock"></i> Approve this order's payment before updating its fulfillment status.
+                    </div>
                     <!-- Dynamic update form -->
                     <form method="POST" id="modalUpdateForm" class="d-flex gap-2 align-items-center w-100">
                         <input type="hidden" name="order_id" id="modal_order_id">
@@ -903,14 +1208,26 @@ $orders = $inv->getAllOrders();
 
             const payMethod = order.payment_method || 'N/A';
             const isCard = /card|credit|debit/i.test(payMethod);
+            const isCOD = /cash on delivery|\bcod\b/i.test(payMethod);
             const payStatus = (order.payment_status || 'pending').toLowerCase();
-            const payClass = ['success', 'paid', 'completed'].includes(payStatus) ? 'success' : (payStatus === 'failed' ? 'failed' : 'pending');
-            const payLabel = payClass === 'success' ? 'Paid' : (payClass === 'failed' ? 'Failed' : 'Pending');
+            const payClass = ['success', 'paid', 'completed'].includes(payStatus) ? 'success' : (['failed', 'rejected'].includes(payStatus) ? 'failed' : 'pending');
+            const payLabel = payClass === 'success' ? 'Paid' : (payStatus === 'rejected' ? 'Rejected' : (payClass === 'failed' ? 'Failed' : 'Pending'));
             const customerName = order.display_customer_name || order.customer_name || order.username || 'Guest';
+
+            // Lock fulfillment status updates until the payment receipt is approved (COD is exempt)
+            const fulfillmentLocked = !isCOD && payStatus !== 'paid';
+            const modalStatusSelect = document.getElementById('modal_order_status');
+            const modalSaveBtn = document.querySelector('#modalUpdateForm button[name="update_status"]');
+            const modalLockHint = document.getElementById('modal_lock_hint');
+            modalStatusSelect.disabled = fulfillmentLocked;
+            modalSaveBtn.disabled = fulfillmentLocked;
+            modalLockHint.style.display = fulfillmentLocked ? 'flex' : 'none';
+
             const streetAddress = order.street_address || '';
             const city = order.city || '';
             const postalCode = order.zip_code || '';
-            const hasShippingAddress = streetAddress || city || postalCode;
+            const phone = order.phone_number || '';
+            const hasShippingAddress = streetAddress || city || postalCode || phone;
             const shippingHtml = hasShippingAddress ? `
     <hr class="section-divider">
     <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Shipping Address</div>
@@ -926,6 +1243,10 @@ $orders = $inv->getAllOrders();
         <div class="detail-item">
             <label>Postal Code</label>
             <span>${escHtml(postalCode || 'N/A')}</span>
+        </div>
+        <div class="detail-item">
+            <label>Phone Number</label>
+            <span>${escHtml(phone || 'N/A')}</span>
         </div>
     </div>` : `
     <hr class="section-divider">

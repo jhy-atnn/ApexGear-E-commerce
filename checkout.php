@@ -17,6 +17,10 @@ if (empty($cart_items) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
+// ── Checkout error notice (e.g. missing receipt screenshot) ──────────────────
+$checkoutError = isset($_SESSION['checkout_error']) ? $_SESSION['checkout_error'] : null;
+unset($_SESSION['checkout_error']);
+
 // ── Applied promo code (carried over from cart.php) ──────────────────────────
 $appliedCoupon = null;
 $couponExpiredNotice = '';
@@ -88,6 +92,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         $receipt_data['mayaName'] = htmlspecialchars($_POST['maya_name'] ?? '');
         $transactionId = htmlspecialchars($_POST['maya_mobile'] ?? '');
         $receipt_data['mayaMobile'] = $transactionId;
+    }
+
+    // 3a. Require & save a payment receipt screenshot for QR/e-wallet methods
+    $receiptImagePath = null;
+    if (in_array($paymentMethodRaw, ['gcash', 'paypal', 'maya'])) {
+        $receiptFieldName = $paymentMethodRaw . '_receipt';
+
+        if (!isset($_FILES[$receiptFieldName]) || $_FILES[$receiptFieldName]['error'] !== UPLOAD_ERR_OK || $_FILES[$receiptFieldName]['size'] <= 0) {
+            $_SESSION['checkout_error'] = 'Please upload a screenshot of your payment receipt to complete your order.';
+            header("Location: checkout.php");
+            exit();
+        }
+
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $fileType = function_exists('mime_content_type') ? mime_content_type($_FILES[$receiptFieldName]['tmp_name']) : $_FILES[$receiptFieldName]['type'];
+
+        if (!in_array($fileType, $allowedTypes)) {
+            $_SESSION['checkout_error'] = 'Your receipt must be an image file (JPG, PNG, GIF, or WEBP).';
+            header("Location: checkout.php");
+            exit();
+        }
+
+        $uploadDir = __DIR__ . '/assets/uploads/receipts/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $ext = strtolower(pathinfo($_FILES[$receiptFieldName]['name'], PATHINFO_EXTENSION));
+        $safeExt = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']) ? $ext : 'png';
+        $receiptFileName = $receipt_number . '_receipt.' . $safeExt;
+
+        if (!move_uploaded_file($_FILES[$receiptFieldName]['tmp_name'], $uploadDir . $receiptFileName)) {
+            $_SESSION['checkout_error'] = 'There was a problem uploading your receipt. Please try again.';
+            header("Location: checkout.php");
+            exit();
+        }
+
+        $receiptImagePath = 'assets/uploads/receipts/' . $receiptFileName;
+        $receipt_data['receiptImage'] = $receiptImagePath;
     }
 
     // 4. Calculate Totals using live sale prices at checkout time
@@ -188,8 +231,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     $paymentMethodDB = $paymentMethodMap[$paymentMethodRaw] ?? ucfirst($paymentMethodRaw);
     $paymentStatusDB = $paymentMethodRaw === 'cod' ? 'Pending' : 'Paid';
 
-    $stmtPayment = $conn->prepare("INSERT INTO payments_tbl (order_id, method, status, card_last_four, transaction_id) VALUES (?, ?, ?, ?, ?)");
-    $stmtPayment->bind_param("issss", $orderId, $paymentMethodDB, $paymentStatusDB, $cardLast4, $transactionId);
+    $stmtPayment = $conn->prepare("INSERT INTO payments_tbl (order_id, method, status, card_last_four, transaction_id, qr_screenshot_path) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmtPayment->bind_param("isssss", $orderId, $paymentMethodDB, $paymentStatusDB, $cardLast4, $transactionId, $receiptImagePath);
     $stmtPayment->execute();
     $stmtPayment->close();
 
@@ -459,12 +502,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                         <span class="text-muted">Subtotal</span>
                                         <span class="text-dark">₱<?php echo number_format($receipt_data['subtotal'], 2); ?></span>
                                     </div>
-                                    <?php if (!empty($receipt_data['discountAmount'])): ?>
                                     <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted">Promo (<?php echo htmlspecialchars($receipt_data['couponCode']); ?>)</span>
-                                        <span class="text-success">&minus;₱<?php echo number_format($receipt_data['discountAmount'], 2); ?></span>
+                                        <span class="text-muted">Promo <?php echo !empty($receipt_data['couponCode']) ? '(' . htmlspecialchars($receipt_data['couponCode']) . ')' : ''; ?></span>
+                                        <?php if (!empty($receipt_data['discountAmount'])): ?>
+                                            <span class="text-success">&minus;₱<?php echo number_format($receipt_data['discountAmount'], 2); ?></span>
+                                        <?php else: ?>
+                                            <span class="text-muted">N/A</span>
+                                        <?php endif; ?>
                                     </div>
-                                    <?php endif; ?>
                                     <div class="d-flex justify-content-between mb-3">
                                         <span class="text-muted">Tax (8%)</span>
                                         <span class="text-dark">₱<?php echo number_format($receipt_data['tax'], 2); ?></span>
@@ -488,12 +533,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             </div>
 
                             <div class="d-flex gap-3 justify-content-center mb-4">
-                                <button type="button" class="btn" id="downloadPdfBtn" style="background: var(--apex-blue); color: white; border: none; padding: 10px 25px; border-radius: 50px; font-weight: 600; cursor: pointer;">
+                                <a href="actions/print_receipt.php?order_id=<?php echo $orderId; ?>" target="_blank" class="btn" style="background: var(--apex-blue); color: white; border: none; padding: 10px 25px; border-radius: 50px; font-weight: 600; text-decoration: none;">
                                     <i class="fas fa-download me-2"></i>Download PDF
-                                </button>
-                                <button type="button" class="btn" onclick="window.print();" style="background: #6c757d; color: white; border: none; padding: 10px 25px; border-radius: 50px; font-weight: 600; cursor: pointer;">
+                                </a>
+                                <a href="actions/print_receipt.php?order_id=<?php echo $orderId; ?>" target="_blank" class="btn" style="background: #6c757d; color: white; border: none; padding: 10px 25px; border-radius: 50px; font-weight: 600; text-decoration: none;">
                                     <i class="fas fa-print me-2"></i>Print Receipt
-                                </button>
+                                </a>
                             </div>
 
                             <a href="store.php" class="btn-apex" style="background: var(--apex-dark); color: white;">Return to Store</a>
@@ -515,7 +560,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                     </div>
                 <?php endif; ?>
 
-                <form method="POST" action="checkout.php" class="row g-5">
+                <?php if ($checkoutError): ?>
+                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-4" role="alert">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span><?php echo htmlspecialchars($checkoutError); ?></span>
+                    </div>
+                <?php endif; ?>
+
+                <form method="POST" action="checkout.php" enctype="multipart/form-data" class="row g-5">
 
                     <div class="col-lg-8">
                         <div class="apex-card mb-4">
@@ -622,6 +674,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                         <small><i class="fas fa-check-circle me-2"></i>Payment reference will be sent to your G Cash account.</small>
                                     </div>
                                 </div>
+                                <div class="col-12 text-center">
+                                    <label class="form-label small fw-bold text-muted text-uppercase d-block mb-2">Scan to Pay via GCash</label>
+                                    <img src="assets/images/bank%20qr%20codes/gcash-qr-card.png" alt="GCash QR Code" style="max-width: 400px; width: 100%; border-radius: 12px; border: 1px solid var(--apex-border); padding: 8px; background: #fff;">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-bold text-muted text-uppercase">Upload Payment Receipt <span class="text-danger">*</span></label>
+                                    <input type="file" class="form-control bg-light payment-required" name="gcash_receipt" accept="image/png, image/jpeg, image/webp, image/gif">
+                                    <small class="text-muted">Scan the QR code above to pay, then upload a screenshot of your payment confirmation. Your order cannot be processed without this.</small>
+                                </div>
                             </div>
 
                             <div id="paypal-fields" class="payment-fields row g-3" style="display: none;">
@@ -638,6 +699,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                         <small><i class="fas fa-external-link-alt me-2"></i>You will be redirected to PayPal to complete the payment.</small>
                                     </div>
                                 </div>
+                                <div class="col-12 text-center">
+                                    <label class="form-label small fw-bold text-muted text-uppercase d-block mb-2">Scan to Pay via PayPal</label>
+                                    <img src="assets/images/bank%20qr%20codes/paypal-qr-card.png" alt="PayPal QR Code" style="max-width: 400px; width: 100%; border-radius: 12px; border: 1px solid var(--apex-border); padding: 8px; background: #fff;">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-bold text-muted text-uppercase">Upload Payment Receipt <span class="text-danger">*</span></label>
+                                    <input type="file" class="form-control bg-light payment-required" name="paypal_receipt" accept="image/png, image/jpeg, image/webp, image/gif">
+                                    <small class="text-muted">Scan the QR code above to pay, then upload a screenshot of your payment confirmation. Your order cannot be processed without this.</small>
+                                </div>
                             </div>
 
                             <div id="maya-fields" class="payment-fields row g-3" style="display: none;">
@@ -653,6 +723,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                     <div class="alert alert-info" role="alert">
                                         <small><i class="fas fa-check-circle me-2"></i>Payment instructions will be sent to your registered account.</small>
                                     </div>
+                                </div>
+                                <div class="col-12 text-center">
+                                    <label class="form-label small fw-bold text-muted text-uppercase d-block mb-2">Scan to Pay via Maya</label>
+                                    <img src="assets/images/bank%20qr%20codes/maya-qr-card.png" alt="Maya QR Code" style="max-width: 400px; width: 100%; border-radius: 12px; border: 1px solid var(--apex-border); padding: 8px; background: #fff;">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-bold text-muted text-uppercase">Upload Payment Receipt <span class="text-danger">*</span></label>
+                                    <input type="file" class="form-control bg-light payment-required" name="maya_receipt" accept="image/png, image/jpeg, image/webp, image/gif">
+                                    <small class="text-muted">Scan the QR code above to pay, then upload a screenshot of your payment confirmation. Your order cannot be processed without this.</small>
                                 </div>
                             </div>
                         </div>
