@@ -502,12 +502,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                         <span class="text-muted">Subtotal</span>
                                         <span class="text-dark">₱<?php echo number_format($receipt_data['subtotal'], 2); ?></span>
                                     </div>
-                                    <?php if (!empty($receipt_data['discountAmount'])): ?>
                                     <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted">Promo (<?php echo htmlspecialchars($receipt_data['couponCode']); ?>)</span>
-                                        <span class="text-success">&minus;₱<?php echo number_format($receipt_data['discountAmount'], 2); ?></span>
+                                        <span class="text-muted">Promo <?php echo !empty($receipt_data['couponCode']) ? '(' . htmlspecialchars($receipt_data['couponCode']) . ')' : ''; ?></span>
+                                        <?php if (!empty($receipt_data['discountAmount'])): ?>
+                                            <span class="text-success">&minus;₱<?php echo number_format($receipt_data['discountAmount'], 2); ?></span>
+                                        <?php else: ?>
+                                            <span class="text-muted">N/A</span>
+                                        <?php endif; ?>
                                     </div>
-                                    <?php endif; ?>
                                     <div class="d-flex justify-content-between mb-3">
                                         <span class="text-muted">Tax (8%)</span>
                                         <span class="text-dark">₱<?php echo number_format($receipt_data['tax'], 2); ?></span>
@@ -531,12 +533,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             </div>
 
                             <div class="d-flex gap-3 justify-content-center mb-4">
-                                <button type="button" class="btn" id="downloadPdfBtn" style="background: var(--apex-blue); color: white; border: none; padding: 10px 25px; border-radius: 50px; font-weight: 600; cursor: pointer;">
+                                <a href="actions/print_receipt.php?order_id=<?php echo $orderId; ?>" target="_blank" class="btn" style="background: var(--apex-blue); color: white; border: none; padding: 10px 25px; border-radius: 50px; font-weight: 600; text-decoration: none;">
                                     <i class="fas fa-download me-2"></i>Download PDF
-                                </button>
-                                <button type="button" class="btn" onclick="window.print();" style="background: #6c757d; color: white; border: none; padding: 10px 25px; border-radius: 50px; font-weight: 600; cursor: pointer;">
+                                </a>
+                                <a href="actions/print_receipt.php?order_id=<?php echo $orderId; ?>" target="_blank" class="btn" style="background: #6c757d; color: white; border: none; padding: 10px 25px; border-radius: 50px; font-weight: 600; text-decoration: none;">
                                     <i class="fas fa-print me-2"></i>Print Receipt
-                                </button>
+                                </a>
                             </div>
 
                             <a href="store.php" class="btn-apex" style="background: var(--apex-dark); color: white;">Return to Store</a>

@@ -1,29 +1,41 @@
 <?php
 session_start();
 
-// Ensure user/admin is logged in if required for your system
-// if (!isset($_SESSION['user_id'])) {
-//     header("Location: login.php");
-//     exit();
-// }
-
 require_once __DIR__ . '/../database/db_connect.php';
 
-if (!isset($_GET['order_id'])) {    
+$db = new Database();
+$conn = $db->getConnection();
+
+if (!isset($_GET['order_id'])) {
     die("Error: No order ID specified.");
 }
 
 $order_id = (int)$_GET['order_id'];
 
-// Fetch the main order and customer details
+// ── 1. Fetch order + shipping address ──────────────────────────────────────────
 $query = "
-    SELECT o.order_number, o.created_at, o.payment_method, 
-           o.subtotal, o.tax_amount, o.shipping_fee, o.total_amount, o.status,
-           c.first_name, c.last_name, c.address_line1, c.city, c.zip_code, 
-           c.phone_number, c.email
-    FROM orders o
-    JOIN customers c ON o.customer_id = c.customer_id
-    WHERE o.order_id = ? LIMIT 1
+    SELECT
+        o.order_id,
+        o.order_ref_code,
+        o.coupon_code,
+        o.discount_amount,
+        o.subtotal,
+        o.tax,
+        o.shipping_fee,
+        o.total_amount,
+        o.order_status,
+        o.created_at,
+        s.first_name,
+        s.last_name,
+        s.phone_number,
+        s.email,
+        s.street_address,
+        s.city,
+        s.zip_code
+    FROM orders_tbl o
+    LEFT JOIN shipping_address_tbl s ON s.order_ref_code = o.order_ref_code
+    WHERE o.order_id = ?
+    LIMIT 1
 ";
 
 $stmt = mysqli_prepare($conn, $query);
@@ -35,412 +47,531 @@ if (!$order) {
     die("Error: Order record not found.");
 }
 
-// Fetch the items for this specific order
-$items_query = "
-    SELECT item_name, quantity, price, total_price 
-    FROM order_items 
+// ── 2. Fetch payment method ────────────────────────────────────────────────────
+$pay_query = "
+    SELECT method, status, card_last_four, transaction_id
+    FROM payments_tbl
     WHERE order_id = ?
+    LIMIT 1
+";
+$pay_stmt = mysqli_prepare($conn, $pay_query);
+mysqli_stmt_bind_param($pay_stmt, "i", $order_id);
+mysqli_stmt_execute($pay_stmt);
+$payment = mysqli_fetch_assoc(mysqli_stmt_get_result($pay_stmt));
+
+// ── 3. Fetch order items (JOIN products for name) ─────────────────────────────
+$items_query = "
+    SELECT
+        p.name   AS item_name,
+        oi.quantity,
+        oi.price_at_checkout AS price,
+        (oi.quantity * oi.price_at_checkout) AS total_price
+    FROM order_items_tbl oi
+    JOIN products_tbl p ON p.product_id = oi.product_id
+    WHERE oi.order_id = ?
 ";
 $items_stmt = mysqli_prepare($conn, $items_query);
 mysqli_stmt_bind_param($items_stmt, "i", $order_id);
 mysqli_stmt_execute($items_stmt);
 $items_result = mysqli_stmt_get_result($items_stmt);
 
-$order_items = [];
+$order_items       = [];
 $total_items_count = 0;
 while ($row = mysqli_fetch_assoc($items_result)) {
-    $order_items[] = $row;
+    $order_items[]      = $row;
     $total_items_count += $row['quantity'];
 }
 
-$fullname = $order['first_name'] . ' ' . $order['last_name'];
-$formatted_date = date('F d, Y \a\t h:i A', strtotime($order['created_at']));
+// ── 4. Coupon info ─────────────────────────────────────────────────────────────
+$coupon_label    = 'N/A';
+$coupon_discount = 0;
+if (!empty($order['coupon_code'])) {
+    $coupon_label    = htmlspecialchars($order['coupon_code']);
+    $coupon_discount = floatval($order['discount_amount']);
+}
 
+// ── 5. Derived display values ──────────────────────────────────────────────────
+$fullname        = trim(($order['first_name'] ?? '') . ' ' . ($order['last_name'] ?? ''));
+$formatted_date  = date('F d, Y \a\t h:i A', strtotime($order['created_at']));
+$payment_method  = $payment['method'] ?? 'N/A';
+$payment_detail  = '';
+if (!empty($payment['card_last_four'])) {
+    $payment_detail = '****' . $payment['card_last_four'];
+} elseif (!empty($payment['transaction_id'])) {
+    $payment_detail = $payment['transaction_id'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt | <?php echo htmlspecialchars($order['order_number']); ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <title>Receipt | <?php echo htmlspecialchars($order['order_ref_code']); ?></title>
     <style>
-        :root {
-            --primary-blue: #0b1c3f;
-            --accent-green: #00d27a;
-            --light-green-bg: #dcf3e8;
-            --text-muted: #6c757d;
-            --border-color: #dee2e6;
-            --bg-body: #f8f9fa;
-        }
+        /* ── Reset & base ─────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-body);
-            color: #333;
-            margin: 0;
-            padding: 40px 20px;
+            font-family: 'Courier New', Courier, monospace;
+            background: #e8e8e8;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
+            padding: 30px 16px 60px;
+            color: #1a1a1a;
         }
 
-        /* Top Success Message */
-        .success-header {
+        /* ── Action bar (hidden on print) ────────────── */
+        .action-bar {
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .btn-print {
+            flex: 1;
+            background: #0b1c3f;
+            color: #fff;
+            border: none;
+            padding: 11px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            transition: background .2s;
+        }
+        .btn-print:hover { background: #1a3a6b; }
+
+        .btn-back {
+            flex: 1;
+            background: transparent;
+            color: #0b1c3f;
+            border: 2px solid #0b1c3f;
+            padding: 11px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            transition: all .2s;
+        }
+        .btn-back:hover { background: #0b1c3f; color: #fff; }
+
+        /* ── Receipt paper ────────────────────────────── */
+        .receipt {
+            background: #fff;
+            width: 100%;
+            max-width: 420px;
+            padding: 0;
+            /* Torn-paper top & bottom */
+            position: relative;
+            filter: drop-shadow(0 4px 24px rgba(0,0,0,.18));
+        }
+
+        /* Jagged top edge */
+        .receipt::before {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 18px;
+            background:
+                radial-gradient(circle at 10px -4px, transparent 8px, #fff 8px) 0 0 / 20px 18px,
+                radial-gradient(circle at 10px -4px, #e8e8e8 8px, transparent 8px) 0 0 / 20px 18px;
+        }
+        /* Jagged bottom edge */
+        .receipt::after {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 18px;
+            background:
+                radial-gradient(circle at 10px 22px, transparent 8px, #fff 8px) 0 0 / 20px 18px,
+                radial-gradient(circle at 10px 22px, #e8e8e8 8px, transparent 8px) 0 0 / 20px 18px;
+        }
+
+        .receipt-inner {
+            padding: 8px 28px 20px;
+        }
+
+        /* ── Store header ─────────────────────────────── */
+        .store-header {
             text-align: center;
-            margin-bottom: 30px;
+            padding: 14px 0 18px;
+            border-bottom: 1px dashed #bbb;
+            margin-bottom: 16px;
         }
 
-        .success-icon {
+        .store-name {
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            color: #0b1c3f;
+            text-transform: uppercase;
+        }
+        .store-name span { color: #00a8e8; }
+
+        .store-tagline {
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        /* ── Success badge ────────────────────────────── */
+        .success-badge {
+            text-align: center;
+            margin: 16px 0 18px;
+        }
+
+        .check-circle {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 48px;
-            height: 48px;
-            background-color: var(--accent-green);
-            color: white;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            font-size: 28px;
-            margin-bottom: 15px;
-        }
-
-        .success-header h1 {
-            color: var(--primary-blue);
-            font-size: 24px;
-            margin: 0 0 10px 0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .success-header p {
-            color: var(--text-muted);
-            margin: 0;
-            font-size: 15px;
-        }
-
-        /* Receipt Card */
-        .receipt-card {
-            background: #fff;
-            width: 100%;
-            max-width: 650px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            border: 1px solid rgba(0,0,0,0.05);
-            overflow: hidden;
-            padding: 40px;
-            box-sizing: border-box;
-        }
-
-        /* Receipt Header */
-        .receipt-header {
-            text-align: center;
-            margin-bottom: 35px;
-        }
-
-        .receipt-header h2 {
-            color: var(--primary-blue);
-            font-size: 20px;
-            margin: 0 0 5px 0;
-        }
-
-        .receipt-header .sub-text {
-            color: var(--text-muted);
-            font-size: 13px;
-            margin: 0 0 15px 0;
-        }
-
-        .receipt-header .order-number {
+            background: #00d27a;
+            color: #fff;
             font-size: 22px;
-            font-weight: 700;
-            color: var(--primary-blue);
-            margin: 0 0 5px 0;
-            letter-spacing: 1px;
+            margin-bottom: 8px;
         }
 
-        .receipt-header .order-date {
-            color: var(--text-muted);
+        .success-badge h2 {
             font-size: 13px;
-            margin: 0;
-        }
-
-        /* Section Titles */
-        .section-title {
-            color: var(--primary-blue);
-            font-size: 13px;
-            font-weight: 700;
+            letter-spacing: 3px;
             text-transform: uppercase;
-            margin: 25px 0 15px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            color: #0b1c3f;
+            font-weight: 900;
         }
 
-        /* Shipping Details */
-        .shipping-details {
-            margin-bottom: 30px;
+        .order-ref {
+            font-size: 13px;
+            font-weight: 700;
+            color: #0b1c3f;
+            letter-spacing: 1.5px;
+            margin-top: 6px;
+            word-break: break-all;
         }
-        
-        .shipping-details strong {
-            display: block;
-            color: #333;
+
+        .order-date {
+            font-size: 10px;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        /* ── Dashed divider ───────────────────────────── */
+        .divider {
+            border: none;
+            border-top: 1px dashed #bbb;
+            margin: 14px 0;
+        }
+
+        /* ── Section label ────────────────────────────── */
+        .section-lbl {
+            font-size: 9.5px;
+            font-weight: 900;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        /* ── Key-value row ────────────────────────────── */
+        .kv {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
             margin-bottom: 5px;
-            font-size: 15px;
-        }
-
-        .shipping-details p {
-            margin: 0 0 4px 0;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-        
-        .shipping-details .contact-info {
-            display: flex;
-            align-items: center;
             gap: 8px;
-            margin-top: 4px;
-            color: var(--text-muted);
-            font-size: 14px;
         }
-
-        /* Payment Method */
-        .payment-method p {
-            margin: 0;
+        .kv .k { color: #555; flex-shrink: 0; }
+        .kv .v {
+            text-align: right;
+            color: #1a1a1a;
             font-weight: 600;
-            font-size: 15px;
-            color: #333;
+            word-break: break-all;
         }
+        .kv .v.muted { color: #888; font-weight: 400; }
 
-        /* Order Items Table */
-        .order-items-table {
+        /* ── Items table ──────────────────────────────── */
+        .items-table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .items-table th {
+            font-size: 9.5px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #888;
+            padding: 0 0 7px 0;
+            border-bottom: 1px dashed #bbb;
+            white-space: nowrap;
+        }
+        .items-table th:last-child,
+        .items-table td:last-child { text-align: right; }
+        .items-table th:nth-child(2),
+        .items-table td:nth-child(2) { text-align: center; }
+        .items-table td {
+            padding: 8px 0 2px;
+            vertical-align: top;
+            color: #1a1a1a;
+        }
+        .items-table td.name { font-weight: 600; max-width: 170px; }
+        .items-table td.price { white-space: nowrap; }
+        .items-table tr:last-child td { padding-bottom: 6px; }
+
+        /* ── Totals block ─────────────────────────────── */
+        .totals { margin-top: 4px; }
+        .totals .row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        .totals .row .lbl { color: #555; }
+        .totals .row .amt { font-weight: 600; }
+        .totals .row.discount .amt { color: #00a044; }
+        .totals .row.shipping .amt { color: #00a044; }
+        .totals .grand {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
             margin-top: 10px;
-            margin-bottom: 15px;
+            padding-top: 10px;
+            border-top: 2px solid #1a1a1a;
         }
-
-        .order-items-table th {
-            text-align: left;
-            padding: 10px 0;
-            color: var(--text-muted);
-            font-weight: 600;
+        .totals .grand .lbl {
             font-size: 13px;
-            border-bottom: 1px solid var(--border-color);
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .totals .grand .amt {
+            font-size: 20px;
+            font-weight: 900;
+            color: #0b1c3f;
         }
 
-        .order-items-table th.right, 
-        .order-items-table td.right {
-            text-align: right;
-        }
-        
-        .order-items-table th.center, 
-        .order-items-table td.center {
-            text-align: center;
-        }
-
-        .order-items-table td {
-            padding: 15px 0;
-            font-size: 14px;
-            color: #333;
-            border-bottom: 1px solid #f1f3f5;
-        }
-
-        .order-items-table td.item-name {
-            color: var(--text-muted);
-        }
-
-        .order-items-table td.total-price {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .items-footer {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 30px;
-        }
-
-        /* Totals Section */
-        .totals-section {
-            width: 100%;
-            margin-left: auto;
-            border-top: 1px solid var(--border-color);
-            padding-top: 20px;
-        }
-
-        .totals-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            font-size: 14px;
-            color: var(--text-muted);
-        }
-
-        .totals-row.shipping .amount {
-            color: var(--accent-green);
-            font-weight: 600;
-        }
-
-        .totals-row .amount {
-            color: #333;
-        }
-
-        /* Grand Total */
-        .grand-total {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .grand-total .label {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .grand-total .amount {
-            font-size: 22px;
-            font-weight: 700;
-            color: #333;
-        }
-
-        /* Status Banner */
+        /* ── Status banner ────────────────────────────── */
         .status-banner {
-            background-color: var(--light-green-bg);
-            border-radius: 6px;
-            padding: 15px 20px;
-            margin-top: 30px;
+            background: #efffF6;
+            border: 1px dashed #00d27a;
+            border-radius: 4px;
+            padding: 10px 14px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            font-size: 12px;
+            margin-top: 14px;
+        }
+        .status-dot {
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            background: #00d27a;
+            flex-shrink: 0;
+        }
+        .status-banner strong { color: #0b7a44; }
+
+        /* ── Footer note ──────────────────────────────── */
+        .receipt-footer {
+            text-align: center;
+            margin-top: 22px;
+            padding-top: 14px;
+            border-top: 1px dashed #bbb;
+        }
+        .receipt-footer p {
+            font-size: 9.5px;
+            color: #aaa;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            line-height: 1.8;
+        }
+        .receipt-footer .barcode {
+            font-size: 32px;
+            letter-spacing: -2px;
+            color: #1a1a1a;
+            line-height: 1;
+            margin: 10px 0 6px;
         }
 
-        .status-banner i {
-            color: #0b7a44;
-            font-size: 18px;
-        }
-
-        .status-banner span {
-            color: #0b7a44;
-            font-size: 14px;
-        }
-        
-        .status-banner strong {
-            font-weight: 600;
-        }
-
+        /* ── PRINT STYLES ─────────────────────────────── */
         @media print {
+            @page { margin: 0; size: 80mm auto; }
             body {
-                background-color: #fff;
+                background: #fff;
                 padding: 0;
             }
-            .receipt-card {
+            .action-bar { display: none !important; }
+            .receipt {
+                filter: none;
+                max-width: 100%;
                 box-shadow: none;
-                border: none;
-                padding: 20px;
-            }
-            .success-header {
-                display: none; /* Usually hide the success message when physically printing */
             }
         }
     </style>
 </head>
 <body>
 
-    <div class="success-header">
-        <div class="success-icon">
-            <i class="bi bi-check"></i>
-        </div>
-        <h1>PAYMENT SUCCESSFUL</h1>
-        <p>Thank you for your order! Your high-performance gear is being prepped for shipment.</p>
+    <div class="action-bar">
+        <a class="btn-back" href="../index.php">
+            &#8592; Go Back
+        </a>
+        <button class="btn-print" onclick="window.print()">
+            &#128438; Print Receipt
+        </button>
     </div>
 
-    <div class="receipt-card">
-        
-        <div class="receipt-header">
-            <h2>ONLINE RECEIPT</h2>
-            <p class="sub-text">Payment Completed Successfully<br>Order Number</p>
-            <p class="order-number"><?php echo htmlspecialchars($order['order_number']); ?></p>
-            <p class="order-date"><?php echo htmlspecialchars($formatted_date); ?></p>
-        </div>
+    <div class="receipt">
+        <div class="receipt-inner">
 
-        <div class="section-title">
-            <i class="bi bi-geo-alt-fill"></i> SHIPPING DETAILS
-        </div>
-        <div class="shipping-details">
-            <strong><?php echo htmlspecialchars($fullname); ?></strong>
-            <p><?php echo htmlspecialchars($order['address_line1']); ?></p>
-            <p><?php echo htmlspecialchars($order['city'] . ', ' . $order['zip_code']); ?></p>
-            <div class="contact-info">
-                <i class="bi bi-telephone-fill" style="color: var(--primary-blue);"></i> <?php echo htmlspecialchars($order['phone_number']); ?>
+            <!-- Store header -->
+            <div class="store-header">
+                <div class="store-name">ApeX<span>Gear</span></div>
+                <div class="store-tagline">High-Performance Tech Store</div>
             </div>
-            <div class="contact-info">
-                <i class="bi bi-envelope-fill" style="color: var(--primary-blue);"></i> <?php echo htmlspecialchars($order['email']); ?>
+
+            <!-- Success badge -->
+            <div class="success-badge">
+                <div class="check-circle">&#10003;</div>
+                <h2>Payment Successful</h2>
+                <div class="order-ref"><?php echo htmlspecialchars($order['order_ref_code']); ?></div>
+                <div class="order-date"><?php echo htmlspecialchars($formatted_date); ?></div>
             </div>
-        </div>
 
-        <div class="section-title">
-            <i class="bi bi-credit-card-2-front-fill"></i> PAYMENT METHOD
-        </div>
-        <div class="payment-method">
-            <p><?php echo htmlspecialchars($order['payment_method']); ?></p>
-        </div>
+            <hr class="divider">
 
-        <div class="section-title">
-            <i class="bi bi-bag-fill"></i> ORDER ITEMS (<?php echo count($order_items); ?> ITEM<?php echo count($order_items) > 1 ? 'S' : ''; ?>)
-        </div>
-        <table class="order-items-table">
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th class="center">Qty</th>
-                    <th class="right">Price</th>
-                    <th class="right">Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($order_items as $item): ?>
-                <tr>
-                    <td class="item-name"><?php echo htmlspecialchars($item['item_name']); ?></td>
-                    <td class="center"><?php echo (int)$item['quantity']; ?></td>
-                    <td class="right">₱<?php echo number_format($item['price'], 2); ?></td>
-                    <td class="right total-price">₱<?php echo number_format($item['total_price'], 2); ?></td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-        
-        <div class="items-footer">
-            Total Quantity: <strong><?php echo $total_items_count; ?></strong> items
-        </div>
+            <!-- Shipping details -->
+            <div class="section-lbl">Shipping Details</div>
+            <div class="kv"><span class="k">Name</span><span class="v"><?php echo htmlspecialchars($fullname ?: 'N/A'); ?></span></div>
+            <div class="kv"><span class="k">Address</span><span class="v"><?php echo htmlspecialchars(($order['street_address'] ?? '') . ', ' . ($order['city'] ?? '') . ' ' . ($order['zip_code'] ?? '')); ?></span></div>
+            <div class="kv"><span class="k">Phone</span><span class="v"><?php echo htmlspecialchars($order['phone_number'] ?? 'N/A'); ?></span></div>
+            <div class="kv"><span class="k">Email</span><span class="v"><?php echo htmlspecialchars($order['email'] ?? 'N/A'); ?></span></div>
 
-        <div class="totals-section">
-            <div class="totals-row">
-                <span>Subtotal</span>
-                <span class="amount">₱<?php echo number_format($order['subtotal'], 2); ?></span>
+            <hr class="divider">
+
+            <!-- Payment method -->
+            <div class="section-lbl">Payment Method</div>
+            <div class="kv">
+                <span class="k">Method</span>
+                <span class="v"><?php echo htmlspecialchars($payment_method); ?></span>
             </div>
-            <div class="totals-row">
-                <span>Tax (8%)</span>
-                <span class="amount">₱<?php echo number_format($order['tax_amount'], 2); ?></span>
+            <?php if ($payment_detail): ?>
+            <div class="kv">
+                <span class="k">Reference</span>
+                <span class="v muted"><?php echo htmlspecialchars($payment_detail); ?></span>
             </div>
-            <div class="totals-row shipping">
-                <span>Shipping</span>
-                <span class="amount"><?php echo ($order['shipping_fee'] == 0) ? 'FREE' : '₱' . number_format($order['shipping_fee'], 2); ?></span>
+            <?php endif; ?>
+
+            <hr class="divider">
+
+            <!-- Coupon -->
+            <div class="section-lbl">Promo / Coupon</div>
+            <div class="kv">
+                <span class="k">Coupon Code</span>
+                <span class="v <?php echo $coupon_label === 'N/A' ? 'muted' : ''; ?>"><?php echo $coupon_label; ?></span>
             </div>
-        </div>
+            <?php if ($coupon_discount > 0): ?>
+            <div class="kv">
+                <span class="k">Discount</span>
+                <span class="v" style="color:#00a044;">-&#8369;<?php echo number_format($coupon_discount, 2); ?></span>
+            </div>
+            <?php endif; ?>
 
-        <div class="grand-total">
-            <span class="label">Total Amount Due</span>
-            <span class="amount">₱<?php echo number_format($order['total_amount'], 2); ?></span>
-        </div>
+            <hr class="divider">
 
-        <div class="status-banner">
-            <i class="bi bi-check-circle-fill"></i>
-            <span><strong>Order Status:</strong> <?php echo htmlspecialchars($order['status']); ?></span>
-        </div>
+            <!-- Order items -->
+            <div class="section-lbl">
+                Order Items &mdash; <?php echo $total_items_count; ?> <?php echo $total_items_count === 1 ? 'item' : 'items'; ?>
+            </div>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($order_items as $item): ?>
+                    <tr>
+                        <td class="name"><?php echo htmlspecialchars($item['item_name']); ?></td>
+                        <td class="center"><?php echo (int)$item['quantity']; ?></td>
+                        <td class="price">&#8369;<?php echo number_format($item['price'], 2); ?></td>
+                        <td class="price">&#8369;<?php echo number_format($item['total_price'], 2); ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
 
+            <hr class="divider">
+
+            <!-- Totals -->
+            <div class="totals">
+                <div class="row">
+                    <span class="lbl">Subtotal</span>
+                    <span class="amt">&#8369;<?php echo number_format($order['subtotal'], 2); ?></span>
+                </div>
+                <?php if ($coupon_discount > 0): ?>
+                <div class="row discount">
+                    <span class="lbl">Discount (<?php echo $coupon_label; ?>)</span>
+                    <span class="amt">-&#8369;<?php echo number_format($coupon_discount, 2); ?></span>
+                </div>
+                <?php endif; ?>
+                <div class="row">
+                    <span class="lbl">Tax (8%)</span>
+                    <span class="amt">&#8369;<?php echo number_format($order['tax'], 2); ?></span>
+                </div>
+                <div class="row shipping">
+                    <span class="lbl">Shipping</span>
+                    <span class="amt"><?php echo ($order['shipping_fee'] == 0) ? 'FREE' : '&#8369;' . number_format($order['shipping_fee'], 2); ?></span>
+                </div>
+                <div class="grand">
+                    <span class="lbl">Total</span>
+                    <span class="amt">&#8369;<?php echo number_format($order['total_amount'], 2); ?></span>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="status-banner">
+                <div class="status-dot"></div>
+                <div>
+                    <strong>Order Status:</strong>
+                    <?php echo htmlspecialchars($order['order_status']); ?>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="receipt-footer">
+                <div class="barcode">
+                    ||| || ||| || || ||| | || |||
+                </div>
+                <p>
+                    <?php echo htmlspecialchars($order['order_ref_code']); ?><br>
+                    Thank you for shopping with ApeX Gear!<br>
+                    Keep this receipt for your records.
+                </p>
+            </div>
+
+        </div>
     </div>
 
 </body>
