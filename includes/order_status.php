@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $orders = [];
 $order_items_map = [];
 
