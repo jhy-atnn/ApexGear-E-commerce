@@ -79,6 +79,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         exit;
     }
 
+    // 1b. Validate Payment Method Fields
+    if ($paymentMethodRaw === 'gcash') {
+        $gcashName = trim($_POST['gcash_name'] ?? '');
+        $gcashMobile = trim($_POST['gcash_mobile'] ?? '');
+        if ($gcashName !== '' && !preg_match('/^[A-Za-z\s]+$/', $gcashName)) {
+            $_SESSION['checkout_error'] = 'Use letters only for GCash Account Name.';
+            header('Location: checkout.php');
+            exit;
+        }
+        if ($gcashMobile !== '' && !preg_match('/^[0-9]+$/', $gcashMobile)) {
+            $_SESSION['checkout_error'] = 'Number Only for GCash Mobile Number.';
+            header('Location: checkout.php');
+            exit;
+        }
+    } elseif ($paymentMethodRaw === 'paypal') {
+        $paypalNumber = trim($_POST['paypal_Number'] ?? '');
+        if ($paypalNumber !== '' && !preg_match('/^[0-9]+$/', $paypalNumber)) {
+            $_SESSION['checkout_error'] = 'Number Only for PayPal Number.';
+            header('Location: checkout.php');
+            exit;
+        }
+    } elseif ($paymentMethodRaw === 'maya') {
+        $mayaName = trim($_POST['maya_name'] ?? '');
+        $mayaMobile = trim($_POST['maya_mobile'] ?? '');
+        if ($mayaName !== '' && !preg_match('/^[A-Za-z\s]+$/', $mayaName)) {
+            $_SESSION['checkout_error'] = 'Use letters only for Maya Account Name.';
+            header('Location: checkout.php');
+            exit;
+        }
+        if ($mayaMobile !== '' && !preg_match('/^[0-9]+$/', $mayaMobile)) {
+            $_SESSION['checkout_error'] = 'Number Only for Maya Mobile Number.';
+            header('Location: checkout.php');
+            exit;
+        }
+    }
+
     // 2. Setup receipt data for the frontend display
     $receipt_data = array(
         'firstName' => htmlspecialchars($firstName),
@@ -685,11 +721,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             <div id="gcash-fields" class="payment-fields row g-3" style="display: none;">
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Account Name</label>
-                                    <input type="text" class="form-control bg-light payment-required" name="gcash_name" placeholder="Name">
+                                    <input type="text" class="form-control bg-light payment-required" name="gcash_name" placeholder="Name" oninput="filterLettersOnly(this)">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Mobile Number</label>
-                                    <input type="tel" class="form-control bg-light payment-required" name="gcash_mobile" placeholder="09171234567">
+                                    <input type="tel" class="form-control bg-light payment-required" name="gcash_mobile" placeholder="09171234567" oninput="filterNumbersOnly(this)">
                                 </div>
                                 <div class="col-12">
                                     <div class="alert alert-info" role="alert">
@@ -714,7 +750,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">PayPal Number</label>
-                                    <input type="email" class="form-control bg-light payment-required" name="paypal_Number" placeholder="your@paypal.com">
+                                    <input type="tel" class="form-control bg-light payment-required" name="paypal_Number" placeholder="09171234567" oninput="filterNumbersOnly(this)">
                                 </div>
                                 <div class="col-12">
                                     <div class="alert alert-info" role="alert">
@@ -735,11 +771,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             <div id="maya-fields" class="payment-fields row g-3" style="display: none;">
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Account Name</label>
-                                    <input type="text" class="form-control bg-light payment-required" name="maya_name" placeholder="Name">
+                                    <input type="text" class="form-control bg-light payment-required" name="maya_name" placeholder="Name" oninput="filterLettersOnly(this)">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Mobile Number</label>
-                                    <input type="tel" class="form-control bg-light payment-required" name="maya_mobile" placeholder="09171234567">
+                                    <input type="tel" class="form-control bg-light payment-required" name="maya_mobile" placeholder="09171234567" oninput="filterNumbersOnly(this)">
                                 </div>
                                 <div class="col-12">
                                     <div class="alert alert-info" role="alert">
