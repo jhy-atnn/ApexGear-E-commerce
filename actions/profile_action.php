@@ -29,6 +29,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $city       = trim($_POST['city'] ?? '');
     $postal     = trim($_POST['postal_code'] ?? '');
 
+    if ($first_name !== '' && !preg_match('/^[A-Za-z ]+$/', $first_name)) {
+        echo json_encode(['success' => false, 'message' => 'Please only use letters for First Name.']);
+        exit;
+    }
+    if ($last_name !== '' && !preg_match('/^[A-Za-z ]+$/', $last_name)) {
+        echo json_encode(['success' => false, 'message' => 'Please only use letters for Last Name.']);
+        exit;
+    }
+
     // 2. Handle Profile Picture Upload
     $image_path = $_SESSION['user']['profile_picture'] ?? null; // Default to existing
 

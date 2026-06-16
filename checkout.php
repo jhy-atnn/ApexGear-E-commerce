@@ -58,6 +58,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     $zipcode   = trim($_POST['zipcode'] ?? '');
     $paymentMethodRaw = trim($_POST['payment_method'] ?? '');
 
+    if ($firstName !== '' && !preg_match('/^[A-Za-z\s]+$/', $firstName)) {
+        $_SESSION['checkout_error'] = 'Please only use letters for First Name.';
+        header('Location: checkout.php');
+        exit;
+    }
+    if ($lastName !== '' && !preg_match('/^[A-Za-z\s]+$/', $lastName)) {
+        $_SESSION['checkout_error'] = 'Please only use letters for Last Name.';
+        header('Location: checkout.php');
+        exit;
+    }
+    if ($phone !== '' && !preg_match('/^[0-9]+$/', $phone)) {
+        $_SESSION['checkout_error'] = 'Use numbers only for Phone Number.';
+        header('Location: checkout.php');
+        exit;
+    }
+    if ($zipcode !== '' && !preg_match('/^[0-9]+$/', $zipcode)) {
+        $_SESSION['checkout_error'] = 'Use numbers only for ZIP / Postal Code.';
+        header('Location: checkout.php');
+        exit;
+    }
+
     // 2. Setup receipt data for the frontend display
     $receipt_data = array(
         'firstName' => htmlspecialchars($firstName),
@@ -566,6 +587,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                         <span><?php echo htmlspecialchars($checkoutError); ?></span>
                     </div>
                 <?php endif; ?>
+                <div id="checkoutFieldAlert" class="alert alert-danger d-none mb-4" role="alert"></div>
 
                 <form method="POST" action="checkout.php" enctype="multipart/form-data" class="row g-5">
 
@@ -575,11 +597,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">First Name</label>
-                                    <input type="text" class="form-control bg-light" name="first_name" required value="<?php echo isset($_SESSION['user']['first_name']) ? htmlspecialchars($_SESSION['user']['first_name']) : ''; ?>">
+                                    <input id="checkoutFirstName" type="text" class="form-control bg-light" name="first_name" required value="<?php echo isset($_SESSION['user']['first_name']) ? htmlspecialchars($_SESSION['user']['first_name']) : ''; ?>" oninput="filterLettersOnly(this)">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Last Name</label>
-                                    <input type="text" class="form-control bg-light" name="last_name" required value="<?php echo isset($_SESSION['user']['last_name']) ? htmlspecialchars($_SESSION['user']['last_name']) : ''; ?>">
+                                    <input id="checkoutLastName" type="text" class="form-control bg-light" name="last_name" required value="<?php echo isset($_SESSION['user']['last_name']) ? htmlspecialchars($_SESSION['user']['last_name']) : ''; ?>" oninput="filterLettersOnly(this)">
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Email Address</label>
@@ -587,7 +609,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Phone Number</label>
-                                    <input type="tel" class="form-control bg-light" name="phone" required placeholder="+63 (XXX) XXX-XXXX" value="<?php echo isset($_SESSION['user']['phone']) ? htmlspecialchars($_SESSION['user']['phone']) : ''; ?>">
+                                    <input id="checkoutPhone" type="tel" class="form-control bg-light" name="phone" required placeholder="09171234567" value="<?php echo isset($_SESSION['user']['phone']) ? htmlspecialchars($_SESSION['user']['phone']) : ''; ?>" oninput="filterNumbersOnly(this)">
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Street Address</label>
@@ -599,7 +621,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">ZIP / Postal Code</label>
-                                    <input type="text" class="form-control bg-light" name="zipcode" required value="<?php echo isset($_SESSION['user']['postal_code']) ? htmlspecialchars($_SESSION['user']['postal_code']) : ''; ?>">
+                                    <input id="checkoutZipcode" type="text" class="form-control bg-light" name="zipcode" required value="<?php echo isset($_SESSION['user']['postal_code']) ? htmlspecialchars($_SESSION['user']['postal_code']) : ''; ?>" oninput="filterNumbersOnly(this)">
                                 </div>
                             </div>
                         </div>
@@ -851,6 +873,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     </script>
 
     <script>
+        function showCheckoutAlert(message) {
+            const el = document.getElementById('checkoutFieldAlert');
+            if (!el) return;
+            el.textContent = message;
+            el.classList.remove('d-none');
+        }
+
+        function hideCheckoutAlert() {
+            const el = document.getElementById('checkoutFieldAlert');
+            if (!el) return;
+            el.classList.add('d-none');
+        }
+
+        function filterLettersOnly(el) {
+            const original = el.value;
+            const filtered = original.replace(/[^A-Za-z\s]/g, '');
+            if (original !== filtered) {
+                el.value = filtered;
+                showCheckoutAlert('Please only use letters');
+            } else {
+                hideCheckoutAlert();
+            }
+        }
+
+        function filterNumbersOnly(el) {
+            const original = el.value;
+            const filtered = original.replace(/[^0-9]/g, '');
+            if (original !== filtered) {
+                el.value = filtered;
+                showCheckoutAlert('Use numbers only');
+            } else {
+                hideCheckoutAlert();
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const paymentMethods = document.querySelectorAll('.payment-method');
             const selectedMethodInput = document.getElementById('selected_payment_method');
@@ -908,6 +965,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                         return false;
                     }
 
+                    // Validate shipping name and number fields
+                    const firstNameField = document.getElementById('checkoutFirstName');
+                    const lastNameField = document.getElementById('checkoutLastName');
+                    const phoneField = document.getElementById('checkoutPhone');
+                    const zipcodeField = document.getElementById('checkoutZipcode');
+                    const lettersOnly = /^[A-Za-z\s]+$/;
+                    const numbersOnly = /^[0-9]+$/;
+
+                    if (firstNameField && !lettersOnly.test(firstNameField.value.trim())) {
+                        showCheckoutAlert('Please only use letters');
+                        firstNameField.focus();
+                        return false;
+                    }
+                    if (lastNameField && !lettersOnly.test(lastNameField.value.trim())) {
+                        showCheckoutAlert('Please only use letters');
+                        lastNameField.focus();
+                        return false;
+                    }
+                    if (phoneField && !numbersOnly.test(phoneField.value.trim())) {
+                        showCheckoutAlert('Use numbers only');
+                        phoneField.focus();
+                        return false;
+                    }
+                    if (zipcodeField && !numbersOnly.test(zipcodeField.value.trim())) {
+                        showCheckoutAlert('Use numbers only');
+                        zipcodeField.focus();
+                        return false;
+                    }
+
                     // Check all required payment fields for the selected method
                     const selectedMethod = selectedMethodInput.value;
                     const paymentFields = document.querySelectorAll(`#${selectedMethod}-fields .payment-required`);
@@ -929,6 +1015,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                         return false;
                     }
 
+                    hideCheckoutAlert();
                     // If all validation passes, submit the form
                     form.submit();
                 });

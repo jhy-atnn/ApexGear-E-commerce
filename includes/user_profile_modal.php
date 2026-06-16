@@ -31,11 +31,11 @@
                 <div class="row gx-3 gy-3">
                     <div class="col-12 col-md-6 form-group">
                         <label for="userFirstName">First Name</label>
-                        <input type="text" id="userFirstName" name="first_name" class="form-control" placeholder="First name" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['first_name'] ?? '') : ''; ?>">
+                        <input type="text" id="userFirstName" name="first_name" class="form-control" placeholder="First name" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['first_name'] ?? '') : ''; ?>" oninput="filterLettersOnly(this)">
                     </div>
                     <div class="col-12 col-md-6 form-group">
                         <label for="userLastName">Last Name</label>
-                        <input type="text" id="userLastName" name="last_name" class="form-control" placeholder="Last name" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['last_name'] ?? '') : ''; ?>">
+                        <input type="text" id="userLastName" name="last_name" class="form-control" placeholder="Last name" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['last_name'] ?? '') : ''; ?>" oninput="filterLettersOnly(this)">
                     </div>
                 </div>
                 <div class="form-group">
@@ -241,6 +241,29 @@
                 reader.readAsDataURL(file);
             }
         });
+
+        function showProfileAlert(message) {
+            const alertBox = document.getElementById('profileAlert');
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = message;
+            alertBox.classList.remove('d-none');
+        }
+
+        function hideProfileAlert() {
+            const alertBox = document.getElementById('profileAlert');
+            alertBox.classList.add('d-none');
+        }
+
+        function filterLettersOnly(el) {
+            const original = el.value;
+            const filtered = original.replace(/[^A-Za-z\s]/g, '');
+            if (original !== filtered) {
+                el.value = filtered;
+                showProfileAlert('Please only use letters');
+            } else {
+                hideProfileAlert();
+            }
+        }
 
         async function saveProfile() {
             const form = document.getElementById('userProfileForm');
