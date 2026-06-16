@@ -38,6 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             echo json_encode(['success' => false, 'message' => 'Please enter a valid email address.']);
             exit;
         }
+        if (!preg_match('/^[A-Za-z]+$/', $username) || !preg_match('/^[A-Za-z]+$/', $firstName) || !preg_match('/^[A-Za-z]+$/', $lastName) || ($middleName !== '' && !preg_match('/^[A-Za-z]+$/', $middleName))) {
+            echo json_encode(['success' => false, 'message' => 'Please only use Letters for username and name fields.']);
+            exit;
+        }
         if (strlen($username) > 50 || strlen($email) > 100) {
             echo json_encode(['success' => false, 'message' => 'Username or email is too long.']);
             exit;
@@ -487,7 +491,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                         <label>Username</label>
                         <div class="auth-input-wrap">
                             <i class="fas fa-user"></i>
-                            <input type="text" id="loginUsername" placeholder="Enter your username" autocomplete="username" required />
+                            <input type="text" id="loginUsername" placeholder="Enter your username" autocomplete="username" required oninput="filterLettersOnly(this)" />
                         </div>
                     </div>
                     <div class="auth-field">
@@ -524,7 +528,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                             <label>Username</label>
                             <div class="auth-input-wrap">
                                 <i class="fas fa-user"></i>
-                                <input type="text" id="regUsername" placeholder="Username" autocomplete="username" required />
+                                <input type="text" id="regUsername" placeholder="Username" autocomplete="username" required oninput="filterLettersOnly(this)" />
                             </div>
                         </div>
                         <div class="auth-field">
@@ -541,19 +545,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                         <div class="auth-field">
                             <label>First Name</label>
                             <div class="auth-input-wrap">
-                                <input type="text" id="regFname" placeholder="First" autocomplete="given-name" required />
+                                <input type="text" id="regFname" placeholder="First" autocomplete="given-name" required oninput="filterLettersOnly(this)" />
                             </div>
                         </div>
                         <div class="auth-field">
                             <label>Middle <span class="auth-opt">(opt.)</span></label>
                             <div class="auth-input-wrap">
-                                <input type="text" id="regMname" placeholder="M.I." autocomplete="additional-name" />
+                                <input type="text" id="regMname" placeholder="M.I." autocomplete="additional-name" oninput="filterLettersOnly(this)" />
                             </div>
                         </div>
                         <div class="auth-field">
                             <label>Last Name</label>
                             <div class="auth-input-wrap">
-                                <input type="text" id="regLname" placeholder="Last" autocomplete="family-name" required />
+                                <input type="text" id="regLname" placeholder="Last" autocomplete="family-name" required oninput="filterLettersOnly(this)" />
                             </div>
                         </div>
                     </div>
@@ -670,6 +674,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             document.getElementById(id).classList.add('d-none');
         }
 
+        function filterLettersOnly(el) {
+            const original = el.value;
+            const filtered = original.replace(/[^A-Za-z]/g, '');
+            if (original !== filtered) {
+                el.value = filtered;
+                const alertId = el.id === 'loginUsername' ? 'loginAlert' : 'registerAlert';
+                showAlert(alertId, 'Please only use Letters');
+            } else {
+                const alertId = el.id === 'loginUsername' ? 'loginAlert' : 'registerAlert';
+                hideAlert(alertId);
+            }
+        }
+
         // ── Loading state ─────────────────────────────────────────────────────────────
         function setLoading(btnId, on) {
             const btn = document.getElementById(btnId);
@@ -694,8 +711,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         async function doLogin() {
             const u = document.getElementById('loginUsername').value.trim();
             const p = document.getElementById('loginPassword').value;
+            const lettersOnly = /^[A-Za-z]+$/;
             if (!u || !p) {
                 showAlert('loginAlert', 'Please fill in both fields.');
+                return;
+            }
+            if (!lettersOnly.test(u)) {
+                showAlert('loginAlert', 'Please only use Letters');
                 return;
             }
             hideAlert('loginAlert');
@@ -725,8 +747,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             const g = document.getElementById('regGender').value;
             const e = document.getElementById('regEmail').value.trim();
             const p = document.getElementById('regPassword').value;
+            const lettersOnly = /^[A-Za-z]+$/;
             if (!u || !l || !f || !g || !e || !p) {
                 showAlert('registerAlert', 'All required fields are required.');
+                return;
+            }
+            if (!lettersOnly.test(u) || !lettersOnly.test(f) || !lettersOnly.test(l) || (m && !lettersOnly.test(m))) {
+                showAlert('registerAlert', 'Please only use Letters');
                 return;
             }
             hideAlert('registerAlert');
