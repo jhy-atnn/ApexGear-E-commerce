@@ -409,6 +409,74 @@ class Inventory
         return $prefix . $imagePath;
     }
 
+    public function syncCompletedOrderPayments($orderId = null)
+    {
+        $paidStatus = 'Paid';
+        $adminCompletedMethod = 'Admin Completed';
+
+        if ($orderId !== null) {
+            $orderId = (int)$orderId;
+
+            $lookup = $this->conn->prepare("
+                SELECT o.order_id, p.payment_id
+                FROM orders_tbl o
+                LEFT JOIN payments_tbl p ON o.order_id = p.order_id
+                WHERE o.order_id = ? AND o.order_status = 'Completed'
+                LIMIT 1
+            ");
+            $lookup->bind_param("i", $orderId);
+            $lookup->execute();
+            $row = $lookup->get_result()->fetch_assoc();
+            $lookup->close();
+
+            if (!$row) {
+                return false;
+            }
+
+            if (!empty($row['payment_id'])) {
+                $stmt = $this->conn->prepare("UPDATE payments_tbl SET status = ? WHERE order_id = ?");
+                $stmt->bind_param("si", $paidStatus, $orderId);
+                $ok = $stmt->execute();
+                $stmt->close();
+                return $ok;
+            }
+
+            $stmt = $this->conn->prepare("INSERT INTO payments_tbl (order_id, method, status) VALUES (?, ?, ?)");
+            $stmt->bind_param("iss", $orderId, $adminCompletedMethod, $paidStatus);
+            $ok = $stmt->execute();
+            $stmt->close();
+            return $ok;
+        }
+
+        $stmt = $this->conn->prepare("
+            UPDATE payments_tbl p
+            INNER JOIN orders_tbl o ON p.order_id = o.order_id
+            SET p.status = ?
+            WHERE o.order_status = 'Completed' AND LOWER(p.status) <> 'paid'
+        ");
+        $stmt->bind_param("s", $paidStatus);
+        $ok = $stmt->execute();
+        $stmt->close();
+
+        $missing = $this->conn->query("
+            SELECT o.order_id
+            FROM orders_tbl o
+            LEFT JOIN payments_tbl p ON o.order_id = p.order_id
+            WHERE o.order_status = 'Completed' AND p.payment_id IS NULL
+        ");
+        if ($missing) {
+            $insert = $this->conn->prepare("INSERT INTO payments_tbl (order_id, method, status) VALUES (?, ?, ?)");
+            while ($row = $missing->fetch_assoc()) {
+                $missingOrderId = (int)$row['order_id'];
+                $insert->bind_param("iss", $missingOrderId, $adminCompletedMethod, $paidStatus);
+                $insert->execute();
+            }
+            $insert->close();
+        }
+
+        return $ok;
+    }
+
     // Temporary mock for Orders to prevent crashes until we do the Orders module
 // 1. FOR ADMIN: Fetch all orders for the management dashboard
     public function getAllOrders() {
@@ -427,7 +495,7 @@ class Inventory
                    ) AS display_customer_name,
                    sa.phone_number, sa.street_address, sa.city, sa.zip_code,
                    p.method AS payment_method,
-                   p.status AS payment_status,
+                   CASE WHEN o.order_status = 'Completed' THEN 'Paid' ELSE p.status END AS payment_status,
                    p.qr_screenshot_path AS payment_screenshot,
                    p.transaction_id,
                    (SELECT SUM(quantity) FROM order_items_tbl WHERE order_id = o.order_id) as items_count

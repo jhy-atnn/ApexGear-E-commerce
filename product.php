@@ -370,6 +370,120 @@ function renderStars($rating, $max = 5) {
         }
 
         /* ── Description & Shipping Info Tabs ── */
+        .review-order-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .review-order-card {
+            width: 100%;
+            text-align: left;
+            border: 1px solid var(--apex-border, #e8ecf0);
+            background: #fff;
+            border-radius: 12px;
+            padding: 14px 15px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            cursor: pointer;
+            transition: border-color .18s, box-shadow .18s, transform .18s, background .18s;
+        }
+
+        .review-order-card:hover,
+        .review-order-card.active {
+            border-color: var(--apex-accent, #00c2ff);
+            background: linear-gradient(135deg, rgba(0, 194, 255, .08), rgba(11, 47, 168, .04));
+            box-shadow: 0 12px 28px rgba(11, 47, 168, .09);
+            transform: translateY(-1px);
+        }
+
+        .review-order-icon {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            border-radius: 10px;
+            color: var(--apex-blue, #0b2fa8);
+            background: rgba(0, 194, 255, .12);
+        }
+
+        .review-order-card.active .review-order-icon {
+            color: #fff;
+            background: linear-gradient(135deg, var(--apex-accent, #00c2ff), var(--apex-blue, #0b2fa8));
+        }
+
+        .review-order-ref {
+            font-weight: 800;
+            color: var(--apex-dark, #0d1117);
+            line-height: 1.2;
+            overflow-wrap: anywhere;
+        }
+
+        .review-order-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin-top: 7px;
+            color: var(--apex-muted, #8a9aaa);
+            font-size: .76rem;
+        }
+
+        .review-order-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #f3f6fb;
+        }
+
+        .review-star-picker {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            padding: 10px 12px;
+            border: 1px solid var(--apex-border, #e8ecf0);
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        .review-star-btn {
+            border: 0;
+            background: transparent;
+            color: #cbd3df;
+            font-size: 1.55rem;
+            line-height: 1;
+            padding: 2px;
+            cursor: pointer;
+            transition: color .15s, transform .15s;
+        }
+
+        .review-star-btn:hover,
+        .review-star-btn.active {
+            color: #f5a623;
+            transform: translateY(-1px) scale(1.05);
+        }
+
+        .review-rating-text {
+            color: var(--apex-muted, #8a9aaa);
+            font-size: .82rem;
+            font-weight: 700;
+        }
+
+        .review-form-error {
+            display: none;
+            color: #d63b52;
+            font-size: .78rem;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        .review-form-error.show {
+            display: block;
+        }
+
         .info-tabs-section {
             background: #fff;
             border-radius: 16px;
@@ -917,43 +1031,65 @@ function renderStars($rating, $max = 5) {
                                 (and once you haven't already reviewed it for that order).
                             </p>
                         <?php else: ?>
-                        <form method="POST" action="product.php?id=<?php echo $product_id; ?>#submit-review">
+                        <form method="POST" action="product.php?id=<?php echo $product_id; ?>#submit-review" id="reviewSubmitForm">
                             <input type="hidden" name="submit_product_review" value="1">
+                            <?php
+                            $activeReviewOrderId = $selectedReviewOrderId;
+                            if ($activeReviewOrderId <= 0 && count($reviewableOrders) === 1) {
+                                $activeReviewOrderId = intval($reviewableOrders[0]['order_id']);
+                            }
+                            ?>
+                            <input type="hidden" name="order_id" id="reviewOrderInput" value="<?php echo $activeReviewOrderId > 0 ? $activeReviewOrderId : ''; ?>">
 
-                            <?php if (count($reviewableOrders) === 1): ?>
-                                <input type="hidden" name="order_id" value="<?php echo intval($reviewableOrders[0]['order_id']); ?>">
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold small text-uppercase text-muted">Reviewing order</label>
-                                    <div class="form-control-plaintext small fw-semibold">
-                                        Ref: <?php echo htmlspecialchars($reviewableOrders[0]['reference_number'] ?? $reviewableOrders[0]['order_id']); ?>
-                                    </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-uppercase text-muted">Which order is this review for?</label>
+                                <div class="review-order-grid">
+                                    <?php foreach ($reviewableOrders as $ro): ?>
+                                        <?php
+                                            $roId = intval($ro['order_id']);
+                                            $isActiveOrder = $activeReviewOrderId === $roId;
+                                            $ref = $ro['reference_number'] ?? $roId;
+                                            $orderDate = !empty($ro['created_at']) ? date('M d, Y', strtotime($ro['created_at'])) : 'Completed order';
+                                            $orderTotal = isset($ro['total_amount']) ? '₱' . number_format((float)$ro['total_amount'], 2) : '';
+                                        ?>
+                                        <button type="button"
+                                                class="review-order-card <?php echo $isActiveOrder ? 'active' : ''; ?>"
+                                                data-order-id="<?php echo $roId; ?>"
+                                                onclick="selectReviewOrder(this)">
+                                            <span class="review-order-icon"><i class="fas fa-receipt"></i></span>
+                                            <span class="flex-grow-1">
+                                                <span class="review-order-ref">Ref: <?php echo htmlspecialchars($ref); ?></span>
+                                                <span class="review-order-meta">
+                                                    <span><i class="far fa-calendar"></i><?php echo htmlspecialchars($orderDate); ?></span>
+                                                    <?php if ($orderTotal !== ''): ?>
+                                                        <span><i class="fas fa-peso-sign"></i><?php echo htmlspecialchars($orderTotal); ?></span>
+                                                    <?php endif; ?>
+                                                </span>
+                                            </span>
+                                        </button>
+                                    <?php endforeach; ?>
                                 </div>
-                            <?php else: ?>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold small text-uppercase text-muted">Which order is this review for?</label>
-                                    <select class="form-select" name="order_id" required>
-                                        <option value="">Choose order</option>
-                                        <?php foreach ($reviewableOrders as $ro): ?>
-                                            <option value="<?php echo intval($ro['order_id']); ?>"
-                                                <?php echo ($selectedReviewOrderId === intval($ro['order_id'])) ? 'selected' : ''; ?>>
-                                                Ref: <?php echo htmlspecialchars($ro['reference_number'] ?? $ro['order_id']); ?>
-                                                (<?php echo date('M d, Y', strtotime($ro['created_at'])); ?>)
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                            <?php endif; ?>
+                                <div class="review-form-error" id="reviewOrderError">Please select the completed order for this review.</div>
+                            </div>
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold small text-uppercase text-muted">Rating</label>
-                                <select class="form-select" name="rating" required>
-                                    <option value="">Choose rating</option>
-                                    <option value="5">5 Stars</option>
-                                    <option value="4">4 Stars</option>
-                                    <option value="3">3 Stars</option>
-                                    <option value="2">2 Stars</option>
-                                    <option value="1">1 Star</option>
-                                </select>
+                                <input type="hidden" name="rating" id="reviewRatingInput" value="">
+                                <div class="d-flex align-items-center flex-wrap gap-3">
+                                    <div class="review-star-picker" role="radiogroup" aria-label="Choose rating">
+                                        <?php for ($star = 1; $star <= 5; $star++): ?>
+                                            <button type="button"
+                                                    class="review-star-btn"
+                                                    data-rating="<?php echo $star; ?>"
+                                                    aria-label="<?php echo $star; ?> star<?php echo $star > 1 ? 's' : ''; ?>"
+                                                    onclick="setReviewRating(<?php echo $star; ?>)">
+                                                <i class="fas fa-star"></i>
+                                            </button>
+                                        <?php endfor; ?>
+                                    </div>
+                                    <span class="review-rating-text" id="reviewRatingText">Choose rating</span>
+                                </div>
+                                <div class="review-form-error" id="reviewRatingError">Please choose a star rating.</div>
                             </div>
 
                             <div class="mb-3">
@@ -1110,6 +1246,55 @@ function renderStars($rating, $max = 5) {
                 extraReviews.style.setProperty('display', 'flex', 'important');
                 extraReviews.style.flexDirection = 'column';
                 loadMoreBtn.style.display = 'none';
+            });
+        }
+
+        function selectReviewOrder(btn) {
+            const input = document.getElementById('reviewOrderInput');
+            const error = document.getElementById('reviewOrderError');
+            document.querySelectorAll('.review-order-card').forEach(card => card.classList.remove('active'));
+            btn.classList.add('active');
+            if (input) input.value = btn.dataset.orderId || '';
+            if (error) error.classList.remove('show');
+        }
+
+        function setReviewRating(rating) {
+            const input = document.getElementById('reviewRatingInput');
+            const text = document.getElementById('reviewRatingText');
+            const error = document.getElementById('reviewRatingError');
+            const value = Number(rating);
+
+            if (input) input.value = value;
+            document.querySelectorAll('.review-star-btn').forEach(btn => {
+                btn.classList.toggle('active', Number(btn.dataset.rating) <= value);
+                btn.setAttribute('aria-checked', Number(btn.dataset.rating) === value ? 'true' : 'false');
+            });
+            if (text) text.textContent = value + ' star' + (value > 1 ? 's' : '');
+            if (error) error.classList.remove('show');
+        }
+
+        const reviewSubmitForm = document.getElementById('reviewSubmitForm');
+        if (reviewSubmitForm) {
+            reviewSubmitForm.addEventListener('submit', function (event) {
+                const orderInput = document.getElementById('reviewOrderInput');
+                const ratingInput = document.getElementById('reviewRatingInput');
+                const orderError = document.getElementById('reviewOrderError');
+                const ratingError = document.getElementById('reviewRatingError');
+                let valid = true;
+
+                if (!orderInput || !orderInput.value) {
+                    orderError?.classList.add('show');
+                    valid = false;
+                }
+
+                if (!ratingInput || !ratingInput.value) {
+                    ratingError?.classList.add('show');
+                    valid = false;
+                }
+
+                if (!valid) {
+                    event.preventDefault();
+                }
             });
         }
     </script>

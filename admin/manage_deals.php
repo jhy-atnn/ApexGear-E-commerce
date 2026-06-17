@@ -220,6 +220,7 @@ foreach ($promoCodes as $p) {
         <a href="manage_products.php"><i class="fas fa-boxes"></i> Manage Products</a>
         <a href="manage_archives.php"><i class="fas fa-archive"></i> Archives</a>
         <a href="manage_users.php"><i class="fas fa-users"></i> Users</a>
+        <a href="report.php"><i class="fas fa-chart-pie"></i> Reports &amp; Analytics</a>
         <a href="manage_deals.php" class="active"><i class="fas fa-ticket-alt"></i> Promo Codes</a>
         
         <div class="sidebar-section-label">Store</div>

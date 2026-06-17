@@ -194,6 +194,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                 'last_name' => $pending['last_name']
             ];
 
+            $_SESSION['apex_welcome_toast'] = [
+                'message' => 'Welcome, ' . $pending['username'] . '!'
+            ];
+
             setcookie('apex_logged_in', (string)time(), time() + 60, '/');
             echo json_encode(['success' => true, 'message' => 'Account created! Welcome to ApeX Gear.']);
         } catch (Throwable $e) {
@@ -300,6 +304,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             'birthday' => $found['birthday'] ?? null
         ];
 
+        $_SESSION['apex_welcome_toast'] = [
+            'message' => 'Welcome back, ' . $found['username'] . '!'
+        ];
+
         // ── SYNC FAVORITES ──
         // Fetch user's saved favorites from the database into the session
         $_SESSION['favorites'] = [];
@@ -319,6 +327,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                 'price' => $favRow['price']
             ];
         }
+
+        $_SESSION['apex_welcome_toast'] = [
+            'message' => 'Welcome back, ' . $fakeName . '!'
+        ];
 
         setcookie('apex_logged_in', (string)time(), time() + 60, '/');
         echo json_encode(['success' => true, 'message' => 'Welcome back, ' . htmlspecialchars($found['username']) . '!']);

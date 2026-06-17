@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($order_id > 0 && in_array($order_status, $allowed, true)) {
 
-            $fulfillmentStatuses = ['On Process', 'Shipped', 'Delivered', 'Completed'];
+            $fulfillmentStatuses = ['On Process', 'Shipped', 'Delivered'];
             $blockedByPayment    = false;
 
             if (in_array($order_status, $fulfillmentStatuses, true)) {
@@ -63,6 +63,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // ── NOTIFICATION SYSTEM TRIGGER ──
                     $db = new Database();
                     $conn = $db->getConnection();
+
+                    if ($order_status === 'Completed') {
+                        if ($inv->syncCompletedOrderPayments($order_id)) {
+                            $status_message .= ' Payment status was also set to Paid.';
+                            $inv->logAdminActivity('payment_status', "Updated order #{$order_id} payment status to Paid.", $admin_id);
+                        }
+                    }
 
                     // Fetch the user_id and reference number for this specific order
                     $fetchStmt = $conn->prepare("SELECT user_id, order_ref_code AS reference_number FROM orders_tbl WHERE order_id = ?");
@@ -164,6 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Fetch all orders for the admin table
 $inv    = new Inventory();
+$inv->syncCompletedOrderPayments();
 $orders = $inv->getAllOrders();
 
 $processingOrders = [];
@@ -935,6 +943,7 @@ $tabs = [
             <a href="manage_products.php"><i class="fas fa-boxes"></i> Manage Products</a>
             <a href="manage_archives.php"><i class="fas fa-archive"></i> Archives</a>
             <a href="manage_users.php"><i class="fas fa-users"></i> Users</a>
+            <a href="report.php"><i class="fas fa-chart-pie"></i> Reports &amp; Analytics</a>
             <a href="manage_deals.php"><i class="fas fa-percentage"></i> Deals &amp; Promos</a>
             <div class="sidebar-section-label">Store</div>
             <a href="../index.php" target="_blank"><i class="fas fa-store"></i> View Live Store</a>

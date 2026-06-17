@@ -4,6 +4,11 @@ if (!isset($inventoryManager)) {
     /** @var Inventory $inventoryManager */
     $inventoryManager = new Inventory();
 }
+$welcomeToast = null;
+if (!empty($_SESSION['apex_welcome_toast']) && is_array($_SESSION['apex_welcome_toast'])) {
+    $welcomeToast = $_SESSION['apex_welcome_toast'];
+    unset($_SESSION['apex_welcome_toast']);
+}
 ?>
 
 <!-- ── Topbar ── -->
@@ -84,6 +89,31 @@ if (!isset($inventoryManager)) {
         </div>
     </div>
 </nav>
+
+<?php if ($welcomeToast): ?>
+    <div class="apex-floating-toast" id="apexWelcomeToast" role="status" aria-live="polite">
+        <div class="apex-floating-toast__icon"><i class="fas fa-bolt"></i></div>
+        <div class="apex-floating-toast__body">
+            <strong><?php echo htmlspecialchars($welcomeToast['message'] ?? 'Welcome to ApeX Gear!'); ?></strong>
+            <span>Good to see you on ApeX Gear.</span>
+        </div>
+        <button type="button" class="apex-floating-toast__close" aria-label="Close notification" onclick="dismissApexWelcomeToast()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <script>
+        function dismissApexWelcomeToast() {
+            const toast = document.getElementById('apexWelcomeToast');
+            if (!toast) return;
+            toast.classList.add('is-hiding');
+            setTimeout(() => toast.remove(), 280);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(dismissApexWelcomeToast, 5000);
+        });
+    </script>
+<?php endif; ?>
 
 <!-- Modals for all visitors -->
 <?php include_once __DIR__ . '/cart_modal.php'; ?>

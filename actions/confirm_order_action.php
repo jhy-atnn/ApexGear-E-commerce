@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../database/db_connect.php';
+require_once __DIR__ . '/../classes/Inventory.php';
 
 header('Content-Type: application/json');
 
@@ -44,6 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $updateStmt->bind_param("i", $order_id);
     
     if ($updateStmt->execute()) {
+        $inventory = new Inventory();
+        $inventory->syncCompletedOrderPayments($order_id);
         echo json_encode(['success' => true, 'message' => 'Order confirmed and moved to archives!']);
     } else {
         echo json_encode(['success' => false, 'message' => 'Database error while completing order.']);
