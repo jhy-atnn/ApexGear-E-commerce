@@ -503,7 +503,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                         <label>Username</label>
                         <div class="auth-input-wrap">
                             <i class="fas fa-user"></i>
-                            <input type="text" id="loginUsername" placeholder="Enter your username" autocomplete="username" required oninput="filterLettersOnly(this)" />
+                            <input type="text" id="loginUsername" placeholder="Enter your username" autocomplete="username" required />
                         </div>
                     </div>
                     <div class="auth-field">
@@ -540,7 +540,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                             <label>Username</label>
                             <div class="auth-input-wrap">
                                 <i class="fas fa-user"></i>
-                                <input type="text" id="regUsername" placeholder="Username" autocomplete="username" required oninput="filterLettersOnly(this)" />
+                                <input type="text" id="regUsername" placeholder="Username" autocomplete="username" required />
                             </div>
                         </div>
                         <div class="auth-field">
@@ -723,13 +723,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         async function doLogin() {
             const u = document.getElementById('loginUsername').value.trim();
             const p = document.getElementById('loginPassword').value;
-            const lettersOnly = /^[A-Za-z]+$/;
             if (!u || !p) {
                 showAlert('loginAlert', 'Please fill in both fields.');
-                return;
-            }
-            if (!lettersOnly.test(u)) {
-                showAlert('loginAlert', 'Please only use Letters');
                 return;
             }
             hideAlert('loginAlert');
@@ -764,7 +759,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                 showAlert('registerAlert', 'All required fields are required.');
                 return;
             }
-            if (!lettersOnly.test(u) || !lettersOnly.test(f) || !lettersOnly.test(l) || (m && !lettersOnly.test(m))) {
+            if (!lettersOnly.test(f) || !lettersOnly.test(l) || (m && !lettersOnly.test(m))) {
                 showAlert('registerAlert', 'Please only use Letters');
                 return;
             }

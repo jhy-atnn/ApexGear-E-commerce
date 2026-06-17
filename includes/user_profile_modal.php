@@ -93,11 +93,11 @@
                 <div class="row gx-3 gy-3">
                     <div class="col-12 col-md-6 form-group">
                         <label for="userCity">City</label>
-                        <input type="text" id="userCity" name="city" class="form-control" placeholder="City" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['city'] ?? '') : ''; ?>">
+                        <input type="text" id="userCity" name="city" class="form-control" placeholder="City" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['city'] ?? '') : ''; ?>" oninput="filterLettersOnly(this)">
                     </div>
                     <div class="col-12 col-md-6 form-group">
                         <label for="userPostalCode">Postal Code</label>
-                        <input type="text" id="userPostalCode" name="postal_code" class="form-control" placeholder="Postal code" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['postal_code'] ?? '') : ''; ?>">
+                        <input type="text" id="userPostalCode" name="postal_code" class="form-control" placeholder="Postal code" value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['postal_code'] ?? '') : ''; ?>" oninput="filterNumbersOnly(this)">
                     </div>
                 </div>
 
@@ -260,6 +260,17 @@
             if (original !== filtered) {
                 el.value = filtered;
                 showProfileAlert('Please only use letters');
+            } else {
+                hideProfileAlert();
+            }
+        }
+
+        function filterNumbersOnly(el) {
+            const original = el.value;
+            const filtered = original.replace(/[^0-9]/g, '');
+            if (original !== filtered) {
+                el.value = filtered;
+                showProfileAlert('Please only use numbers');
             } else {
                 hideProfileAlert();
             }

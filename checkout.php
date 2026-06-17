@@ -653,7 +653,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">City</label>
-                                    <input type="text" class="form-control bg-light" name="city" required value="<?php echo isset($_SESSION['user']['city']) ? htmlspecialchars($_SESSION['user']['city']) : ''; ?>">
+                                    <input type="text" class="form-control bg-light" name="city" required value="<?php echo isset($_SESSION['user']['city']) ? htmlspecialchars($_SESSION['user']['city']) : ''; ?>" oninput="filterLettersOnly(this)">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">ZIP / Postal Code</label>
@@ -692,19 +692,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             <div id="card-fields" class="payment-fields row g-3" style="display: none;">
                                 <div class="col-12">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Name on Card</label>
-                                    <input type="text" class="form-control bg-light payment-required" name="card_name" placeholder="John Doe">
+                                    <input type="text" class="form-control bg-light payment-required" name="card_name" placeholder="John Doe" oninput="filterLettersOnly(this)">
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Card Number</label>
-                                    <input type="text" class="form-control bg-light payment-required" name="card_number" placeholder="0000 0000 0000 0000" pattern="\d{16}" title="16 digit card number" maxlength="19">
+                                    <input type="text" class="form-control bg-light payment-required" name="card_number" placeholder="0000 0000 0000 0000" pattern="\d{16}" title="16 digit card number" maxlength="19" oninput="filterNumbersOnly(this)">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Expiration Date</label>
-                                    <input type="text" class="form-control bg-light payment-required" name="card_expiry" placeholder="MM/YY" maxlength="5">
+                                    <input type="month" class="form-control bg-light payment-required" name="card_expiry">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">CVV</label>
-                                    <input type="password" class="form-control bg-light payment-required" name="card_cvv" placeholder="123" maxlength="3">
+                                    <input type="text" class="form-control bg-light payment-required" name="card_cvv" placeholder="123" maxlength="3" oninput="filterNumbersOnly(this)">
                                 </div>
                             </div>
 
