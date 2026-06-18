@@ -17,6 +17,10 @@ $categoryAliases = [
     'laptop' => 'Laptop',
     'desktops' => 'Desktop / PC',
     'desktop' => 'Desktop / PC',
+    'pc' => 'Desktop / PC',
+    'pcs' => 'Desktop / PC',
+    'desktop pc' => 'Desktop / PC',
+    'desktop/pc' => 'Desktop / PC',
     'desktop / pc' => 'Desktop / PC',
     'cellphones' => 'Phone',
     'cellphone' => 'Phone',
@@ -26,26 +30,43 @@ $categoryAliases = [
     'tablets' => 'Tablet',
     'audio' => 'Headphones / Audio',
     'headphones' => 'Headphones / Audio',
+    'headphone' => 'Headphones / Audio',
+    'headphones audio' => 'Headphones / Audio',
+    'headphones/audio' => 'Headphones / Audio',
     'headphones / audio' => 'Headphones / Audio',
+    'accessory' => 'Accessories / Peripherals',
     'accessories' => 'Accessories / Peripherals',
     'peripherals' => 'Accessories / Peripherals',
     'peripheral' => 'Accessories / Peripherals',
+    'accessories peripherals' => 'Accessories / Peripherals',
+    'accessories/peripherals' => 'Accessories / Peripherals',
     'accessories / peripherals' => 'Accessories / Peripherals',
     'cpu' => 'CPU',
     'gpu' => 'GPU',
 ];
 
+$normalizeCategory = static function (string $category) use (&$categoryAliases): string {
+    $category = trim($category);
+    if ($category === '') {
+        return '';
+    }
+
+    $categoryKey = mb_strtolower($category, 'UTF-8');
+    $categoryKey = preg_replace('/\s+/', ' ', $categoryKey);
+    return $categoryAliases[$categoryKey] ?? $category;
+};
+
 $categoryMap = [];
 foreach ($allProducts as $product) {
     $category = trim($product['category'] ?? '');
     if ($category !== '') {
-        $categoryMap[mb_strtolower($category, 'UTF-8')] = $category;
+        $categoryMap[mb_strtolower($category, 'UTF-8')] = $normalizeCategory($category);
     }
 }
 
 if ($activeCategory !== '') {
     $categoryKey = mb_strtolower($activeCategory, 'UTF-8');
-    $activeCategory = $categoryMap[$categoryKey] ?? ($categoryAliases[$categoryKey] ?? $activeCategory);
+    $activeCategory = $categoryMap[$categoryKey] ?? $normalizeCategory($activeCategory);
 }
 
 // Search filter
@@ -67,10 +88,11 @@ if ($searchQuery !== '') {
 
 // Category filter
 if ($activeCategory !== '') {
+    $normalizedActiveCategory = $normalizeCategory($activeCategory);
     $products = array_filter(
         $products,
         fn($p) =>
-        mb_strtolower($p['category'] ?? '', 'UTF-8') === mb_strtolower($activeCategory, 'UTF-8')
+        mb_strtolower($normalizeCategory((string) ($p['category'] ?? '')), 'UTF-8') === mb_strtolower($normalizedActiveCategory, 'UTF-8')
     );
     $products = array_values($products);
 }
@@ -184,7 +206,7 @@ sort($allCategories);
                                 <?php foreach ($categoryOptions as $val => $label): ?>
                                     <li>
                                         <a href="#" class="apex-sort-item <?php echo $activeCategory === $val ? 'active' : ''; ?>"
-                                            onclick="applyCategory(<?php echo json_encode($val); ?>); return false;">
+                                            onclick="applyCategory(<?php echo htmlspecialchars(json_encode($val), ENT_QUOTES, 'UTF-8'); ?>); return false;">
                                             <?php echo htmlspecialchars($label); ?>
                                             <?php if ($activeCategory === $val): ?>
                                                 <i class="fas fa-check ms-auto"></i>

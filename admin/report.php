@@ -966,8 +966,8 @@ foreach ($locationRows as $row) {
 
         @media print {
             @page {
-                size: A4;
-                margin: 12mm;
+                size: A4 landscape;
+                margin: 10mm;
             }
 
             * {
@@ -1014,13 +1014,24 @@ foreach ($locationRows as $row) {
             .report-panel {
                 border-color: #cfd8e6 !important;
                 box-shadow: none !important;
-                break-inside: avoid;
-                page-break-inside: avoid;
+                overflow: visible !important;
             }
 
             .metric-card {
                 min-height: 104px;
                 padding: 12px;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .report-panel {
+                break-inside: auto;
+                page-break-inside: auto;
+            }
+
+            .report-panel-header {
+                break-after: avoid;
+                page-break-after: avoid;
             }
 
             .metric-value {
@@ -1043,6 +1054,8 @@ foreach ($locationRows as $row) {
 
             .trend-chart {
                 min-height: 190px;
+                break-inside: avoid;
+                page-break-inside: avoid;
             }
 
             .trend-chart svg {
@@ -1055,7 +1068,22 @@ foreach ($locationRows as $row) {
             }
 
             .analytics-table {
-                font-size: 8.5pt;
+                width: 100% !important;
+                table-layout: fixed;
+                font-size: 8pt;
+                page-break-inside: auto;
+            }
+
+            .analytics-table th,
+            .analytics-table td {
+                padding: 6px 5px;
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+
+            .analytics-table tr {
+                break-inside: avoid;
+                page-break-inside: avoid;
             }
         }
     </style>

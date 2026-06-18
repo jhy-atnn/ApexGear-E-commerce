@@ -22,7 +22,7 @@ if (!empty($_SESSION['apex_welcome_toast']) && is_array($_SESSION['apex_welcome_
             <a href="tel:+1234567890">+63 912 255 3546</a>
             <span class="mx-2">|</span>
             <i class="fas fa-envelope me-1"></i>
-            <a href="mailto:apexgear26@gmail.com">apexgear26@gmail.com</a>
+            <a href="mailto:apexgear26@gmail.com">apex26gear@gmail.com</a>
         </div>
         <div class="d-flex align-items-center gap-3">
             <span>Free shipping on orders over ₱5,000 </span>
@@ -54,6 +54,9 @@ if (!empty($_SESSION['apex_welcome_toast']) && is_array($_SESSION['apex_welcome_
                     <div class="nav-search-field">
                         <button class="nav-search-toggle" type="button" aria-label="Search products" aria-expanded="false">
                             <i class="fas fa-search"></i>
+                        </button>
+                        <button class="nav-search-clear" type="button" aria-label="Clear search">
+                            <i class="fas fa-times"></i>
                         </button>
                         <input type="search" class="nav-product-search" name="q" value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" placeholder="Search products..." autocomplete="off">
                     </div>

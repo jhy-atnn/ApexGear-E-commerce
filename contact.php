@@ -1,4 +1,10 @@
-<?php session_start(); $currentPage = 'contact'; ?>
+<?php
+session_start();
+$currentPage = 'contact';
+$contactFlash = $_SESSION['contact_flash'] ?? null;
+$contactOld = $_SESSION['contact_old'] ?? [];
+unset($_SESSION['contact_flash'], $_SESSION['contact_old']);
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -41,7 +47,7 @@
                         <p class="contact-info-sub">Our tech-savvy team is available 24/7. Reach us through any of the channels below.</p>
                         <div class="contact-line"><i class="fas fa-location-dot"></i><div><strong>Main Office</strong><span>Ayala Avenue, Makati City, Philippines</span></div></div>
                         <div class="contact-line"><i class="fas fa-phone"></i><div><strong>Phone</strong><span>+63 912 255 3546</span></div></div>
-                        <div class="contact-line"><i class="fas fa-envelope"></i><div><strong>Email</strong><span>apexgear26@gmail.com</span></div></div>
+                        <div class="contact-line"><i class="fas fa-envelope"></i><div><strong>Email</strong><span>apex26gear@gmail.com</span></div></div>
                         <div class="contact-line"><i class="fas fa-clock"></i><div><strong>Hours</strong><span>Mon–Sat, 9:00 AM – 9:00 PM</span></div></div>
                         <div class="contact-socials">
                             <a href="#"><i class="fab fa-facebook-f"></i></a>
@@ -54,23 +60,29 @@
                 <div class="col-lg-7 fade-up">
                     <div class="contact-form-card">
                         <h3 class="contact-form-title">Send Us a Message</h3>
+                        <?php if ($contactFlash): ?>
+                            <div class="contact-alert contact-alert-<?php echo htmlspecialchars($contactFlash['type'] ?? 'error'); ?>">
+                                <i class="fas <?php echo ($contactFlash['type'] ?? '') === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; ?>"></i>
+                                <span><?php echo htmlspecialchars($contactFlash['message'] ?? ''); ?></span>
+                            </div>
+                        <?php endif; ?>
                         <form method="POST" action="actions/contact_action.php">
                             <div class="row g-3">
                                 <div class="col-sm-6">
                                     <label class="support-label" for="c_name">Full Name</label>
-                                    <input type="text" id="c_name" name="name" class="form-control" required>
+                                    <input type="text" id="c_name" name="name" class="form-control" value="<?php echo htmlspecialchars($contactOld['name'] ?? ''); ?>" required>
                                 </div>
                                 <div class="col-sm-6">
                                     <label class="support-label" for="c_email">Email Address</label>
-                                    <input type="email" id="c_email" name="email" class="form-control" required>
+                                    <input type="email" id="c_email" name="email" class="form-control" value="<?php echo htmlspecialchars($contactOld['email'] ?? ''); ?>" required>
                                 </div>
                                 <div class="col-12">
                                     <label class="support-label" for="c_subject">Subject</label>
-                                    <input type="text" id="c_subject" name="subject" class="form-control" required>
+                                    <input type="text" id="c_subject" name="subject" class="form-control" value="<?php echo htmlspecialchars($contactOld['subject'] ?? ''); ?>" required>
                                 </div>
                                 <div class="col-12">
                                     <label class="support-label" for="c_msg">Message</label>
-                                    <textarea id="c_msg" name="message" class="form-control" rows="5" required></textarea>
+                                    <textarea id="c_msg" name="message" class="form-control" rows="5" required><?php echo htmlspecialchars($contactOld['message'] ?? ''); ?></textarea>
                                 </div>
                                 <div class="col-12">
                                     <button type="submit" class="btn-apex"><i class="fas fa-paper-plane me-2"></i>Send Message</button>

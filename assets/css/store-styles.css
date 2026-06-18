@@ -531,6 +531,11 @@
         padding-bottom: 28px;
     }
 
+    .store-hero-copy {
+        top: auto !important;
+        transform: none !important;
+    }
+
     .store-hero h1 {
         font-size: 2.4rem;
     }
@@ -557,5 +562,59 @@
 
     .product-img {
         height: 190px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .store-hero .container {
+        padding-top: 30px;
+        padding-bottom: 24px;
+    }
+
+    .store-hero h1 {
+        font-size: 2.05rem;
+    }
+
+    .store-hero p {
+        font-size: .92rem;
+    }
+
+    .store-hero-search {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .store-hero-search input,
+    .store-hero-search button {
+        width: 100%;
+        border-radius: 8px;
+    }
+
+    .store-hero-search input {
+        border-right: 1px solid rgba(255,255,255,.16);
+    }
+
+    .catalog-toolbar,
+    .apex-filter-row {
+        width: 100%;
+        align-items: stretch;
+    }
+
+    .apex-filter-row {
+        flex-direction: column;
+    }
+
+    .apex-filter-row .apex-sort-wrap,
+    .apex-sort-btn {
+        width: 100%;
+    }
+
+    .apex-sort-btn {
+        justify-content: space-between;
+    }
+
+    .apex-sort-menu {
+        width: 100%;
+        min-width: 0;
     }
 }
