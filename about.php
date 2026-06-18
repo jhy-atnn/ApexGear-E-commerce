@@ -241,7 +241,7 @@ class AboutTeam extends AboutBrand
                 <div class="col-sm-6 col-lg-4 fade-up">
                     <div class="team-card">
                         <div class="team-img-wrap">
-                            <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80" alt="Lead Dev" />
+                            <img src="assets\images\profiles\profile_1_1781327573.png" alt="Lead Dev" />
                             <div class="team-img-overlay"></div>
                             <span class="team-role-badge">Lead Dev</span>
                         </div>
@@ -250,7 +250,7 @@ class AboutTeam extends AboutBrand
                             <div class="team-position">Lead Full-Stack Developer</div>
                             <p class="team-bio">Architected the entire ApeX platform — from the backend inventory system to the storefront you're browsing right now. PHP, JS, and everything in between.</p>
                             <div class="team-socials">
-                                <a href="#"><i class="fab fa-github"></i></a>
+                                <a href="https://github.com/jhy-atnn"><i class="fab fa-github"></i></a>
                                 <a href="#"><i class="fab fa-linkedin-in"></i></a>
                                 <a href="#"><i class="fab fa-twitter"></i></a>
                             </div>
@@ -260,7 +260,7 @@ class AboutTeam extends AboutBrand
                 <div class="col-sm-6 col-lg-4 fade-up">
                     <div class="team-card">
                         <div class="team-img-wrap">
-                            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80" alt="UI Designer" />
+                            <img src="assets\images\profiles\luige_1x1.jpg" alt="UI Designer" />
                             <div class="team-img-overlay"></div>
                             <span class="team-role-badge">Designer</span>
                         </div>
@@ -279,7 +279,7 @@ class AboutTeam extends AboutBrand
                 <div class="col-sm-6 col-lg-4 fade-up">
                     <div class="team-card">
                         <div class="team-img-wrap">
-                            <img src="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=400&q=80" alt="Backend Dev" />
+                            <img src="assets\images\profiles\luis_1x1.jpg" alt="Backend Dev" />
                             <div class="team-img-overlay"></div>
                             <span class="team-role-badge">Dev</span>
                         </div>
