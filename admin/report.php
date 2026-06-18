@@ -404,6 +404,34 @@ foreach ($locationRows as $row) {
             white-space: nowrap;
         }
 
+        .report-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .report-action-btn {
+            border: 1px solid rgba(255, 255, 255, .26);
+            background: rgba(255, 255, 255, .12);
+            color: #fff;
+            border-radius: 8px;
+            padding: 9px 13px;
+            font-size: .78rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .report-action-btn:hover {
+            background: rgba(255, 255, 255, .2);
+            color: #fff;
+        }
+
         .metric-card {
             background: #fff;
             border: 1px solid var(--border);
@@ -917,6 +945,101 @@ foreach ($locationRows as $row) {
                 min-height: 430px;
             }
         }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 12mm;
+            }
+
+            * {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+
+            body {
+                background: #fff !important;
+                color: #0d1b2e !important;
+                font-size: 10pt;
+            }
+
+            .sidebar,
+            .sidebar-overlay,
+            .topbar,
+            .report-actions,
+            .ph-map-tools,
+            script {
+                display: none !important;
+            }
+
+            .main-wrap {
+                margin: 0 !important;
+                width: 100% !important;
+            }
+
+            .page-body {
+                padding: 0 !important;
+            }
+
+            .report-hero {
+                border-radius: 0;
+                margin-bottom: 12px;
+                padding: 16px 18px;
+                break-after: avoid;
+            }
+
+            .report-hero h1 {
+                font-size: 22pt;
+            }
+
+            .metric-card,
+            .report-panel {
+                border-color: #cfd8e6 !important;
+                box-shadow: none !important;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .metric-card {
+                min-height: 104px;
+                padding: 12px;
+            }
+
+            .metric-value {
+                font-size: 18pt;
+            }
+
+            .report-panel-header,
+            .report-panel-body {
+                padding: 11px 12px;
+            }
+
+            .row {
+                --bs-gutter-x: .7rem;
+                --bs-gutter-y: .7rem;
+            }
+
+            .mb-4 {
+                margin-bottom: .7rem !important;
+            }
+
+            .trend-chart {
+                min-height: 190px;
+            }
+
+            .trend-chart svg {
+                height: 150px;
+            }
+
+            .ph-map-shell,
+            .ph-map-svg {
+                min-height: 360px;
+            }
+
+            .analytics-table {
+                font-size: 8.5pt;
+            }
+        }
     </style>
 </head>
 
@@ -960,6 +1083,7 @@ foreach ($locationRows as $row) {
                 <span class="topbar-crumb">Orders, Users &amp; Store Analytics</span>
             </div>
             <div class="topbar-right">
+                <button type="button" class="btn-topbar" onclick="printReport()"><i class="fas fa-print"></i> Print / Download</button>
                 <a href="manage_orders.php" class="btn-topbar"><i class="fas fa-shopping-cart"></i> Orders</a>
             </div>
         </header>
@@ -970,7 +1094,10 @@ foreach ($locationRows as $row) {
                     <h1>Reports &amp; Analytics</h1>
                     <p>Crystal-style operational view for ApeX Gear sales, users, inventory, and admin activity.</p>
                 </div>
-                <div class="report-stamp"><i class="fas fa-calendar-day me-2"></i><?php echo date('M d, Y h:i A'); ?></div>
+                <div class="report-actions">
+                    <button type="button" class="report-action-btn" onclick="printReport()"><i class="fas fa-file-arrow-down"></i> Print / Download Report</button>
+                    <div class="report-stamp"><i class="fas fa-calendar-day me-2"></i><?php echo date('M d, Y h:i A'); ?></div>
+                </div>
             </section>
 
             <div class="row g-3 mb-4">
@@ -1415,6 +1542,10 @@ foreach ($locationRows as $row) {
         function closeSidebar() {
             document.getElementById('sidebar').classList.remove('open');
             document.getElementById('sidebarOverlay').classList.remove('show');
+        }
+
+        function printReport() {
+            window.print();
         }
 
         const phMap = document.getElementById('phOrderMap');

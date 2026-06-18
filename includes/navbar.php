@@ -19,10 +19,10 @@ if (!empty($_SESSION['apex_welcome_toast']) && is_array($_SESSION['apex_welcome_
     <div class="container d-flex justify-content-between align-items-center">
         <div>
             <i class="fas fa-phone-alt me-1"></i>
-            <a href="tel:+1234567890">+1 (234) 567-890</a>
+            <a href="tel:+1234567890">+63 912 255 3546</a>
             <span class="mx-2">|</span>
             <i class="fas fa-envelope me-1"></i>
-            <a href="mailto:support@apexgear.com">support@apexgear.com</a>
+            <a href="mailto:apexgear26@gmail.com">apexgear26@gmail.com</a>
         </div>
         <div class="d-flex align-items-center gap-3">
             <span>Free shipping on orders over ₱5,000 </span>
@@ -33,7 +33,7 @@ if (!empty($_SESSION['apex_welcome_toast']) && is_array($_SESSION['apex_welcome_
 <!-- ── Navbar ── -->
 <nav id="mainNav" class="main-nav navbar navbar-expand-lg">
     <div class="container">
-        <a href="index.php" class="brand me-4">
+        <a href="#" class="brand me-4" data-scroll-top>
             <img src="assets/images/ApeX Logo.png" alt="ApeX Gear Logo" class="brand-logo-img">
             <div class="brand-text" style="color: white; margin-left:-10px">ApeX</div>
             <div class="brand-text" style="color: #00c2ff; margin-left:-10px">Gear</div>

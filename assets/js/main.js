@@ -13,6 +13,18 @@ if (btt) {
     });
 }
 
+document.querySelectorAll('[data-scroll-top]').forEach(link => {
+    if (link.dataset.scrollBound === 'true') return;
+    link.dataset.scrollBound = 'true';
+    link.addEventListener('click', event => {
+        event.preventDefault();
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+});
+
 const cdH = document.getElementById('cd-h');
 const cdM = document.getElementById('cd-m');
 const cdS = document.getElementById('cd-s');

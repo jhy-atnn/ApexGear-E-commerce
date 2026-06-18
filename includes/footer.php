@@ -57,7 +57,7 @@
     <div class="container">
         <div class="row g-5">
             <div class="col-lg-3">
-                <a href="index.php" class="footer-logo-brand text-decoration-none">
+                <a href="#" class="footer-logo-brand text-decoration-none" data-scroll-top>
                     <img src="assets/images/ApeX Logo.png" alt="ApeX Gear Logo" class="footer-logo-img">
                     <div class="footer-brand-text">
                         <div class="footer-brand">ApeX<span style="margin-left:2px">Gear</span></div>
@@ -81,7 +81,7 @@
                     <li><a href="product.php">Products</a></li>
                     <li><a href="deals.php">Deals</a></li>
                     <li><a href="#">News</a></li>
-                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="contact.php">Contact Us</a></li>
                 </ul>
             </div>
             <div class="col-6 col-md-3 col-lg-2">
@@ -98,9 +98,9 @@
             <div class="col-md-6 col-lg-3">
                 <div class="footer-heading">Contact Us</div>
                 <ul>
-                    <li style="color:rgba(255,255,255,.45); font-size:.85rem;"><i class="fas fa-map-marker-alt me-2" style="color:var(--apex-accent);"></i>123 Tech Ave, Silicon City, PH</li>
-                    <li><a href="tel:+1234567890"><i class="fas fa-phone-alt me-2" style="color:var(--apex-accent);"></i>+1 (234) 567-890</a></li>
-                    <li><a href="mailto:support@apexgear.com"><i class="fas fa-envelope me-2" style="color:var(--apex-accent);"></i>support@apexgear.com</a></li>
+                    <li style="color:rgba(255,255,255,.45); font-size:.85rem;"><i class="fas fa-map-marker-alt me-2" style="color:var(--apex-accent);"></i>Ayala Avenue, Makati City, PH</li>
+                    <li><a href="tel:+1234567890"><i class="fas fa-phone-alt me-2" style="color:var(--apex-accent);"></i>+63 912 255 3546</a></li>
+                    <li><a href="mailto:support@apexgear.com"><i class="fas fa-envelope me-2" style="color:var(--apex-accent);"></i>apexgear26@gmail.com</a></li>
                     <li style="color:rgba(255,255,255,.45); font-size:.85rem;"><i class="fas fa-clock me-2" style="color:var(--apex-accent);"></i>Mon–Sat: 9AM – 9PM</li>
                 </ul>
                 <div class="footer-heading mt-4">Accept Payment</div>

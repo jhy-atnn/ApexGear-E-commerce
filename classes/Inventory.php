@@ -145,6 +145,31 @@ class Inventory
     {
         if (empty($catName)) return null;
 
+        $aliases = [
+            'laptops' => 'Laptop',
+            'laptop' => 'Laptop',
+            'desktops' => 'Desktop / PC',
+            'desktop' => 'Desktop / PC',
+            'desktop / pc' => 'Desktop / PC',
+            'cellphones' => 'Phone',
+            'cellphone' => 'Phone',
+            'phones' => 'Phone',
+            'phone' => 'Phone',
+            'tablet' => 'Tablet',
+            'tablets' => 'Tablet',
+            'audio' => 'Headphones / Audio',
+            'headphones' => 'Headphones / Audio',
+            'headphones / audio' => 'Headphones / Audio',
+            'accessories' => 'Accessories / Peripherals',
+            'peripherals' => 'Accessories / Peripherals',
+            'peripheral' => 'Accessories / Peripherals',
+            'accessories / peripherals' => 'Accessories / Peripherals',
+            'cpu' => 'CPU',
+            'gpu' => 'GPU',
+        ];
+        $key = mb_strtolower(trim((string)$catName), 'UTF-8');
+        $catName = $aliases[$key] ?? trim((string)$catName);
+
         $stmt = $this->conn->prepare("SELECT category_id FROM category_tbl WHERE category_name = ?");
         $stmt->bind_param("s", $catName);
         $stmt->execute();
@@ -169,6 +194,15 @@ class Inventory
                    p.badge, p.badge_type, p.est_shipping_time as shipping_time,
                    p.archived_at, IF(p.archived_at IS NULL, 0, 1) AS archived,
                    b.brand_name as brand, c.category_name as category,
+                   COALESCE(ROUND((SELECT AVG(r.rating) FROM reviews_tbl r WHERE r.product_id = p.product_id), 1), 0) as rating,
+                   COALESCE((SELECT COUNT(*) FROM reviews_tbl r WHERE r.product_id = p.product_id), 0) as review_count,
+                   COALESCE((
+                       SELECT SUM(oi.quantity)
+                       FROM order_items_tbl oi
+                       JOIN orders_tbl o ON oi.order_id = o.order_id
+                       WHERE oi.product_id = p.product_id
+                         AND LOWER(o.order_status) <> 'canceled'
+                   ), 0) as sales,
                    (SELECT image_path FROM product_images_tbl WHERE product_id = p.product_id LIMIT 1) as image
             FROM products_tbl p
             LEFT JOIN brand_tbl b ON p.brand_id = b.brand_id
@@ -183,10 +217,10 @@ class Inventory
         $products = [];
 
         while ($row = $result->fetch_assoc()) {
-            // Placeholder data for frontend features not yet in database
             $row = self::applyPricingFields($row);
-            $row['rating'] = rand(4, 5); // Mock rating until reviews_tbl is active
-            $row['sales']  = rand(50, 500); // Mock sales for featured sorting
+            $row['rating'] = (float)($row['rating'] ?? 0);
+            $row['review_count'] = (int)($row['review_count'] ?? 0);
+            $row['sales'] = (int)($row['sales'] ?? 0);
 
             $products[$row['id']] = $row;
         }
@@ -199,7 +233,7 @@ class Inventory
         $brand_id = $this->getBrandId($brand);
         $cat_id = $this->getCategoryId($category);
 
-        $sale_expiry = !empty($sale_expiry) ? $sale_expiry : null;
+        $sale_expiry = !empty($sale_expiry) ? str_replace('T', ' ', $sale_expiry) : null;
         $sale_percent = !empty($sale_percent) ? $sale_percent : 0;
         $image = self::normalizeProductImagePath($image);
 
@@ -224,7 +258,7 @@ class Inventory
         $brand_id = $this->getBrandId($brand);
         $cat_id = $this->getCategoryId($category);
 
-        $sale_expiry = !empty($sale_expiry) ? $sale_expiry : null;
+        $sale_expiry = !empty($sale_expiry) ? str_replace('T', ' ', $sale_expiry) : null;
         $sale_percent = !empty($sale_percent) ? $sale_percent : 0;
         $image = self::normalizeProductImagePath($image);
 
@@ -610,6 +644,15 @@ class Inventory
                    p.sale_percent, p.sale_valid_until as sale_expiry,
                    p.badge, p.badge_type, p.est_shipping_time as shipping_time,
                    b.brand_name as brand, c.category_name as category,
+                   COALESCE(ROUND((SELECT AVG(r.rating) FROM reviews_tbl r WHERE r.product_id = p.product_id), 1), 0) as rating,
+                   COALESCE((SELECT COUNT(*) FROM reviews_tbl r WHERE r.product_id = p.product_id), 0) as review_count,
+                   COALESCE((
+                       SELECT SUM(oi.quantity)
+                       FROM order_items_tbl oi
+                       JOIN orders_tbl o ON oi.order_id = o.order_id
+                       WHERE oi.product_id = p.product_id
+                         AND LOWER(o.order_status) <> 'canceled'
+                   ), 0) as sales,
                    (SELECT image_path FROM product_images_tbl WHERE product_id = p.product_id LIMIT 1) as image
             FROM products_tbl p
             LEFT JOIN brand_tbl b ON p.brand_id = b.brand_id
@@ -623,10 +666,10 @@ class Inventory
         $result = $stmt->get_result();
 
         if ($row = $result->fetch_assoc()) {
-            // Placeholder data for frontend features not yet in database
             $row = self::applyPricingFields($row);
-            $row['rating'] = rand(4, 5);
-            $row['sales']  = rand(50, 500);
+            $row['rating'] = (float)($row['rating'] ?? 0);
+            $row['review_count'] = (int)($row['review_count'] ?? 0);
+            $row['sales'] = (int)($row['sales'] ?? 0);
             return $row;
         }
 

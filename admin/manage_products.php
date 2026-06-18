@@ -1023,14 +1023,14 @@ usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percen
                                     <label class="field-label">Category</label>
                                     <select name="category" class="field-control" required>
                                         <option value="" disabled selected>Select Category</option>
-                                        <option value="laptop">Laptop</option>
-                                        <option value="desktop">Desktop / PC</option>
-                                        <option value="tablet">Tablet</option>
-                                        <option value="phone">Phone</option>
-                                        <option value="audio">Headphones / Audio</option>
-                                        <option value="peripheral">Accessories / Peripherals</option>
-                                        <option value="cpu">CPU</option>
-                                        <option value="gpu">GPU</option>
+                                        <option value="Laptop">Laptop</option>
+                                        <option value="Desktop / PC">Desktop / PC</option>
+                                        <option value="Tablet">Tablet</option>
+                                        <option value="Phone">Phone</option>
+                                        <option value="Headphones / Audio">Headphones / Audio</option>
+                                        <option value="Accessories / Peripherals">Accessories / Peripherals</option>
+                                        <option value="CPU">CPU</option>
+                                        <option value="GPU">GPU</option>
                                     </select>
                                 </div>
                             </div>
@@ -1123,14 +1123,14 @@ usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percen
                             <div class="field-group">
                                 <label class="field-label">Category</label>
                                 <select name="category" id="edit_category" class="field-control">
-                                    <option value="laptop">Laptop</option>
-                                    <option value="desktop">Desktop / PC</option>
-                                    <option value="tablet">Tablet</option>
-                                    <option value="phone">Phone</option>
-                                    <option value="audio">Headphones / Audio</option>
-                                    <option value="peripheral">Accessories / Peripherals</option>
-                                    <option value="cpu">CPU</option>
-                                    <option value="gpu">GPU</option>
+                                    <option value="Laptop">Laptop</option>
+                                    <option value="Desktop / PC">Desktop / PC</option>
+                                    <option value="Tablet">Tablet</option>
+                                    <option value="Phone">Phone</option>
+                                    <option value="Headphones / Audio">Headphones / Audio</option>
+                                    <option value="Accessories / Peripherals">Accessories / Peripherals</option>
+                                    <option value="CPU">CPU</option>
+                                    <option value="GPU">GPU</option>
                                 </select>
                             </div>
                         </div>
@@ -1226,14 +1226,14 @@ usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percen
                                 <label class="field-label">Category</label>
                                 <select name="category" class="field-control" required>
                                     <option value="" disabled selected>Select Category</option>
-                                    <option value="laptop">Laptop</option>
-                                    <option value="desktop">Desktop / PC</option>
-                                    <option value="tablet">Tablet</option>
-                                    <option value="phone">Phone</option>
-                                    <option value="audio">Headphones / Audio</option>
-                                    <option value="peripheral">Accessories / Peripherals</option>
-                                    <option value="cpu">CPU</option>
-                                    <option value="gpu">GPU</option>
+                                    <option value="Laptop">Laptop</option>
+                                    <option value="Desktop / PC">Desktop / PC</option>
+                                    <option value="Tablet">Tablet</option>
+                                    <option value="Phone">Phone</option>
+                                    <option value="Headphones / Audio">Headphones / Audio</option>
+                                    <option value="Accessories / Peripherals">Accessories / Peripherals</option>
+                                    <option value="CPU">CPU</option>
+                                    <option value="GPU">GPU</option>
                                 </select>
                             </div>
                         </div>
@@ -1299,10 +1299,33 @@ usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percen
 
         function populateEditForm(btn) {
             const d = btn.dataset;
+            const categoryAliases = {
+                laptop: 'Laptop',
+                laptops: 'Laptop',
+                desktop: 'Desktop / PC',
+                desktops: 'Desktop / PC',
+                'desktop / pc': 'Desktop / PC',
+                tablet: 'Tablet',
+                tablets: 'Tablet',
+                phone: 'Phone',
+                phones: 'Phone',
+                cellphone: 'Phone',
+                cellphones: 'Phone',
+                audio: 'Headphones / Audio',
+                headphones: 'Headphones / Audio',
+                'headphones / audio': 'Headphones / Audio',
+                peripheral: 'Accessories / Peripherals',
+                peripherals: 'Accessories / Peripherals',
+                accessories: 'Accessories / Peripherals',
+                'accessories / peripherals': 'Accessories / Peripherals',
+                cpu: 'CPU',
+                gpu: 'GPU'
+            };
+            const categoryValue = categoryAliases[(d.category || '').toLowerCase()] || d.category;
             document.getElementById('edit_product_id').value = d.id;
             document.getElementById('edit_name').value = d.name;
             document.getElementById('edit_brand').value = d.brand;
-            document.getElementById('edit_category').value = d.category;
+            document.getElementById('edit_category').value = categoryValue;
             document.getElementById('edit_price').value = d.price;
             document.getElementById('edit_stock').value = d.stock;
             document.getElementById('edit_sale_percent').value = d.sale_percent;
