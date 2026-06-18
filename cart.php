@@ -14,7 +14,26 @@ $couponMsgType = 'success';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $product_id = $_POST['product_id'] ?? 0;
-    if ($_POST['action'] === 'remove') {
+    if ($_POST['action'] === 'checkout') {
+        $quantities = isset($_POST['quantities']) && is_array($_POST['quantities']) ? $_POST['quantities'] : [];
+        foreach ($quantities as $productId => $qty) {
+            $productId = (int)$productId;
+            $qty = (int)$qty;
+
+            if ($productId <= 0 || !isset($_SESSION['cart'][$productId])) {
+                continue;
+            }
+
+            if ($qty > 0) {
+                $_SESSION['cart'][$productId]['qty'] = $qty;
+            } else {
+                unset($_SESSION['cart'][$productId]);
+            }
+        }
+
+        header("Location: checkout.php");
+        exit();
+    } elseif ($_POST['action'] === 'remove') {
         unset($_SESSION['cart'][$product_id]);
     } elseif ($_POST['action'] === 'update') {
         $new_qty = (int)($_POST['qty'] ?? 0);
@@ -928,7 +947,7 @@ $grand_total = ($subtotal - $couponDiscountAmount) + $tax;
                                                     <form method="POST" action="cart.php" class="qty-wrap">
                                                         <input type="hidden" name="action" value="update">
                                                         <input type="hidden" name="product_id" value="<?php echo $id; ?>">
-                                                        <input type="number" name="qty" value="<?php echo $item['qty']; ?>" class="qty-input" min="1">
+                                                        <input type="number" name="qty" value="<?php echo $item['qty']; ?>" class="qty-input" min="1" data-product-id="<?php echo (int)$id; ?>">
                                                         <button type="submit" class="btn-qty-update" title="Update quantity">
                                                             <i class="fas fa-sync-alt"></i>
                                                         </button>
@@ -1039,10 +1058,16 @@ $grand_total = ($subtotal - $couponDiscountAmount) + $tax;
                         </div>
 
                         <?php if ($item_count > 0): ?>
-                            <a href="checkout.php" class="btn-checkout">
+                            <form method="POST" action="cart.php" id="checkoutCartForm" style="margin:0;">
+                                <input type="hidden" name="action" value="checkout">
+                                <?php foreach ($_SESSION['cart'] as $id => $item): ?>
+                                    <input type="hidden" name="quantities[<?php echo (int)$id; ?>]" value="<?php echo (int)$item['qty']; ?>" data-checkout-product-id="<?php echo (int)$id; ?>">
+                                <?php endforeach; ?>
+                            </form>
+                            <button type="submit" form="checkoutCartForm" class="btn-checkout">
                                 <i class="fas fa-lock" style="font-size:.8rem; margin-right:5px;"></i>
                                 Proceed to Checkout
-                            </a>
+                            </button>
                         <?php else: ?>
                             <span class="btn-checkout btn-checkout-disabled">Proceed to Checkout</span>
                         <?php endif; ?>
@@ -1083,6 +1108,56 @@ $grand_total = ($subtotal - $couponDiscountAmount) + $tax;
         }
         updateCartCountdowns();
         setInterval(updateCartCountdowns, 1000);
+
+        function getValidCartQty(input) {
+            const qty = parseInt(input.value, 10);
+            return Number.isFinite(qty) && qty > 0 ? qty : null;
+        }
+
+        function syncCheckoutQuantity(input) {
+            const productId = input.dataset.productId;
+            const qty = getValidCartQty(input);
+            if (!productId || qty === null) return;
+
+            const checkoutQty = document.querySelector(`[data-checkout-product-id="${productId}"]`);
+            if (checkoutQty) {
+                checkoutQty.value = qty;
+            }
+        }
+
+        let qtyUpdateTimer = null;
+        document.querySelectorAll('.qty-input').forEach(input => {
+            input.addEventListener('input', () => {
+                syncCheckoutQuantity(input);
+
+                clearTimeout(qtyUpdateTimer);
+                if (getValidCartQty(input) === null) return;
+
+                qtyUpdateTimer = setTimeout(() => {
+                    const form = input.closest('form');
+                    if (form) form.requestSubmit();
+                }, 650);
+            });
+
+            input.addEventListener('change', () => {
+                clearTimeout(qtyUpdateTimer);
+
+                if (getValidCartQty(input) === null) {
+                    input.value = input.min || 1;
+                }
+
+                syncCheckoutQuantity(input);
+                const form = input.closest('form');
+                if (form) form.requestSubmit();
+            });
+        });
+
+        const checkoutCartForm = document.getElementById('checkoutCartForm');
+        if (checkoutCartForm) {
+            checkoutCartForm.addEventListener('submit', () => {
+                document.querySelectorAll('.qty-input').forEach(syncCheckoutQuantity);
+            });
+        }
 
         function goBackFromCart(event) {
             event.preventDefault();

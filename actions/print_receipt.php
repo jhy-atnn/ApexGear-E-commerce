@@ -205,7 +205,7 @@ if (!empty($payment['card_last_four'])) {
         }
 
         .receipt-inner {
-            padding: 8px 28px 20px;
+            padding: 8px 40px 20px;
         }
 
         /* ── Store header ─────────────────────────────── */

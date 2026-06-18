@@ -40,7 +40,8 @@ if (isset($_SESSION['applied_coupon'])) {
 
 // ── Helper: compute the effective (live-sale) price for a cart item ──────────
 // Called at order placement time — if the sale is still running, it applies.
-function getEffectiveCheckoutPrice($item) {
+function getEffectiveCheckoutPrice($item)
+{
     return Inventory::getCartItemEffectivePrice($item);
 }
 
@@ -353,7 +354,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         .form-control.is-invalid {
             border-color: #dc3545 !important;
@@ -363,6 +363,348 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         .form-control.is-invalid:focus {
             border-color: #dc3545 !important;
             box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+
+        /* ─── Receipt Page Wrapper ─────────────────────── */
+        .receipt-page-shell {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 3rem;
+        }
+
+        /* ─── Thermal Receipt Card ──────────────────────── */
+        .thermal-receipt-shell {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 3rem;
+        }
+
+        .thermal-receipt {
+            background: #fafaf8;
+            color: #1a1a1a;
+            width: 100%;
+            max-width: 460px;
+            padding: 0;
+            position: relative;
+            border-radius: 2px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 12px 40px rgba(0, 0, 0, 0.12);
+            font-family: 'Courier New', Courier, monospace;
+            text-align: left;
+        }
+
+        /* Torn-paper top edge */
+        .thermal-receipt::before {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 20px;
+            background:
+                radial-gradient(circle at 10px -5px, transparent 9px, #fafaf8 9px) 0 0 / 20px 20px,
+                radial-gradient(circle at 10px -5px, #e2e0d8 9px, transparent 9px) 0 0 / 20px 20px;
+        }
+
+        /* Torn-paper bottom edge */
+        .thermal-receipt::after {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 20px;
+            background:
+                radial-gradient(circle at 10px 25px, transparent 9px, #fafaf8 9px) 0 0 / 20px 20px,
+                radial-gradient(circle at 10px 25px, #e2e0d8 9px, transparent 9px) 0 0 / 20px 20px;
+        }
+
+        .thermal-receipt-inner {
+            padding: 4px 32px 24px;
+        }
+
+        /* ─── Store Header ──────────────────────────────── */
+        .thermal-store-header {
+            text-align: center;
+            padding: 18px 0 20px;
+            border-bottom: 1px dashed #c8c6be;
+            margin-bottom: 18px;
+        }
+
+        .thermal-store-name {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 30px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: #0b1c3f;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+
+        .thermal-store-name span {
+            color: #00a8e8;
+        }
+
+        .thermal-store-tagline {
+            font-family: 'Barlow', sans-serif;
+            font-size: 9px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #9b9890;
+            margin-top: 5px;
+        }
+
+        /* ─── Success Badge ─────────────────────────────── */
+        .thermal-success {
+            text-align: center;
+            margin: 20px 0 20px;
+        }
+
+        .thermal-check-circle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d27a, #00b568);
+            color: #fff;
+            font-size: 24px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 14px rgba(0, 210, 122, 0.35);
+        }
+
+        .thermal-success h2 {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 14px;
+            letter-spacing: 3.5px;
+            text-transform: uppercase;
+            color: #0b1c3f;
+            font-weight: 900;
+            margin: 0;
+        }
+
+        .thermal-order-ref {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            color: #00a8e8;
+            letter-spacing: 1.5px;
+            margin-top: 8px;
+            background: #e8f7ff;
+            border: 1px solid #b3e0f7;
+            border-radius: 3px;
+            padding: 3px 10px;
+            word-break: break-all;
+        }
+
+        .thermal-order-date {
+            font-size: 10px;
+            color: #9b9890;
+            margin-top: 6px;
+            font-family: 'Barlow', sans-serif;
+        }
+
+        /* ─── Dividers ──────────────────────────────────── */
+        .thermal-divider {
+            border: none;
+            border-top: 1px dashed #c8c6be;
+            margin: 16px 0;
+            opacity: 1;
+        }
+
+        /* ─── Section Labels ────────────────────────────── */
+        .thermal-section-label {
+            font-family: 'Barlow', sans-serif;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #9b9890;
+            margin-bottom: 10px;
+            padding-bottom: 2px;
+        }
+
+        /* ─── Key / Value Rows ──────────────────────────── */
+        .thermal-kv {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 6px;
+            gap: 10px;
+            line-height: 1.5;
+        }
+
+        .thermal-kv .thermal-k {
+            color: #7a7870;
+            flex-shrink: 0;
+            font-size: 11.5px;
+        }
+
+        .thermal-kv .thermal-v {
+            text-align: right;
+            color: #1a1a1a;
+            font-weight: 700;
+            word-break: break-all;
+        }
+
+        .thermal-kv .thermal-v.muted {
+            color: #9b9890;
+            font-weight: 400;
+        }
+
+        /* ─── Items Table ───────────────────────────────── */
+        .thermal-items-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11.5px;
+            margin-top: 4px;
+        }
+
+        .thermal-items-table th {
+            font-family: 'Barlow', sans-serif;
+            font-size: 8.5px;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: #9b9890;
+            padding: 0 0 8px 0;
+            border-bottom: 1px dashed #c8c6be;
+            white-space: nowrap;
+        }
+
+        .thermal-items-table th:last-child,
+        .thermal-items-table td:last-child {
+            text-align: right;
+        }
+
+        .thermal-items-table th:nth-child(2),
+        .thermal-items-table td:nth-child(2) {
+            text-align: center;
+        }
+
+        .thermal-items-table td {
+            padding: 9px 0 3px;
+            vertical-align: top;
+            color: #1a1a1a;
+        }
+
+        .thermal-items-table tr:not(:last-child) td {
+            border-bottom: 1px dotted #e2e0d8;
+        }
+
+        .thermal-items-table td.name {
+            font-weight: 600;
+            max-width: 160px;
+            line-height: 1.4;
+        }
+
+        .thermal-items-table td.price {
+            white-space: nowrap;
+        }
+
+        /* ─── Totals ────────────────────────────────────── */
+        .thermal-totals {
+            margin-top: 6px;
+        }
+
+        .thermal-total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .thermal-total-row .lbl {
+            color: #7a7870;
+        }
+
+        .thermal-total-row .amt {
+            font-weight: 600;
+        }
+
+        .thermal-total-row.discount .amt {
+            color: #00a044;
+        }
+
+        .thermal-total-row.shipping .amt {
+            color: #00a044;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .thermal-grand {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-top: 12px;
+            padding: 12px 0 0;
+            border-top: 2px solid #0b1c3f;
+        }
+
+        .thermal-grand .lbl {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #0b1c3f;
+        }
+
+        .thermal-grand .amt {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 26px;
+            font-weight: 900;
+            color: #0b1c3f;
+            letter-spacing: 1px;
+        }
+
+        /* ─── Order Status Badge ────────────────────────── */
+        .thermal-status {
+            background: #edfff6;
+            border: 1px solid #b6f0d4;
+            border-radius: 6px;
+            padding: 11px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            margin-top: 16px;
+        }
+
+        .thermal-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00d27a;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 3px rgba(0, 210, 122, 0.2);
+        }
+
+        .thermal-status strong {
+            color: #0b7a44;
+        }
+
+        /* ─── Footer ────────────────────────────────────── */
+        .thermal-footer-note {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px dashed #c8c6be;
+        }
+
+        .thermal-footer-note p {
+            font-family: 'Barlow', sans-serif;
+            font-size: 9px;
+            color: #b5b3aa;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            line-height: 2;
+            margin: 0;
+        }
+
+        .thermal-barcode {
+            font-size: 28px;
+            letter-spacing: -1.5px;
+            color: #2a2a2a;
+            line-height: 1;
+            margin: 8px 0 8px;
+            opacity: 0.75;
         }
 
         @media print {
@@ -383,7 +725,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
             .container {
                 max-width: 100%;
-                padding: 20px;
+                padding: 20px 40px;
             }
 
             .apex-card {
@@ -407,7 +749,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                 page-break-inside: avoid;
             }
 
-            #downloadPdfBtn,
             [onclick*="print"] {
                 display: none !important;
             }
@@ -456,20 +797,154 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             <?php if ($order_successful): ?>
                 <div class="row justify-content-center mt-4">
                     <div class="col-md-8 text-center">
-                        <div class="apex-card border-top border-5" style="border-top-color: #00d68f !important;">
-                            <div class="mb-4">
-                                <i class="fas fa-check-circle" style="font-size: 4rem; color: #00d68f;"></i>
+                        <div class="apex-card border-top border-5" style="border-top-color: #00d68f !important; background: #f8f9fa;">
+                            <div class="mb-3 pt-2">
+                                <div style="display:inline-flex; align-items:center; justify-content:center; width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,#00d27a,#00b568); box-shadow:0 6px 20px rgba(0,210,122,0.30);">
+                                    <i class="fas fa-check" style="font-size: 2rem; color: #fff;"></i>
+                                </div>
                             </div>
-                            <h1 class="fw-bold mb-3" style="font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase;">Payment Successful</h1>
-                            <p class="text-muted lead mb-4">Thank you for your order! Your high-performance gear is being prepped for shipment.</p>
+                            <h1 class="fw-bold mb-2" style="font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; font-size: 2rem; letter-spacing: 0.05em;">Order Confirmed!</h1>
+                            <p class="text-muted mb-4" style="font-size: 0.95rem; max-width: 380px; margin-inline: auto;">Your high-performance gear is being prepped for shipment. Check your email for updates.</p>
 
-                            <div class="bg-light rounded-4 p-5 mb-5 text-start w-100 border" style="border: 2px solid var(--apex-border);">
+                            <div class="thermal-receipt-shell d-none">
+                                <div id="receiptDownloadArea" class="thermal-receipt">
+                                    <div class="thermal-receipt-inner">
+                                        <div class="thermal-store-header">
+                                            <div class="thermal-store-name">ApeX<span>Gear</span></div>
+                                            <div class="thermal-store-tagline">High-Performance Tech Store</div>
+                                        </div>
+
+                                        <div class="thermal-success">
+                                            <div class="thermal-check-circle">&#10003;</div>
+                                            <h2>Payment Successful</h2>
+                                            <div class="thermal-order-ref"><?php echo htmlspecialchars($receipt_number); ?></div>
+                                            <div class="thermal-order-date"><?php echo htmlspecialchars($receipt_data['orderDate']); ?></div>
+                                        </div>
+
+                                        <hr class="thermal-divider">
+
+                                        <div class="thermal-section-label">Shipping Details</div>
+                                        <div class="thermal-kv"><span class="thermal-k">Name</span><span class="thermal-v"><?php echo $receipt_data['firstName'] . ' ' . $receipt_data['lastName']; ?></span></div>
+                                        <div class="thermal-kv"><span class="thermal-k">Address</span><span class="thermal-v"><?php echo $receipt_data['address'] . ', ' . $receipt_data['city'] . ' ' . $receipt_data['zipcode']; ?></span></div>
+                                        <div class="thermal-kv"><span class="thermal-k">Phone</span><span class="thermal-v"><?php echo $receipt_data['phone']; ?></span></div>
+                                        <div class="thermal-kv"><span class="thermal-k">Email</span><span class="thermal-v"><?php echo $receipt_data['email']; ?></span></div>
+
+                                        <hr class="thermal-divider">
+
+                                        <div class="thermal-section-label">Payment Method</div>
+                                        <?php
+                                        $methods = array(
+                                            'card' => 'Credit / Debit Card',
+                                            'cod' => 'Cash on Delivery',
+                                            'gcash' => 'GCash',
+                                            'paypal' => 'PayPal',
+                                            'maya' => 'Maya'
+                                        );
+                                        $receiptPaymentMethod = isset($methods[$receipt_data['paymentMethod']]) ? $methods[$receipt_data['paymentMethod']] : ucfirst($receipt_data['paymentMethod']);
+                                        $receiptPaymentDetail = '';
+                                        if ($receipt_data['paymentMethod'] === 'card' && isset($receipt_data['cardLast4'])) {
+                                            $receiptPaymentDetail = $receipt_data['cardLast4'];
+                                        } elseif ($receipt_data['paymentMethod'] === 'gcash' && isset($receipt_data['gcashMobile'])) {
+                                            $receiptPaymentDetail = $receipt_data['gcashMobile'];
+                                        } elseif ($receipt_data['paymentMethod'] === 'paypal' && isset($receipt_data['paypalEmail'])) {
+                                            $receiptPaymentDetail = $receipt_data['paypalEmail'];
+                                        } elseif ($receipt_data['paymentMethod'] === 'maya' && isset($receipt_data['mayaMobile'])) {
+                                            $receiptPaymentDetail = $receipt_data['mayaMobile'];
+                                        }
+                                        ?>
+                                        <div class="thermal-kv"><span class="thermal-k">Method</span><span class="thermal-v"><?php echo htmlspecialchars($receiptPaymentMethod); ?></span></div>
+                                        <?php if ($receiptPaymentDetail): ?>
+                                            <div class="thermal-kv"><span class="thermal-k">Reference</span><span class="thermal-v muted"><?php echo htmlspecialchars($receiptPaymentDetail); ?></span></div>
+                                        <?php endif; ?>
+
+                                        <hr class="thermal-divider">
+
+                                        <div class="thermal-section-label">Promo / Coupon</div>
+                                        <div class="thermal-kv">
+                                            <span class="thermal-k">Coupon Code</span>
+                                            <span class="thermal-v <?php echo empty($receipt_data['couponCode']) ? 'muted' : ''; ?>"><?php echo !empty($receipt_data['couponCode']) ? htmlspecialchars($receipt_data['couponCode']) : 'N/A'; ?></span>
+                                        </div>
+                                        <?php if (!empty($receipt_data['discountAmount'])): ?>
+                                            <div class="thermal-kv"><span class="thermal-k">Discount</span><span class="thermal-v" style="color:#00a044;">-&#8369;<?php echo number_format($receipt_data['discountAmount'], 2); ?></span></div>
+                                        <?php endif; ?>
+
+                                        <hr class="thermal-divider">
+
+                                        <div class="thermal-section-label">
+                                            Order Items - <?php echo $receipt_data['itemCount']; ?> <?php echo $receipt_data['itemCount'] == 1 ? 'item' : 'items'; ?>
+                                        </div>
+                                        <table class="thermal-items-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Item</th>
+                                                    <th>Qty</th>
+                                                    <th>Price</th>
+                                                    <th>Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($receipt_data['items'] as $item):
+                                                    $rcptPrice = getEffectiveCheckoutPrice($item);
+                                                ?>
+                                                    <tr>
+                                                        <td class="name"><?php echo htmlspecialchars($item['name']); ?></td>
+                                                        <td><?php echo (int)$item['qty']; ?></td>
+                                                        <td class="price">&#8369;<?php echo number_format($rcptPrice, 2); ?></td>
+                                                        <td class="price">&#8369;<?php echo number_format($rcptPrice * $item['qty'], 2); ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+
+                                        <hr class="thermal-divider">
+
+                                        <div class="thermal-totals">
+                                            <div class="thermal-total-row">
+                                                <span class="lbl">Subtotal</span>
+                                                <span class="amt">&#8369;<?php echo number_format($receipt_data['subtotal'], 2); ?></span>
+                                            </div>
+                                            <?php if (!empty($receipt_data['discountAmount'])): ?>
+                                                <div class="thermal-total-row discount">
+                                                    <span class="lbl">Discount (<?php echo htmlspecialchars($receipt_data['couponCode']); ?>)</span>
+                                                    <span class="amt">-&#8369;<?php echo number_format($receipt_data['discountAmount'], 2); ?></span>
+                                                </div>
+                                            <?php endif; ?>
+                                            <div class="thermal-total-row">
+                                                <span class="lbl">Tax (8%)</span>
+                                                <span class="amt">&#8369;<?php echo number_format($receipt_data['tax'], 2); ?></span>
+                                            </div>
+                                            <div class="thermal-total-row shipping">
+                                                <span class="lbl">Shipping</span>
+                                                <span class="amt">FREE</span>
+                                            </div>
+                                            <div class="thermal-grand">
+                                                <span class="lbl">Total</span>
+                                                <span class="amt">&#8369;<?php echo number_format($receipt_data['grandTotal'], 2); ?></span>
+                                            </div>
+                                        </div>
+
+                                        <div class="thermal-status">
+                                            <div class="thermal-status-dot"></div>
+                                            <div><strong>Order Status:</strong> Processing</div>
+                                        </div>
+
+                                        <div class="thermal-footer-note">
+                                            <div class="thermal-barcode">||| || ||| || || ||| | || |||</div>
+                                            <p>
+                                                <?php echo htmlspecialchars($receipt_number); ?><br>
+                                                Thank you for shopping with ApeX Gear!<br>
+                                                Keep this receipt for your records.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="oldReceiptLayout">
                                 <div class="text-center mb-4 pb-3 border-bottom">
-                                    <h3 class="fw-bold mb-2" style="font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.05em;">ONLINE RECEIPT</h3>
-                                    <p class="text-muted small mb-0">Payment Completed Successfully</p>
-                                    <p class="text-muted small mb-1">Order Number</p>
-                                    <h4 class="fw-bold text-apex-blue font-monospace"><?php echo $receipt_number; ?></h4>
-                                    <p class="text-muted small mt-2 mb-0"><?php echo $receipt_data['orderDate']; ?></p>
+                                    <p class="text-muted small mb-1" style="letter-spacing:2px; text-transform:uppercase; font-size:0.75rem;">Order Reference</p>
+                                    <h4 class="fw-bold text-apex-blue font-monospace mb-1" style="font-size:1rem;"><?php echo $receipt_number; ?></h4>
+                                    <p class="text-muted" style="font-size:0.82rem;"><?php echo $receipt_data['orderDate']; ?></p>
                                 </div>
 
                                 <div class="mb-4 pb-3 border-bottom">
@@ -586,22 +1061,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                     </div>
                                 </div>
 
-                                <div class="alert alert-success alert-dismissible fade show mt-4 mb-0" role="alert">
-                                    <i class="fas fa-check-circle me-2"></i>
-                                    <strong>Order Status:</strong> Processing &bull; Paid
+                                <div style="background:#edfff6; border:1px solid #b6f0d4; border-radius:8px; padding:12px 16px; display:flex; align-items:center; gap:10px; font-size:0.88rem; margin-top:1.2rem;">
+                                    <span style="width:9px;height:9px;border-radius:50%;background:#00d27a;flex-shrink:0;box-shadow:0 0 0 3px rgba(0,210,122,0.2);display:inline-block;"></span>
+                                    <div><strong style="color:#0b7a44;">Order Status:</strong> <span class="text-muted">Processing &bull; Paid</span></div>
                                 </div>
                             </div>
-
-                            <div class="d-flex gap-3 justify-content-center mb-4">
-                                <a href="actions/print_receipt.php?order_id=<?php echo $orderId; ?>" target="_blank" class="btn" style="background: var(--apex-blue); color: white; border: none; padding: 10px 25px; border-radius: 50px; font-weight: 600; text-decoration: none;">
-                                    <i class="fas fa-download me-2"></i>Download PDF
+<br><br>
+                            <div class="d-flex gap-3 justify-content-center flex-wrap mb-4">
+                                <a href="actions/print_receipt.php?order_id=<?php echo $orderId; ?>" target="_blank"
+                                    style="display:inline-flex; align-items:center; gap:8px; background:var(--apex-blue); color:#fff; border:none; padding:11px 26px; border-radius:50px; font-weight:700; font-size:.88rem; text-decoration:none; letter-spacing:0.03em; box-shadow:0 4px 14px rgba(0,168,232,0.30); transition:opacity .2s;">
+                                    <i class="fas fa-download"></i> Download Receipt
                                 </a>
-                                <a href="actions/print_receipt.php?order_id=<?php echo $orderId; ?>" target="_blank" class="btn" style="background: #6c757d; color: white; border: none; padding: 10px 25px; border-radius: 50px; font-weight: 600; text-decoration: none;">
-                                    <i class="fas fa-print me-2"></i>Print Receipt
+                                <a href="actions/print_receipt.php?order_id=<?php echo $orderId; ?>" target="_blank"
+                                    style="display:inline-flex; align-items:center; gap:8px; background:#fff; color:#0b1c3f; border:2px solid #d0d0d0; padding:9px 26px; border-radius:50px; font-weight:700; font-size:.88rem; text-decoration:none; letter-spacing:0.03em; transition:border-color .2s;">
+                                    <i class="fas fa-print"></i> Print Receipt
                                 </a>
                             </div>
 
-                            <a href="store.php" class="btn-apex" style="background: var(--apex-dark); color: white;">Return to Store</a>
+                            <a href="store.php" class="btn-apex" style="background: var(--apex-dark); color: white;">← Back to Store</a>
                         </div>
                     </div>
                 </div>
@@ -824,10 +1301,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             </div>
 
                             <?php if (!empty($appliedCoupon)): ?>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Promo (<?php echo htmlspecialchars($appliedCoupon['code']); ?>)</span>
-                                <span class="fw-bold text-success">&minus;₱<?php echo number_format($discount_amount, 2); ?></span>
-                            </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Promo (<?php echo htmlspecialchars($appliedCoupon['code']); ?>)</span>
+                                    <span class="fw-bold text-success">&minus;₱<?php echo number_format($discount_amount, 2); ?></span>
+                                </div>
                             <?php endif; ?>
 
                             <div class="d-flex justify-content-between mb-3">
@@ -866,50 +1343,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/navbar.js"></script>
     <script src="assets/js/main.js"></script>
-
-    <script>
-        // PDF Download functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const downloadBtn = document.getElementById('downloadPdfBtn');
-            if (downloadBtn) {
-                downloadBtn.addEventListener('click', function() {
-                    // Find the receipt container
-                    const receiptElement = document.querySelector('.bg-light.rounded-4.p-5');
-
-                    if (receiptElement) {
-                        // Clone the receipt for PDF export
-                        const element = receiptElement.cloneNode(true);
-
-                        // Remove buttons div from clone
-                        const buttonsToRemove = element.querySelectorAll('.d-flex.gap-3.justify-content-center');
-                        buttonsToRemove.forEach(btn => btn.remove());
-
-                        const opt = {
-                            margin: 10,
-                            filename: 'APX_Gear_Receipt_<?php echo isset($receipt_number) ? htmlspecialchars($receipt_number) : 'receipt'; ?>.pdf',
-                            image: {
-                                type: 'jpeg',
-                                quality: 0.98
-                            },
-                            html2canvas: {
-                                scale: 2,
-                                useCORS: true
-                            },
-                            jsPDF: {
-                                orientation: 'portrait',
-                                unit: 'mm',
-                                format: 'a4'
-                            }
-                        };
-
-                        html2pdf().set(opt).from(element).save();
-                    } else {
-                        alert('Receipt not found. Please try again.');
-                    }
-                });
-            }
-        });
-    </script>
 
     <script>
         function showCheckoutAlert(message) {
