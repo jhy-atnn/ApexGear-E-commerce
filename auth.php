@@ -39,8 +39,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             echo json_encode(['success' => false, 'message' => 'Please enter a valid email address.']);
             exit;
         }
-        if (!preg_match('/^[A-Za-z]+$/', $username) || !preg_match('/^[A-Za-z]+$/', $firstName) || !preg_match('/^[A-Za-z]+$/', $lastName) || ($middleName !== '' && !preg_match('/^[A-Za-z]+$/', $middleName))) {
-            echo json_encode(['success' => false, 'message' => 'Please only use Letters for username and name fields.']);
+        if (preg_match('/[\x00-\x1F\x7F]/', $username)) {
+            echo json_encode(['success' => false, 'message' => 'Username contains invalid characters.']);
+            exit;
+        }
+        if (preg_match('/\d/', $firstName) || preg_match('/\d/', $lastName) || ($middleName !== '' && preg_match('/\d/', $middleName))) {
+            echo json_encode(['success' => false, 'message' => 'First Name, Middle Initial, and Last Name cannot contain numbers.']);
             exit;
         }
         if (strlen($username) > 50 || strlen($email) > 100) {
@@ -558,19 +562,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                         <div class="auth-field">
                             <label>First Name</label>
                             <div class="auth-input-wrap">
-                                <input type="text" id="regFname" placeholder="First" autocomplete="given-name" required oninput="filterLettersOnly(this)" />
+                                <input type="text" id="regFname" placeholder="First" autocomplete="given-name" required oninput="filterNumbersFromName(this)" />
                             </div>
                         </div>
                         <div class="auth-field">
                             <label>Middle <span class="auth-opt">(opt.)</span></label>
                             <div class="auth-input-wrap">
-                                <input type="text" id="regMname" placeholder="M.I." autocomplete="additional-name" oninput="filterLettersOnly(this)" />
+                                <input type="text" id="regMname" placeholder="M.I." autocomplete="additional-name" oninput="filterNumbersFromName(this)" />
                             </div>
                         </div>
                         <div class="auth-field">
                             <label>Last Name</label>
                             <div class="auth-input-wrap">
-                                <input type="text" id="regLname" placeholder="Last" autocomplete="family-name" required oninput="filterLettersOnly(this)" />
+                                <input type="text" id="regLname" placeholder="Last" autocomplete="family-name" required oninput="filterNumbersFromName(this)" />
                             </div>
                         </div>
                     </div>
@@ -687,16 +691,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             document.getElementById(id).classList.add('d-none');
         }
 
-        function filterLettersOnly(el) {
+        function filterNumbersFromName(el) {
             const original = el.value;
-            const filtered = original.replace(/[^A-Za-z]/g, '');
+            const filtered = original.replace(/\d/g, '');
             if (original !== filtered) {
                 el.value = filtered;
-                const alertId = el.id === 'loginUsername' ? 'loginAlert' : 'registerAlert';
-                showAlert(alertId, 'Please only use Letters');
+                showAlert('registerAlert', 'First Name, Middle Initial, and Last Name cannot contain numbers.');
             } else {
-                const alertId = el.id === 'loginUsername' ? 'loginAlert' : 'registerAlert';
-                hideAlert(alertId);
+                hideAlert('registerAlert');
             }
         }
 
@@ -755,13 +757,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             const g = document.getElementById('regGender').value;
             const e = document.getElementById('regEmail').value.trim();
             const p = document.getElementById('regPassword').value;
-            const lettersOnly = /^[A-Za-z]+$/;
+            const hasNumber = /\d/;
             if (!u || !l || !f || !g || !e || !p) {
                 showAlert('registerAlert', 'All required fields are required.');
                 return;
             }
-            if (!lettersOnly.test(f) || !lettersOnly.test(l) || (m && !lettersOnly.test(m))) {
-                showAlert('registerAlert', 'Please only use Letters');
+            if (hasNumber.test(f) || hasNumber.test(l) || (m && hasNumber.test(m))) {
+                showAlert('registerAlert', 'First Name, Middle Initial, and Last Name cannot contain numbers.');
                 return;
             }
             hideAlert('registerAlert');
