@@ -260,7 +260,7 @@ class AboutTeam extends AboutBrand
                 <div class="col-sm-6 col-lg-4 fade-up">
                     <div class="team-card">
                         <div class="team-img-wrap">
-                            <img src="assets\images\profiles\luige_1x1.jpg" alt="UI Designer" />
+                            <img src="assets\images\profiles\luig_1x1.png" alt="UI Designer" />
                             <div class="team-img-overlay"></div>
                             <span class="team-role-badge">Designer</span>
                         </div>
@@ -279,7 +279,7 @@ class AboutTeam extends AboutBrand
                 <div class="col-sm-6 col-lg-4 fade-up">
                     <div class="team-card">
                         <div class="team-img-wrap">
-                            <img src="assets\images\profiles\luis_1x1.jpg" alt="Backend Dev" />
+                            <img src="assets\images\profiles\luis_1x1.png" alt="Backend Dev" />
                             <div class="team-img-overlay"></div>
                             <span class="team-role-badge">Dev</span>
                         </div>
