@@ -80,7 +80,6 @@
                     <li><a href="about.php">About Us</a></li>
                     <li><a href="product.php">Products</a></li>
                     <li><a href="deals.php">Deals</a></li>
-                    <li><a href="#">News</a></li>
                     <li><a href="contact.php">Contact Us</a></li>
                 </ul>
             </div>
