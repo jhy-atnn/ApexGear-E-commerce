@@ -713,6 +713,13 @@ $grand_total = ($subtotal - $couponDiscountAmount) + $tax;
         }
 
         /* ── RESPONSIVE ── */
+        @media (max-width: 991.98px) {
+            .summary-card {
+                position: static;
+                margin-top: 24px;
+            }
+        }
+
         @media (max-width: 768px) {
 
             .cart-table thead th:nth-child(3),
@@ -722,6 +729,102 @@ $grand_total = ($subtotal - $couponDiscountAmount) + $tax;
 
             .cart-page {
                 padding: 28px 0 60px;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .cart-header-inner {
+                height: auto;
+                min-height: 58px;
+                gap: 12px;
+                padding: 10px 0;
+            }
+
+            .cart-header-logo {
+                min-width: 0;
+                gap: 8px;
+            }
+
+            .cart-header-logo img {
+                height: 34px;
+            }
+
+            .cart-header-logo .logo-wordmark {
+                font-size: 1.35rem;
+            }
+
+            .cart-header-label {
+                font-size: .64rem;
+                letter-spacing: 1.4px;
+                white-space: nowrap;
+            }
+
+            .cart-heading {
+                font-size: 1.85rem;
+            }
+
+            .cart-subtext {
+                margin-bottom: 22px;
+            }
+
+            .cart-card {
+                border-radius: 12px;
+            }
+
+            .cart-table {
+                min-width: 560px;
+            }
+
+            .cart-table td,
+            .cart-table thead th {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            .product-thumb {
+                width: 54px;
+                height: 54px;
+            }
+
+            .product-name {
+                max-width: 160px;
+                overflow-wrap: anywhere;
+            }
+
+            .qty-wrap {
+                gap: 5px;
+            }
+
+            .qty-input {
+                width: 48px;
+            }
+
+            .btn-qty-update,
+            .btn-remove {
+                width: 32px;
+                height: 32px;
+            }
+
+            .summary-card {
+                padding: 22px 20px;
+                border-radius: 12px;
+            }
+
+            .summary-total .tot-amt {
+                font-size: 1.42rem;
+            }
+
+            .coupon-input-wrap {
+                flex-direction: column;
+            }
+
+            .coupon-btn,
+            .coupon-input {
+                width: 100%;
+            }
+
+            .mt-3.d-flex.justify-content-end {
+                justify-content: center !important;
             }
         }
     </style>

@@ -27,29 +27,40 @@
 // ── Navbar search with AJAX live results
 const navSearchWrap = document.querySelector('.nav-search-wrap');
 const navSearchToggle = document.querySelector('.nav-search-toggle');
+const navSearchClear = document.querySelector('.nav-search-clear');
 const navSearchInput = document.querySelector('.nav-product-search');
 const navSearchPanel = document.querySelector('.nav-search-panel');
 
 let searchTimeout;
 
 if (navSearchWrap && navSearchToggle && navSearchInput) {
+    const setSearchPanel = (html = '') => {
+        if (!navSearchPanel) return;
+        navSearchPanel.innerHTML = html;
+        navSearchWrap.classList.toggle('has-results', html.trim().length > 0);
+    };
+
+    const updateClearButton = () => {
+        navSearchWrap.classList.toggle('has-query', navSearchInput.value.trim().length > 0);
+    };
+
     const fetchSearchResults = async (query) => {
         query = (query || '').trim();
         
         // Clear if query is too short
         if (query.length < 2) {
-            navSearchPanel.innerHTML = '<div class="nav-search-empty show">Type at least 2 characters to search</div>';
+            setSearchPanel('');
             return;
         }
 
         try {
-            navSearchPanel.innerHTML = '<div class="nav-search-loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+            setSearchPanel('<div class="nav-search-loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>');
             
             const response = await fetch(`api/search.php?q=${encodeURIComponent(query)}`);
             const data = await response.json();
             
             if (!data.success || data.count === 0) {
-                navSearchPanel.innerHTML = `<div class="nav-search-empty show">No products found for "${query}"</div>`;
+                setSearchPanel(`<div class="nav-search-empty show">No products found for "${query}"</div>`);
                 return;
             }
             
@@ -69,22 +80,23 @@ if (navSearchWrap && navSearchToggle && navSearchInput) {
             });
             
             resultsHTML += `<a href="store.php?q=${encodeURIComponent(query)}" class="nav-search-viewall">View all results →</a>`;
-            navSearchPanel.innerHTML = resultsHTML;
+            setSearchPanel(resultsHTML);
             
         } catch (error) {
             console.error('Search error:', error);
-            navSearchPanel.innerHTML = '<div class="nav-search-empty show">Error loading results</div>';
+            setSearchPanel('<div class="nav-search-empty show">Error loading results</div>');
         }
     };
 
     const openNavSearch = () => {
         navSearchWrap.classList.add('open');
+        updateClearButton();
         navSearchInput.focus();
     };
 
     const closeNavSearch = () => {
         navSearchWrap.classList.remove('open');
-        navSearchPanel.innerHTML = '';
+        setSearchPanel('');
     };
 
     navSearchToggle.addEventListener('click', (event) => {
@@ -99,18 +111,28 @@ if (navSearchWrap && navSearchToggle && navSearchInput) {
     navSearchInput.addEventListener('input', (event) => {
         const query = event.target.value;
         clearTimeout(searchTimeout);
+        updateClearButton();
         
         // Debounce search
         searchTimeout = setTimeout(() => {
             if (query.trim().length >= 2) {
                 fetchSearchResults(query);
-            } else if (query.trim().length === 0) {
-                navSearchPanel.innerHTML = '';
             } else {
-                navSearchPanel.innerHTML = '<div class="nav-search-empty show">Type at least 2 characters to search</div>';
+                setSearchPanel('');
             }
         }, 300);
     });
+
+    if (navSearchClear) {
+        navSearchClear.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            navSearchInput.value = '';
+            updateClearButton();
+            setSearchPanel('');
+            navSearchInput.focus();
+        });
+    }
 
     navSearchInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
@@ -125,6 +147,8 @@ if (navSearchWrap && navSearchToggle && navSearchInput) {
     navSearchInput.addEventListener('focus', () => {
         openNavSearch();
     });
+
+    updateClearButton();
 
     document.addEventListener('click', (event) => {
         if (!navSearchWrap.contains(event.target)) {

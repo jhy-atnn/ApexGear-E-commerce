@@ -841,6 +841,7 @@
 .profile-panel {
     position: absolute;
     width: 264px;
+    max-width: calc(100vw - 28px);
     background: #0a1535;
     border: 1px solid rgba(45,107,228,.35);
     border-radius: 16px;
@@ -850,7 +851,7 @@
     transform: translateY(-10px) scale(.96);
     pointer-events: none;
     transition: opacity .22s cubic-bezier(.4,0,.2,1), transform .22s cubic-bezier(.4,0,.2,1);
-    z-index: 1035;
+    z-index: 2300;
 }
 .profile-panel.open {
     opacity: 1;
@@ -908,6 +909,33 @@
     text-overflow: ellipsis;
     max-width: 160px;
     margin-top: 2px;
+}
+
+@media (max-width: 575.98px) {
+    .profile-btn {
+        padding: 4px;
+        border-radius: 999px;
+    }
+
+    .profile-panel {
+        left: 14px !important;
+        right: 14px !important;
+        width: auto;
+        max-height: calc(100vh - 96px);
+        overflow-y: auto;
+    }
+
+    .profile-panel::before {
+        right: 40px;
+    }
+
+    .pp-header {
+        padding: 12px;
+    }
+
+    .pp-email {
+        max-width: calc(100vw - 132px);
+    }
 }
 
 .pp-divider {

@@ -100,7 +100,7 @@
                 <ul>
                     <li style="color:rgba(255,255,255,.45); font-size:.85rem;"><i class="fas fa-map-marker-alt me-2" style="color:var(--apex-accent);"></i>Ayala Avenue, Makati City, PH</li>
                     <li><a href="tel:+1234567890"><i class="fas fa-phone-alt me-2" style="color:var(--apex-accent);"></i>+63 912 255 3546</a></li>
-                    <li><a href="mailto:support@apexgear.com"><i class="fas fa-envelope me-2" style="color:var(--apex-accent);"></i>apexgear26@gmail.com</a></li>
+                    <li><a href="mailto:support@apexgear.com"><i class="fas fa-envelope me-2" style="color:var(--apex-accent);"></i>apex26gear@gmail.com</a></li>
                     <li style="color:rgba(255,255,255,.45); font-size:.85rem;"><i class="fas fa-clock me-2" style="color:var(--apex-accent);"></i>Mon–Sat: 9AM – 9PM</li>
                 </ul>
                 <div class="footer-heading mt-4">Accept Payment</div>
