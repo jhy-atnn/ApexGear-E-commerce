@@ -7,7 +7,8 @@ if (!function_exists('renderProductCard')) {
         $brand = $product['brand'] ?? 'Unknown';
         $category = $product['category'] ?? 'Accessories';
         $stock = (int)($product['stock'] ?? $product['stock_qty'] ?? 0);
-        $rating = $product['rating'] ?? 5;
+        $rating = (float)($product['rating'] ?? 0);
+        $reviewCount = (int)($product['review_count'] ?? $product['reviews'] ?? 0);
         $badge = trim((string)($product['badge'] ?? ''));
         $badgeType = $product['badge_type'] ?? 'normal';
         $returnUrl = $options['return_url'] ?? ($_SERVER['REQUEST_URI'] ?? 'store.php');
@@ -72,8 +73,16 @@ if (!function_exists('renderProductCard')) {
                 <div class="product-name"><?php echo htmlspecialchars($name); ?></div>
 
                 <div class="product-rating">
-                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                    <span>(<?php echo htmlspecialchars((string)$rating); ?>)</span>
+                    <?php for ($star = 1; $star <= 5; $star++): ?>
+                        <?php if ($rating >= $star): ?>
+                            <i class="fas fa-star"></i>
+                        <?php elseif ($rating >= $star - 0.5): ?>
+                            <i class="fas fa-star-half-alt"></i>
+                        <?php else: ?>
+                            <i class="far fa-star"></i>
+                        <?php endif; ?>
+                    <?php endfor; ?>
+                    <span><?php echo $reviewCount > 0 ? number_format($rating, 1) . ' (' . $reviewCount . ')' : 'No ratings yet'; ?></span>
                 </div>
 
                 <div class="product-price">

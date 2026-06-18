@@ -5,11 +5,50 @@ require_once __DIR__ . '/../database/db_connect.php';
 class Inventory
 {
     private $conn;
+    private static $productCreatedAtChecked = false;
 
     public function __construct()
     {
         $db = new Database();
         $this->conn = $db->getConnection();
+        $this->ensureProductCreatedAtColumn();
+    }
+
+    private function ensureProductCreatedAtColumn()
+    {
+        if (self::$productCreatedAtChecked) {
+            return;
+        }
+
+        self::$productCreatedAtChecked = true;
+        $result = $this->conn->query("SHOW COLUMNS FROM products_tbl LIKE 'created_at'");
+        if ($result && $result->num_rows > 0) {
+            return;
+        }
+
+        $this->conn->query("ALTER TABLE products_tbl ADD COLUMN created_at DATETIME NULL AFTER est_shipping_time");
+    }
+
+    private static function applyBadgeLifecycle(array $row)
+    {
+        $badge = trim((string)($row['badge'] ?? ''));
+        $badgeType = trim((string)($row['badge_type'] ?? ''));
+        $createdAt = trim((string)($row['created_at'] ?? ''));
+        $isNewArrival = strcasecmp($badge, 'New Arrival') === 0;
+
+        if ($isNewArrival) {
+            $createdTs = $createdAt !== '' ? strtotime($createdAt) : false;
+            $isWithinNewWindow = $createdTs !== false && $createdTs >= strtotime('-7 days');
+
+            if (!$isWithinNewWindow) {
+                $row['badge'] = '';
+                $row['badge_type'] = '';
+            } elseif ($badgeType === '') {
+                $row['badge_type'] = 'new';
+            }
+        }
+
+        return $row;
     }
 
     public static function isSaleActive($salePercent, $saleExpiry)
@@ -145,6 +184,31 @@ class Inventory
     {
         if (empty($catName)) return null;
 
+        $aliases = [
+            'laptops' => 'Laptop',
+            'laptop' => 'Laptop',
+            'desktops' => 'Desktop / PC',
+            'desktop' => 'Desktop / PC',
+            'desktop / pc' => 'Desktop / PC',
+            'cellphones' => 'Phone',
+            'cellphone' => 'Phone',
+            'phones' => 'Phone',
+            'phone' => 'Phone',
+            'tablet' => 'Tablet',
+            'tablets' => 'Tablet',
+            'audio' => 'Headphones / Audio',
+            'headphones' => 'Headphones / Audio',
+            'headphones / audio' => 'Headphones / Audio',
+            'accessories' => 'Accessories / Peripherals',
+            'peripherals' => 'Accessories / Peripherals',
+            'peripheral' => 'Accessories / Peripherals',
+            'accessories / peripherals' => 'Accessories / Peripherals',
+            'cpu' => 'CPU',
+            'gpu' => 'GPU',
+        ];
+        $key = mb_strtolower(trim((string)$catName), 'UTF-8');
+        $catName = $aliases[$key] ?? trim((string)$catName);
+
         $stmt = $this->conn->prepare("SELECT category_id FROM category_tbl WHERE category_name = ?");
         $stmt->bind_param("s", $catName);
         $stmt->execute();
@@ -166,9 +230,18 @@ class Inventory
         $query = "
             SELECT p.product_id as id, p.name, p.price, p.`desc`, p.stock_qty as stock,
                    p.sale_percent, p.sale_valid_until as sale_expiry,
-                   p.badge, p.badge_type, p.est_shipping_time as shipping_time,
+                   p.badge, p.badge_type, p.est_shipping_time as shipping_time, p.created_at,
                    p.archived_at, IF(p.archived_at IS NULL, 0, 1) AS archived,
                    b.brand_name as brand, c.category_name as category,
+                   COALESCE(ROUND((SELECT AVG(r.rating) FROM reviews_tbl r WHERE r.product_id = p.product_id), 1), 0) as rating,
+                   COALESCE((SELECT COUNT(*) FROM reviews_tbl r WHERE r.product_id = p.product_id), 0) as review_count,
+                   COALESCE((
+                       SELECT SUM(oi.quantity)
+                       FROM order_items_tbl oi
+                       JOIN orders_tbl o ON oi.order_id = o.order_id
+                       WHERE oi.product_id = p.product_id
+                         AND LOWER(o.order_status) <> 'canceled'
+                   ), 0) as sales,
                    (SELECT image_path FROM product_images_tbl WHERE product_id = p.product_id LIMIT 1) as image
             FROM products_tbl p
             LEFT JOIN brand_tbl b ON p.brand_id = b.brand_id
@@ -183,10 +256,11 @@ class Inventory
         $products = [];
 
         while ($row = $result->fetch_assoc()) {
-            // Placeholder data for frontend features not yet in database
             $row = self::applyPricingFields($row);
-            $row['rating'] = rand(4, 5); // Mock rating until reviews_tbl is active
-            $row['sales']  = rand(50, 500); // Mock sales for featured sorting
+            $row = self::applyBadgeLifecycle($row);
+            $row['rating'] = (float)($row['rating'] ?? 0);
+            $row['review_count'] = (int)($row['review_count'] ?? 0);
+            $row['sales'] = (int)($row['sales'] ?? 0);
 
             $products[$row['id']] = $row;
         }
@@ -199,12 +273,18 @@ class Inventory
         $brand_id = $this->getBrandId($brand);
         $cat_id = $this->getCategoryId($category);
 
-        $sale_expiry = !empty($sale_expiry) ? $sale_expiry : null;
+        $sale_expiry = !empty($sale_expiry) ? str_replace('T', ' ', $sale_expiry) : null;
         $sale_percent = !empty($sale_percent) ? $sale_percent : 0;
+        $badge = trim((string)$badge);
+        $badge_type = trim((string)$badge_type);
+        if ($badge === '') {
+            $badge = 'New Arrival';
+            $badge_type = 'new';
+        }
         $image = self::normalizeProductImagePath($image);
 
         // Insert main product
-        $stmt = $this->conn->prepare("INSERT INTO products_tbl (brand_id, category_id, name, `desc`, price, sale_percent, sale_valid_until, stock_qty, badge, badge_type, est_shipping_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $this->conn->prepare("INSERT INTO products_tbl (brand_id, category_id, name, `desc`, price, sale_percent, sale_valid_until, stock_qty, badge, badge_type, est_shipping_time, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
         $stmt->bind_param("iissdisisss", $brand_id, $cat_id, $name, $desc, $price, $sale_percent, $sale_expiry, $stock, $badge, $badge_type, $shipping_time);
         $stmt->execute();
         $product_id = $stmt->insert_id;
@@ -224,7 +304,7 @@ class Inventory
         $brand_id = $this->getBrandId($brand);
         $cat_id = $this->getCategoryId($category);
 
-        $sale_expiry = !empty($sale_expiry) ? $sale_expiry : null;
+        $sale_expiry = !empty($sale_expiry) ? str_replace('T', ' ', $sale_expiry) : null;
         $sale_percent = !empty($sale_percent) ? $sale_percent : 0;
         $image = self::normalizeProductImagePath($image);
 
@@ -608,8 +688,17 @@ class Inventory
         $query = "
             SELECT p.product_id as id, p.name, p.price, p.`desc`, p.stock_qty as stock,
                    p.sale_percent, p.sale_valid_until as sale_expiry,
-                   p.badge, p.badge_type, p.est_shipping_time as shipping_time,
+                   p.badge, p.badge_type, p.est_shipping_time as shipping_time, p.created_at,
                    b.brand_name as brand, c.category_name as category,
+                   COALESCE(ROUND((SELECT AVG(r.rating) FROM reviews_tbl r WHERE r.product_id = p.product_id), 1), 0) as rating,
+                   COALESCE((SELECT COUNT(*) FROM reviews_tbl r WHERE r.product_id = p.product_id), 0) as review_count,
+                   COALESCE((
+                       SELECT SUM(oi.quantity)
+                       FROM order_items_tbl oi
+                       JOIN orders_tbl o ON oi.order_id = o.order_id
+                       WHERE oi.product_id = p.product_id
+                         AND LOWER(o.order_status) <> 'canceled'
+                   ), 0) as sales,
                    (SELECT image_path FROM product_images_tbl WHERE product_id = p.product_id LIMIT 1) as image
             FROM products_tbl p
             LEFT JOIN brand_tbl b ON p.brand_id = b.brand_id
@@ -623,10 +712,11 @@ class Inventory
         $result = $stmt->get_result();
 
         if ($row = $result->fetch_assoc()) {
-            // Placeholder data for frontend features not yet in database
             $row = self::applyPricingFields($row);
-            $row['rating'] = rand(4, 5);
-            $row['sales']  = rand(50, 500);
+            $row = self::applyBadgeLifecycle($row);
+            $row['rating'] = (float)($row['rating'] ?? 0);
+            $row['review_count'] = (int)($row['review_count'] ?? 0);
+            $row['sales'] = (int)($row['sales'] ?? 0);
             return $row;
         }
 

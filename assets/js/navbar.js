@@ -139,3 +139,14 @@ if (navSearchWrap && navSearchToggle && navSearchInput) {
     });
 }
 
+document.querySelectorAll('[data-scroll-top]').forEach(link => {
+    if (link.dataset.scrollBound === 'true') return;
+    link.dataset.scrollBound = 'true';
+    link.addEventListener('click', event => {
+        event.preventDefault();
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+});

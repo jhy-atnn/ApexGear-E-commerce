@@ -267,10 +267,11 @@ $recentOrderNotifications = $inventoryManager->getRecentOrderNotifications(6);
 <body>
 
     <!-- Sidebar overlay (mobile) -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <?php if (false): ?><div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div><?php endif; ?>
 
     <!-- ══ SIDEBAR ══ -->
-    <aside class="sidebar" id="sidebar">
+    <?php $currentAdminPage = 'apex26admin.php'; include __DIR__ . '/includes/admin_sidebar.php'; ?>
+    <?php if (false): ?><aside class="sidebar" id="sidebar">
         <a href="../index.php" class="sidebar-brand">
             <img src="../assets/images/ApeX Logo.png" alt="ApeX Gear">
             <div class="sidebar-brand-text">
@@ -300,7 +301,7 @@ $recentOrderNotifications = $inventoryManager->getRecentOrderNotifications(6);
             <a href="../index.php"><i class="fas fa-arrow-left"></i> Back to Site</a>
             <a href="admin_logout.php" style="color: #ff6b6b;"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </div>
-    </aside>
+    </aside><?php endif; ?>
 
     <!-- ══ MAIN WRAP ══ -->
     <div class="main-wrap">

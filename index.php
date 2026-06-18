@@ -180,7 +180,7 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
                 </button>
                 <div class="category-slider" aria-label="Browse categories">
                     <div class="cat-slide">
-                        <a href="store.php" class="cat-card">
+                        <a href="store.php?cat=Laptop" class="cat-card">
                             <img src="assets/images/products/legion5pro.png" alt="Gaming laptop" class="cat-img">
                             <div class="cat-card-info">
                                 <div class="cat-name">Laptops</div>
@@ -189,7 +189,7 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
                         </a>
                     </div>
                     <div class="cat-slide">
-                        <a href="store.php" class="cat-card">
+                        <a href="store.php?cat=Desktop%20%2F%20PC" class="cat-card">
                             <img src="assets/images/products/xpstower.png" alt="Desktop computer" class="cat-img">
                             <div class="cat-card-info">
                                 <div class="cat-name">Desktops</div>
@@ -198,7 +198,7 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
                         </a>
                     </div>
                     <div class="cat-slide">
-                        <a href="store.php" class="cat-card">
+                        <a href="store.php?cat=Phone" class="cat-card">
                             <img src="assets/images/products/iphone17pro.png" alt="Cellphone" class="cat-img">
                             <div class="cat-card-info">
                                 <div class="cat-name">Cellphones</div>
@@ -207,16 +207,7 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
                         </a>
                     </div>
                     <div class="cat-slide">
-                        <a href="store.php" class="cat-card">
-                            <img src="assets/images/products/sonywh.png" alt="Headphones" class="cat-img">
-                            <div class="cat-card-info">
-                                <div class="cat-name">Headphones</div>
-                                <span class="btn-shop">Shop Now</span>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="cat-slide">
-                        <a href="store.php" class="cat-card">
+                        <a href="store.php?cat=Tablet" class="cat-card">
                             <img src="assets/images/products/s24ultra.png" alt="Tablet device" class="cat-img">
                             <div class="cat-card-info">
                                 <div class="cat-name">Tablet</div>
@@ -225,7 +216,16 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
                         </a>
                     </div>
                     <div class="cat-slide">
-                        <a href="store.php" class="cat-card">
+                        <a href="store.php?cat=Headphones%20%2F%20Audio" class="cat-card">
+                            <img src="assets/images/products/sonywh.png" alt="Headphones" class="cat-img">
+                            <div class="cat-card-info">
+                                <div class="cat-name">Audio</div>
+                                <span class="btn-shop">Shop Now</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="cat-slide">
+                        <a href="store.php?cat=CPU" class="cat-card">
                             <img src="assets/images/intel.png" alt="CPU" class="cat-img cat-img-contain">
                             <div class="cat-card-info">
                                 <div class="cat-name">CPU</div>
@@ -234,7 +234,7 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
                         </a>
                     </div>
                     <div class="cat-slide">
-                        <a href="store.php" class="cat-card">
+                        <a href="store.php?cat=GPU" class="cat-card">
                             <img src="assets/images/products/nvidiartx4070.png" alt="Graphics card" class="cat-img">
                             <div class="cat-card-info">
                                 <div class="cat-name">GPU</div>
@@ -243,7 +243,7 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
                         </a>
                     </div>
                     <div class="cat-slide">
-                        <a href="store.php" class="cat-card">
+                        <a href="store.php?cat=Accessories%20%2F%20Peripherals" class="cat-card">
                             <img src="assets/images/products/blackwidow.png" alt="Gaming accessories" class="cat-img">
                             <div class="cat-card-info">
                                 <div class="cat-name">Accessories</div>

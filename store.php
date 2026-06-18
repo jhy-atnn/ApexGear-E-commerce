@@ -6,10 +6,47 @@ require_once __DIR__ . '/includes/product_card.php';
 /** @var Inventory $inventoryManager */
 $inventoryManager = new Inventory();
 $products = $inventoryManager->getAllProducts();
+$allProducts = $products;
 
 $searchQuery = trim($_GET['q'] ?? '');
 $activeCategory = trim($_GET['cat'] ?? '');
 $activeSort = trim($_GET['sort'] ?? '');
+
+$categoryAliases = [
+    'laptops' => 'Laptop',
+    'laptop' => 'Laptop',
+    'desktops' => 'Desktop / PC',
+    'desktop' => 'Desktop / PC',
+    'desktop / pc' => 'Desktop / PC',
+    'cellphones' => 'Phone',
+    'cellphone' => 'Phone',
+    'phones' => 'Phone',
+    'phone' => 'Phone',
+    'tablet' => 'Tablet',
+    'tablets' => 'Tablet',
+    'audio' => 'Headphones / Audio',
+    'headphones' => 'Headphones / Audio',
+    'headphones / audio' => 'Headphones / Audio',
+    'accessories' => 'Accessories / Peripherals',
+    'peripherals' => 'Accessories / Peripherals',
+    'peripheral' => 'Accessories / Peripherals',
+    'accessories / peripherals' => 'Accessories / Peripherals',
+    'cpu' => 'CPU',
+    'gpu' => 'GPU',
+];
+
+$categoryMap = [];
+foreach ($allProducts as $product) {
+    $category = trim($product['category'] ?? '');
+    if ($category !== '') {
+        $categoryMap[mb_strtolower($category, 'UTF-8')] = $category;
+    }
+}
+
+if ($activeCategory !== '') {
+    $categoryKey = mb_strtolower($activeCategory, 'UTF-8');
+    $activeCategory = $categoryMap[$categoryKey] ?? ($categoryAliases[$categoryKey] ?? $activeCategory);
+}
 
 // Search filter
 if ($searchQuery !== '') {
@@ -33,7 +70,7 @@ if ($activeCategory !== '') {
     $products = array_filter(
         $products,
         fn($p) =>
-        mb_strtolower($p['category'] ?? '') === mb_strtolower($activeCategory)
+        mb_strtolower($p['category'] ?? '', 'UTF-8') === mb_strtolower($activeCategory, 'UTF-8')
     );
     $products = array_values($products);
 }
@@ -48,7 +85,6 @@ if ($activeSort === 'price_asc') {
 $productCount = count($products);
 
 // Collect all unique categories for filter chips
-$allProducts = $inventoryManager->getAllProducts();
 $allCategories = array_unique(array_filter(array_column($allProducts, 'category')));
 sort($allCategories);
 ?>
@@ -126,14 +162,17 @@ sort($allCategories);
                             $categoryOptions = [
                                 '' => 'All Categories',
                                 'Laptop' => 'Laptop',
-                                'Desktop' => 'Desktop',
+                                'Desktop / PC' => 'Desktop / PC',
                                 'Tablet' => 'Tablet',
                                 'Phone' => 'Phone',
-                                'Audio' => 'Audio',
-                                'Peripheral' => 'Peripheral',
+                                'Headphones / Audio' => 'Headphones / Audio',
+                                'Accessories / Peripherals' => 'Accessories / Peripherals',
                                 'CPU' => 'CPU',
                                 'GPU' => 'GPU',
                             ];
+                            foreach ($allCategories as $categoryName) {
+                                $categoryOptions[$categoryName] = $categoryName;
+                            }
                             $currentCategoryLabel = isset($categoryOptions[$activeCategory]) ? $categoryOptions[$activeCategory] : 'Category';
                             ?>
                             <button class="apex-sort-btn" onclick="toggleCategory(event)" type="button">
@@ -145,7 +184,7 @@ sort($allCategories);
                                 <?php foreach ($categoryOptions as $val => $label): ?>
                                     <li>
                                         <a href="#" class="apex-sort-item <?php echo $activeCategory === $val ? 'active' : ''; ?>"
-                                            onclick="applyCategory('<?php echo $val; ?>'); return false;">
+                                            onclick="applyCategory(<?php echo json_encode($val); ?>); return false;">
                                             <?php echo htmlspecialchars($label); ?>
                                             <?php if ($activeCategory === $val): ?>
                                                 <i class="fas fa-check ms-auto"></i>
@@ -204,8 +243,8 @@ sort($allCategories);
                             <a href="store.php" class="btn-shop d-inline-block mt-3" style="padding: 10px 24px; border-radius: 6px;">Browse All</a>
                         <?php else: ?>
                             <div style="color: var(--apex-muted); font-size: 2.5rem; margin-bottom: 12px;"><i class="fas fa-box-open"></i></div>
-                            <h4 style="color: var(--apex-text); font-family: 'Barlow Condensed', sans-serif; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;">Inventory is empty</h4>
-                            <p style="color: var(--apex-muted); margin-top: 6px;">Head over to the <a href="admin/apex26admin.php" style="color: var(--apex-blue);">Admin Panel</a> to add products.</p>
+                            <h4 style="color: var(--apex-text); font-family: 'Barlow Condensed', sans-serif; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;">No product available</h4>
+                            <p style="color: var(--apex-muted); margin-top: 6px;">Please check back soon for updated inventory.</p>
                         <?php endif; ?>
                     </div>
                 <?php else: ?>

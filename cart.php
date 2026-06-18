@@ -863,7 +863,7 @@ $grand_total = ($subtotal - $couponDiscountAmount) + $tax;
                         <?php if ($item_count > 0): ?>
                             <div class="shipping-badge">
                                 <i class="fas fa-truck"></i>
-                                You qualify for <strong>FREE shipping!</strong>
+                                You are qualified for FREE shipping!
                             </div>
                         <?php endif; ?>
 

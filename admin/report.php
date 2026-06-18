@@ -332,6 +332,8 @@ $orderLinePoints = buildLinePoints($orderTrendValues);
 $revenueLinePoints = buildLinePoints($revenueTrendValues);
 $maxTrendOrders = max($orderTrendValues) ?: 0;
 $maxTrendRevenue = max($revenueTrendValues) ?: 0;
+$totalTrendRevenue = array_sum($revenueTrendValues);
+$totalTrendOrders = array_sum($orderTrendValues);
 $channelColors = ['#0b7d75', '#35bdb2', '#7fd9d1', '#f5c518', '#f59f00', '#0b2fa8'];
 $channelGradient = buildConicGradient($channelRows, 'revenue', $channelColors);
 $maxMonthlyRevenue = 1;
@@ -402,6 +404,34 @@ foreach ($locationRows as $row) {
             background: rgba(255, 255, 255, .08);
             font-size: .78rem;
             white-space: nowrap;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .report-action-btn {
+            border: 1px solid rgba(255, 255, 255, .26);
+            background: rgba(255, 255, 255, .12);
+            color: #fff;
+            border-radius: 8px;
+            padding: 9px 13px;
+            font-size: .78rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .report-action-btn:hover {
+            background: rgba(255, 255, 255, .2);
+            color: #fff;
         }
 
         .metric-card {
@@ -475,9 +505,25 @@ foreach ($locationRows as $row) {
             padding: 18px;
         }
 
+        .recent-orders-panel .report-panel-body {
+            padding-bottom: 8px;
+        }
+
         .trend-chart {
             position: relative;
             min-height: 250px;
+        }
+
+        .trend-empty {
+            border: 1px dashed #cfd8e6;
+            border-radius: 10px;
+            min-height: 150px;
+            display: grid;
+            place-items: center;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-align: center;
+            background: #f8fbff;
         }
 
         .trend-chart svg {
@@ -917,11 +963,107 @@ foreach ($locationRows as $row) {
                 min-height: 430px;
             }
         }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 12mm;
+            }
+
+            * {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+
+            body {
+                background: #fff !important;
+                color: #0d1b2e !important;
+                font-size: 10pt;
+            }
+
+            .sidebar,
+            .sidebar-overlay,
+            .topbar,
+            .report-actions,
+            .ph-map-tools,
+            script {
+                display: none !important;
+            }
+
+            .main-wrap {
+                margin: 0 !important;
+                width: 100% !important;
+            }
+
+            .page-body {
+                padding: 0 !important;
+            }
+
+            .report-hero {
+                border-radius: 0;
+                margin-bottom: 12px;
+                padding: 16px 18px;
+                break-after: avoid;
+            }
+
+            .report-hero h1 {
+                font-size: 22pt;
+            }
+
+            .metric-card,
+            .report-panel {
+                border-color: #cfd8e6 !important;
+                box-shadow: none !important;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .metric-card {
+                min-height: 104px;
+                padding: 12px;
+            }
+
+            .metric-value {
+                font-size: 18pt;
+            }
+
+            .report-panel-header,
+            .report-panel-body {
+                padding: 11px 12px;
+            }
+
+            .row {
+                --bs-gutter-x: .7rem;
+                --bs-gutter-y: .7rem;
+            }
+
+            .mb-4 {
+                margin-bottom: .7rem !important;
+            }
+
+            .trend-chart {
+                min-height: 190px;
+            }
+
+            .trend-chart svg {
+                height: 150px;
+            }
+
+            .ph-map-shell,
+            .ph-map-svg {
+                min-height: 360px;
+            }
+
+            .analytics-table {
+                font-size: 8.5pt;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <?php $currentAdminPage = 'report.php'; include __DIR__ . '/includes/admin_sidebar.php'; ?>
+    <?php if (false): ?><div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
     <aside class="sidebar" id="sidebar">
         <a href="../index.php" class="sidebar-brand">
@@ -949,7 +1091,7 @@ foreach ($locationRows as $row) {
             <a href="../index.php"><i class="fas fa-arrow-left"></i> Back to Site</a>
             <a href="admin_logout.php" style="color: #ff6b6b;"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </div>
-    </aside>
+    </aside><?php endif; ?>
 
     <div class="main-wrap">
         <header class="topbar">
@@ -960,6 +1102,7 @@ foreach ($locationRows as $row) {
                 <span class="topbar-crumb">Orders, Users &amp; Store Analytics</span>
             </div>
             <div class="topbar-right">
+                <button type="button" class="btn-topbar" onclick="printReport()"><i class="fas fa-print"></i> Print / Download</button>
                 <a href="manage_orders.php" class="btn-topbar"><i class="fas fa-shopping-cart"></i> Orders</a>
             </div>
         </header>
@@ -970,7 +1113,10 @@ foreach ($locationRows as $row) {
                     <h1>Reports &amp; Analytics</h1>
                     <p>Crystal-style operational view for ApeX Gear sales, users, inventory, and admin activity.</p>
                 </div>
-                <div class="report-stamp"><i class="fas fa-calendar-day me-2"></i><?php echo date('M d, Y h:i A'); ?></div>
+                <div class="report-actions">
+                    <button type="button" class="report-action-btn" onclick="printReport()"><i class="fas fa-file-arrow-down"></i> Print / Download Report</button>
+                    <div class="report-stamp"><i class="fas fa-calendar-day me-2"></i><?php echo date('M d, Y h:i A'); ?></div>
+                </div>
             </section>
 
             <div class="row g-3 mb-4">
@@ -1147,23 +1293,27 @@ foreach ($locationRows as $row) {
                         </div>
                         <div class="report-panel-body trend-chart">
                             <div class="trend-meta">
-                                <span>Highest day: &#8369;<?php echo number_format($maxTrendRevenue, 2); ?></span>
+                                <span>14-day revenue: &#8369;<?php echo number_format($totalTrendRevenue, 2); ?></span>
                                 <div class="trend-legend">
                                     <span class="legend-item"><span class="legend-swatch"></span> Revenue</span>
                                 </div>
                             </div>
-                            <svg viewBox="0 0 640 170" role="img" aria-label="Revenue trend line graph">
-                                <line class="trend-grid" x1="18" y1="18" x2="622" y2="18"></line>
-                                <line class="trend-grid" x1="18" y1="85" x2="622" y2="85"></line>
-                                <line class="trend-grid" x1="18" y1="152" x2="622" y2="152"></line>
-                                <?php if ($revenueLinePoints): ?>
-                                    <polyline class="trend-line revenue" points="<?php echo htmlspecialchars($revenueLinePoints); ?>"></polyline>
-                                    <?php foreach (explode(' ', $revenueLinePoints) as $point): ?>
-                                        <?php [$cx, $cy] = explode(',', $point); ?>
-                                        <circle class="trend-dot revenue" cx="<?php echo $cx; ?>" cy="<?php echo $cy; ?>" r="4"></circle>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </svg>
+                            <?php if ($maxTrendRevenue <= 0): ?>
+                                <div class="trend-empty"><span>No revenue recorded in the last 14 days.</span></div>
+                            <?php else: ?>
+                                <svg viewBox="0 0 640 170" role="img" aria-label="Revenue trend line graph">
+                                    <line class="trend-grid" x1="18" y1="18" x2="622" y2="18"></line>
+                                    <line class="trend-grid" x1="18" y1="85" x2="622" y2="85"></line>
+                                    <line class="trend-grid" x1="18" y1="152" x2="622" y2="152"></line>
+                                    <?php if ($revenueLinePoints): ?>
+                                        <polyline class="trend-line revenue" points="<?php echo htmlspecialchars($revenueLinePoints); ?>"></polyline>
+                                        <?php foreach (explode(' ', $revenueLinePoints) as $point): ?>
+                                            <?php [$cx, $cy] = explode(',', $point); ?>
+                                            <circle class="trend-dot revenue" cx="<?php echo $cx; ?>" cy="<?php echo $cy; ?>" r="4"></circle>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </svg>
+                            <?php endif; ?>
                             <div class="chart-labels">
                                 <?php foreach ($trendLabels as $label): ?>
                                     <span><?php echo htmlspecialchars($label); ?></span>
@@ -1177,7 +1327,7 @@ foreach ($locationRows as $row) {
                     <section class="report-panel h-100">
                         <div class="report-panel-header">
                             <h2>Orders Line Graph</h2>
-                            <span class="status-pill"><i class="fas fa-receipt"></i><?php echo array_sum($orderTrendValues); ?> orders</span>
+                            <span class="status-pill"><i class="fas fa-receipt"></i><?php echo $totalTrendOrders; ?> orders</span>
                         </div>
                         <div class="report-panel-body trend-chart">
                             <div class="trend-meta">
@@ -1210,7 +1360,7 @@ foreach ($locationRows as $row) {
 
             <div class="row g-4 mb-4">
                 <div class="col-12 col-xl-7">
-                    <section class="report-panel h-100">
+                    <section class="report-panel">
                         <div class="report-panel-header">
                             <h2>Order Status Breakdown</h2>
                             <span class="status-pill"><i class="fas fa-chart-simple"></i><?php echo $pendingOrders; ?> pending</span>
@@ -1335,7 +1485,7 @@ foreach ($locationRows as $row) {
 
             <div class="row g-4">
                 <div class="col-12 col-xl-7">
-                    <section class="report-panel h-100">
+                    <section class="report-panel recent-orders-panel">
                         <div class="report-panel-header"><h2>Recent Orders</h2></div>
                         <div class="report-panel-body">
                             <table class="analytics-table">
@@ -1415,6 +1565,10 @@ foreach ($locationRows as $row) {
         function closeSidebar() {
             document.getElementById('sidebar').classList.remove('open');
             document.getElementById('sidebarOverlay').classList.remove('show');
+        }
+
+        function printReport() {
+            window.print();
         }
 
         const phMap = document.getElementById('phOrderMap');

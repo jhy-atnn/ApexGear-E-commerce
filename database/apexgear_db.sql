@@ -490,6 +490,7 @@ CREATE TABLE `products_tbl` (
   `badge` varchar(50) DEFAULT NULL,
   `badge_type` varchar(50) DEFAULT NULL,
   `est_shipping_time` varchar(50) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
   `archived_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
