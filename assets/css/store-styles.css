@@ -149,6 +149,8 @@
     gap: 0;
     margin-top: 22px;
     max-width: 480px;
+    position: relative;
+    z-index: 5;
 }
 
 .store-hero-search input {
@@ -189,6 +191,41 @@
 .store-hero-search button:hover {
     background: #29d4ff;
     transform: translateX(1px);
+}
+
+.store-search-panel {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid rgba(0, 194, 255, .18);
+    border-radius: 8px;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, .24);
+    max-height: 390px;
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+}
+
+.store-hero-search.has-results .store-search-panel {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.store-search-panel .nav-search-loading,
+.store-search-panel .nav-search-empty {
+    color: #7180a8;
+    padding: 14px 16px;
+    font-size: .9rem;
+}
+
+.store-search-panel .nav-search-result,
+.store-search-panel .nav-search-viewall {
+    color: inherit;
 }
 
 /* ── CATALOG SECTION ──────────────────────────────────────── */

@@ -163,6 +163,93 @@ if (navSearchWrap && navSearchToggle && navSearchInput) {
     });
 }
 
+// Store hero search with the same live results as the navbar search
+const storeHeroSearch = document.querySelector('.store-hero-search');
+const storeHeroSearchInput = document.querySelector('.store-product-search');
+const storeHeroSearchPanel = document.querySelector('.store-search-panel');
+let storeSearchTimeout;
+
+if (storeHeroSearch && storeHeroSearchInput && storeHeroSearchPanel) {
+    const setStoreSearchPanel = (html = '') => {
+        storeHeroSearchPanel.innerHTML = html;
+        storeHeroSearch.classList.toggle('has-results', html.trim().length > 0);
+    };
+
+    const fetchStoreSearchResults = async (query) => {
+        query = (query || '').trim();
+        if (query.length < 2) {
+            setStoreSearchPanel('');
+            return;
+        }
+
+        try {
+            setStoreSearchPanel('<div class="nav-search-loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>');
+
+            const response = await fetch(`api/search.php?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+
+            if (!data.success || data.count === 0) {
+                setStoreSearchPanel(`<div class="nav-search-empty show">No products found for "${query}"</div>`);
+                return;
+            }
+
+            let resultsHTML = '';
+            data.results.forEach(product => {
+                const image = product.image ? (product.image.includes('/') ? product.image : `assets/images/products/${product.image}`) : 'assets/images/products/placeholder.png';
+                resultsHTML += `
+                    <a href="product.php?id=${product.id}" class="nav-search-result">
+                        <img src="${image}" alt="${product.name}" class="nav-search-img">
+                        <div class="nav-search-info">
+                            <div class="nav-search-name">${product.name}</div>
+                            <div class="nav-search-meta">${product.brand}${product.category ? ' â€¢ ' + product.category : ''}</div>
+                            <div class="nav-search-price">â‚±${parseFloat(product.price).toLocaleString('en-PH', {minimumFractionDigits: 2})}</div>
+                        </div>
+                    </a>
+                `;
+            });
+
+            resultsHTML += `<a href="store.php?q=${encodeURIComponent(query)}" class="nav-search-viewall">View all results â†’</a>`;
+            setStoreSearchPanel(resultsHTML);
+        } catch (error) {
+            console.error('Search error:', error);
+            setStoreSearchPanel('<div class="nav-search-empty show">Error loading results</div>');
+        }
+    };
+
+    storeHeroSearchInput.addEventListener('input', (event) => {
+        const query = event.target.value;
+        clearTimeout(storeSearchTimeout);
+
+        storeSearchTimeout = setTimeout(() => {
+            if (query.trim().length >= 2) {
+                fetchStoreSearchResults(query);
+            } else {
+                setStoreSearchPanel('');
+            }
+        }, 300);
+    });
+
+    storeHeroSearchInput.addEventListener('focus', () => {
+        const query = storeHeroSearchInput.value.trim();
+        if (query.length >= 2) {
+            fetchStoreSearchResults(query);
+        }
+    });
+
+    storeHeroSearchInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            setStoreSearchPanel('');
+            storeHeroSearchInput.blur();
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!storeHeroSearch.contains(event.target)) {
+            setStoreSearchPanel('');
+        }
+    });
+}
+
 document.querySelectorAll('[data-scroll-top]').forEach(link => {
     if (link.dataset.scrollBound === 'true') return;
     link.dataset.scrollBound = 'true';

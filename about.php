@@ -251,8 +251,6 @@ class AboutTeam extends AboutBrand
                             <p class="team-bio">Architected the entire ApeX platform — from the backend inventory system to the storefront you're browsing right now. PHP, JS, and everything in between.</p>
                             <div class="team-socials">
                                 <a href="https://github.com/jhy-atnn"><i class="fab fa-github"></i></a>
-                                <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                                <a href="#"><i class="fab fa-twitter"></i></a>
                             </div>
                         </div>
                     </div>
@@ -269,9 +267,7 @@ class AboutTeam extends AboutBrand
                             <div class="team-position">UI/UX Designer &amp; Front-End Dev</div>
                             <p class="team-bio">Responsible for every pixel of the ApeX aesthetic. Carla merges design instinct with front-end code — ensuring the site is as beautiful as it is fast.</p>
                             <div class="team-socials">
-                                <a href="#"><i class="fab fa-behance"></i></a>
-                                <a href="#"><i class="fab fa-dribbble"></i></a>
-                                <a href="#"><i class="fab fa-github"></i></a>
+                                <a href="https://github.com/jluigemalaiba"><i class="fab fa-github"></i></a>
                             </div>
                         </div>
                     </div>
@@ -288,8 +284,7 @@ class AboutTeam extends AboutBrand
                             <div class="team-position">Back-End Developer &amp; DB Admin</div>
                             <p class="team-bio">Maintains the database, API integrations, and server infrastructure behind ApeX. If the site is fast and the data is clean, thank Renz.</p>
                             <div class="team-socials">
-                                <a href="#"><i class="fab fa-github"></i></a>
-                                <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                                <a href="https://github.com/sebastianluisebora-svg"><i class="fab fa-github"></i></a>
                             </div>
                         </div>
                     </div>

@@ -146,10 +146,12 @@ sort($allCategories);
                     <input
                         type="text"
                         name="q"
+                        class="store-product-search"
                         placeholder="Search products, brands…"
                         value="<?php echo htmlspecialchars($searchQuery); ?>"
                         autocomplete="off" />
                     <button type="submit"><i class="fas fa-search me-1"></i> Search</button>
+                    <div class="store-search-panel" aria-label="Search products"></div>
                 </form>
             </div>
 
