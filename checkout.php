@@ -3,6 +3,9 @@ session_start();
 
 require_once __DIR__ . '/database/db_connect.php';
 require_once __DIR__ . '/classes/Inventory.php';
+require_once __DIR__ . '/includes/auth_timeout.php';
+
+apex_enforce_login_timeout();
 
 /** @var Inventory $inventoryManager */
 $inventoryManager = new Inventory();

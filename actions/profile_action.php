@@ -1,8 +1,11 @@
 <?php
 session_start();
 require_once __DIR__ . '/../database/db_connect.php';
+require_once __DIR__ . '/../includes/auth_timeout.php';
 
 header('Content-Type: application/json');
+
+apex_enforce_login_timeout();
 
 // Ensure user is logged in
 if (!isset($_SESSION['user'])) {

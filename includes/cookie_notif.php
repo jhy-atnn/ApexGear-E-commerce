@@ -1,7 +1,9 @@
 <?php
 $_apexCookieSet  = isset($_COOKIE['apex_logged_in']) && is_numeric($_COOKIE['apex_logged_in']);
 $_apexCookieSetAt = $_apexCookieSet ? (int)$_COOKIE['apex_logged_in'] : 0;
-$_apexSecondsLeft = $_apexCookieSet ? max(0, 60 - (time() - $_apexCookieSetAt)) : 0;
+require_once __DIR__ . '/auth_timeout.php';
+
+$_apexSecondsLeft = $_apexCookieSet ? max(0, APEX_LOGIN_TIMEOUT_SECONDS - (time() - $_apexCookieSetAt)) : 0;
 ?>
 <?php if ($_apexCookieSet && $_apexSecondsLeft > 0): ?>
     <div class="apex-cookie-notif" id="apexCookieNotif">
@@ -15,7 +17,7 @@ $_apexSecondsLeft = $_apexCookieSet ? max(0, 60 - (time() - $_apexCookieSetAt)) 
         </div>
         <div class="apex-cookie-progress" id="apexCookieBar">
             <div class="apex-cookie-progress__fill" id="apexCookieFill"
-                style="width:<?= round($_apexSecondsLeft / 60 * 100) ?>%"></div>
+                style="width:<?= round($_apexSecondsLeft / APEX_LOGIN_TIMEOUT_SECONDS * 100) ?>%"></div>
         </div>
     </div>
     <script>
@@ -26,20 +28,20 @@ $_apexSecondsLeft = $_apexCookieSet ? max(0, 60 - (time() - $_apexCookieSetAt)) 
             if (!el) return;
 
             var setAt = <?= $_apexCookieSetAt ?> * 1000;
-            var duration = 60 * 1000;
+            var duration = <?= APEX_LOGIN_TIMEOUT_SECONDS ?> * 1000;
 
             function tick() {
                 var left = Math.max(0, Math.round((setAt + duration - Date.now()) / 1000));
                 if (span) span.textContent = left;
-                if (fill) fill.style.width = (left / 60 * 100) + '%';
+                if (fill) fill.style.width = (left / <?= APEX_LOGIN_TIMEOUT_SECONDS ?> * 100) + '%';
 
                 if (left <= 0) {
                     el.classList.add('apex-cookie-notif--expired');
                     el.querySelector('.apex-cookie-notif__text').innerHTML =
                         '<i class="fas fa-clock me-1"></i> Cookie has <strong>expired</strong>.';
                     setTimeout(function() {
-                        el && el.remove();
-                    }, 2500);
+                        window.location.href = 'logout.php';
+                    }, 1200);
                 } else {
                     setTimeout(tick, 1000);
                 }

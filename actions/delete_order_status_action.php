@@ -8,6 +8,9 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/../includes/auth_timeout.php';
+apex_enforce_login_timeout();
+
 if (!isset($_SESSION['user']['id'])) {
     echo json_encode(['success' => false, 'message' => 'Not logged in.']);
     exit;

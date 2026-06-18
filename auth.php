@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '\database\db_connect.php';
 require_once __DIR__ . '\includes\otp_mailer.php';
+require_once __DIR__ . '\includes\auth_timeout.php';
 
 // If already logged in, redirect home
 if (isset($_SESSION['user'])) {
@@ -198,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                 'message' => 'Welcome, ' . $pending['username'] . '!'
             ];
 
-            setcookie('apex_logged_in', (string)time(), time() + 60, '/');
+            apex_set_login_timeout();
             echo json_encode(['success' => true, 'message' => 'Account created! Welcome to ApeX Gear.']);
         } catch (Throwable $e) {
             $conn->rollback();
@@ -329,10 +330,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         }
 
         $_SESSION['apex_welcome_toast'] = [
-            'message' => 'Welcome back, ' . $fakeName . '!'
+            'message' => 'Welcome back, ' . $found['username'] . '!'
         ];
 
-        setcookie('apex_logged_in', (string)time(), time() + 60, '/');
+        apex_set_login_timeout();
         echo json_encode(['success' => true, 'message' => 'Welcome back, ' . htmlspecialchars($found['username']) . '!']);
         exit;
     }
@@ -362,7 +363,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         ];
 
 
-        setcookie('apex_logged_in', (string)time(), time() + 60, '/');
+        apex_set_login_timeout();
         echo json_encode(['success' => true, 'message' => 'Signed in with ' . ucfirst($provider) . '!']);
         exit;
     }

@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/auth_timeout.php';
+apex_enforce_login_timeout();
+
 if (!isset($inventoryManager)) {
     require_once __DIR__ . '/../classes/Inventory.php';
     /** @var Inventory $inventoryManager */
