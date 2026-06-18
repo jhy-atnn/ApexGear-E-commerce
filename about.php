@@ -98,7 +98,7 @@ class AboutTeam extends AboutBrand
                     <h2 class="sec-title mb-1">From a Small <span>Stall</span><br>to Something Bigger</h2>
                     <div class="sec-divider left"></div>
                     <div class="story-text">
-                        <p>ApeX Gear started in 2022 from a humble bazaar stall in Dasmariñas, Cavite — just a few laptops, some second-hand peripherals, and a dream to give Filipino gamers and students access to quality tech at fair prices.</p>
+                        <p>ApeX Gear started in 2022 from a humble bazaar stall in Makati City — just a few laptops, some second-hand peripherals, and a dream to give Filipino gamers and students access to quality tech at fair prices.</p>
                         <p>What we discovered was a massive gap: most Filipinos couldn't find <strong>trusted, curated</strong> tech equipment in one place. So we built it. Starting with pre-loved units and a handful of brand-new items, we slowly earned the trust of our community.</p>
                         <p>Today, ApeX Gear is a <strong>growing tech equipment store in the Philippines</strong>, with an expanding online catalog covering laptops, desktops, cellphones, headphones, GPUs, CPUs, and accessories — all hand-picked by our in-house tech team.</p>
                         <p>We're not just sellers. We're enthusiasts who test, review, and <strong>believe in every product we carry</strong>. That's the ApeX promise.</p>
