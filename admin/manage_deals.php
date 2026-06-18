@@ -203,7 +203,8 @@ foreach ($promoCodes as $p) {
     </style>
 </head>
 <body>
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<?php $currentAdminPage = 'manage_deals.php'; include __DIR__ . '/includes/admin_sidebar.php'; ?>
+<?php if (false): ?><div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
     <a href="../index.php" class="sidebar-brand">
         <img src="../assets/images/ApeX Logo.png" alt="ApeX Gear">
@@ -231,7 +232,7 @@ foreach ($promoCodes as $p) {
         <a href="../index.php"><i class="fas fa-arrow-left"></i> Back to Site</a>
         <a href="admin_logout.php" style="color: #ff6b6b;"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
-</aside>
+</aside><?php endif; ?>
 
 <div class="main-wrap">
     <header class="topbar">

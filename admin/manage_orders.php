@@ -925,7 +925,12 @@ $tabs = [
 </head>
 
 <body>
-    <aside class="sidebar">
+    <?php
+    $pendingCount = count(array_filter($orders ?? [], fn($o) => strtolower($o['order_status'] ?? '') === 'on process'));
+    $currentAdminPage = 'manage_orders.php';
+    include __DIR__ . '/includes/admin_sidebar.php';
+    ?>
+    <?php if (false): ?><aside class="sidebar">
         <a href="../index.php" class="sidebar-brand">
             <img src="../assets/images/ApeX Logo.png" alt="ApeX Gear">
             <div><span class="t1">ApeX </span><span class="t2">Gear</span></div>
@@ -953,7 +958,7 @@ $tabs = [
             <a href="../index.php"><i class="fas fa-arrow-left"></i> Back to Site</a>
             <a href="admin_logout.php" style="color: #ff6b6b;"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </div>
-    </aside>
+    </aside><?php endif; ?>
 
     <div class="main-wrap">
         <header class="topbar">

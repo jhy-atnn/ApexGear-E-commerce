@@ -332,6 +332,8 @@ $orderLinePoints = buildLinePoints($orderTrendValues);
 $revenueLinePoints = buildLinePoints($revenueTrendValues);
 $maxTrendOrders = max($orderTrendValues) ?: 0;
 $maxTrendRevenue = max($revenueTrendValues) ?: 0;
+$totalTrendRevenue = array_sum($revenueTrendValues);
+$totalTrendOrders = array_sum($orderTrendValues);
 $channelColors = ['#0b7d75', '#35bdb2', '#7fd9d1', '#f5c518', '#f59f00', '#0b2fa8'];
 $channelGradient = buildConicGradient($channelRows, 'revenue', $channelColors);
 $maxMonthlyRevenue = 1;
@@ -503,9 +505,25 @@ foreach ($locationRows as $row) {
             padding: 18px;
         }
 
+        .recent-orders-panel .report-panel-body {
+            padding-bottom: 8px;
+        }
+
         .trend-chart {
             position: relative;
             min-height: 250px;
+        }
+
+        .trend-empty {
+            border: 1px dashed #cfd8e6;
+            border-radius: 10px;
+            min-height: 150px;
+            display: grid;
+            place-items: center;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-align: center;
+            background: #f8fbff;
         }
 
         .trend-chart svg {
@@ -1044,7 +1062,8 @@ foreach ($locationRows as $row) {
 </head>
 
 <body>
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <?php $currentAdminPage = 'report.php'; include __DIR__ . '/includes/admin_sidebar.php'; ?>
+    <?php if (false): ?><div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
     <aside class="sidebar" id="sidebar">
         <a href="../index.php" class="sidebar-brand">
@@ -1072,7 +1091,7 @@ foreach ($locationRows as $row) {
             <a href="../index.php"><i class="fas fa-arrow-left"></i> Back to Site</a>
             <a href="admin_logout.php" style="color: #ff6b6b;"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </div>
-    </aside>
+    </aside><?php endif; ?>
 
     <div class="main-wrap">
         <header class="topbar">
@@ -1274,23 +1293,27 @@ foreach ($locationRows as $row) {
                         </div>
                         <div class="report-panel-body trend-chart">
                             <div class="trend-meta">
-                                <span>Highest day: &#8369;<?php echo number_format($maxTrendRevenue, 2); ?></span>
+                                <span>14-day revenue: &#8369;<?php echo number_format($totalTrendRevenue, 2); ?></span>
                                 <div class="trend-legend">
                                     <span class="legend-item"><span class="legend-swatch"></span> Revenue</span>
                                 </div>
                             </div>
-                            <svg viewBox="0 0 640 170" role="img" aria-label="Revenue trend line graph">
-                                <line class="trend-grid" x1="18" y1="18" x2="622" y2="18"></line>
-                                <line class="trend-grid" x1="18" y1="85" x2="622" y2="85"></line>
-                                <line class="trend-grid" x1="18" y1="152" x2="622" y2="152"></line>
-                                <?php if ($revenueLinePoints): ?>
-                                    <polyline class="trend-line revenue" points="<?php echo htmlspecialchars($revenueLinePoints); ?>"></polyline>
-                                    <?php foreach (explode(' ', $revenueLinePoints) as $point): ?>
-                                        <?php [$cx, $cy] = explode(',', $point); ?>
-                                        <circle class="trend-dot revenue" cx="<?php echo $cx; ?>" cy="<?php echo $cy; ?>" r="4"></circle>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </svg>
+                            <?php if ($maxTrendRevenue <= 0): ?>
+                                <div class="trend-empty"><span>No revenue recorded in the last 14 days.</span></div>
+                            <?php else: ?>
+                                <svg viewBox="0 0 640 170" role="img" aria-label="Revenue trend line graph">
+                                    <line class="trend-grid" x1="18" y1="18" x2="622" y2="18"></line>
+                                    <line class="trend-grid" x1="18" y1="85" x2="622" y2="85"></line>
+                                    <line class="trend-grid" x1="18" y1="152" x2="622" y2="152"></line>
+                                    <?php if ($revenueLinePoints): ?>
+                                        <polyline class="trend-line revenue" points="<?php echo htmlspecialchars($revenueLinePoints); ?>"></polyline>
+                                        <?php foreach (explode(' ', $revenueLinePoints) as $point): ?>
+                                            <?php [$cx, $cy] = explode(',', $point); ?>
+                                            <circle class="trend-dot revenue" cx="<?php echo $cx; ?>" cy="<?php echo $cy; ?>" r="4"></circle>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </svg>
+                            <?php endif; ?>
                             <div class="chart-labels">
                                 <?php foreach ($trendLabels as $label): ?>
                                     <span><?php echo htmlspecialchars($label); ?></span>
@@ -1304,7 +1327,7 @@ foreach ($locationRows as $row) {
                     <section class="report-panel h-100">
                         <div class="report-panel-header">
                             <h2>Orders Line Graph</h2>
-                            <span class="status-pill"><i class="fas fa-receipt"></i><?php echo array_sum($orderTrendValues); ?> orders</span>
+                            <span class="status-pill"><i class="fas fa-receipt"></i><?php echo $totalTrendOrders; ?> orders</span>
                         </div>
                         <div class="report-panel-body trend-chart">
                             <div class="trend-meta">
@@ -1337,7 +1360,7 @@ foreach ($locationRows as $row) {
 
             <div class="row g-4 mb-4">
                 <div class="col-12 col-xl-7">
-                    <section class="report-panel h-100">
+                    <section class="report-panel">
                         <div class="report-panel-header">
                             <h2>Order Status Breakdown</h2>
                             <span class="status-pill"><i class="fas fa-chart-simple"></i><?php echo $pendingOrders; ?> pending</span>
@@ -1462,7 +1485,7 @@ foreach ($locationRows as $row) {
 
             <div class="row g-4">
                 <div class="col-12 col-xl-7">
-                    <section class="report-panel h-100">
+                    <section class="report-panel recent-orders-panel">
                         <div class="report-panel-header"><h2>Recent Orders</h2></div>
                         <div class="report-panel-body">
                             <table class="analytics-table">
