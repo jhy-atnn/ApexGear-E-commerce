@@ -9,7 +9,7 @@ if (isset($_SESSION['favorites']) && is_array($_SESSION['favorites'])) {
     $_SESSION['favorites'] = $inventoryManager->refreshFavoriteItemsWithLivePricing($_SESSION['favorites']);
 }
 ?>
-<div class="offcanvas offcanvas-end" tabindex="-1" id="favoritesOffcanvas" aria-labelledby="favoritesOffcanvasLabel" style="width: 400px; border-left: none; box-shadow: -4px 0 24px rgba(0,0,0,0.1);">
+<div class="offcanvas offcanvas-end apex-side-panel" tabindex="-1" id="favoritesOffcanvas" aria-labelledby="favoritesOffcanvasLabel" data-bs-backdrop="true" data-bs-scroll="false" style="border-left: none; box-shadow: -4px 0 24px rgba(0,0,0,0.1);">
     <div class="offcanvas-header border-bottom pb-3 pt-4 px-4">
         <h6 class="offcanvas-title fw-bold text-dark d-flex align-items-center" id="favoritesOffcanvasLabel">
             <i class="fas fa-heart me-2" style="color: #ff3b5c;"></i> Your Favorites

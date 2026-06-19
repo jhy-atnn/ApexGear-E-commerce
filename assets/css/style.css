@@ -753,6 +753,24 @@ html {
     color: var(--apex-white);
 }
 
+/* ── Responsive Bootstrap side panels ── */
+.apex-side-panel.offcanvas-end {
+    width: min(400px, 100vw) !important;
+    max-width: 100vw;
+}
+
+body.offcanvas-open,
+body:has(.apex-side-panel.show),
+body:has(.apex-side-panel.showing) {
+    overflow-x: hidden;
+    padding-right: 0 !important;
+}
+
+.offcanvas-backdrop {
+    width: 100vw;
+    max-width: 100vw;
+}
+
 .btn-apex-outline {
     background: transparent;
     color: var(--apex-white);

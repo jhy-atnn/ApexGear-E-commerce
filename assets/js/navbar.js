@@ -14,6 +14,40 @@
         }
 
         // ── Scroll animations
+        const mobileMenu = document.getElementById("mainMenu");
+        const mobileMenuToggle = document.querySelector('[data-bs-target="#mainMenu"]');
+        if (mobileMenu && mobileMenuToggle && window.bootstrap?.Collapse) {
+            const getMobileMenu = () => bootstrap.Collapse.getOrCreateInstance(mobileMenu, { toggle: false });
+            const closeMobileMenu = () => {
+                if (mobileMenu.classList.contains("show")) {
+                    getMobileMenu().hide();
+                }
+            };
+
+            mobileMenuToggle.addEventListener("click", (event) => {
+                if (mobileMenu.classList.contains("show")) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    closeMobileMenu();
+                }
+            });
+
+            mobileMenu.querySelectorAll(".nav-link, [data-bs-toggle='offcanvas'], .profile-btn, .order-status-link").forEach((item) => {
+                item.addEventListener("click", closeMobileMenu);
+            });
+
+            document.addEventListener("click", (event) => {
+                if (!mobileMenu.classList.contains("show")) return;
+                if (mobileMenu.contains(event.target) || mobileMenuToggle.contains(event.target)) return;
+                closeMobileMenu();
+            });
+
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                    closeMobileMenu();
+                }
+            });
+        }
         const fadeEls = document.querySelectorAll('.fade-up');
         const io = new IntersectionObserver((entries) => {
             entries.forEach((e, i) => {
