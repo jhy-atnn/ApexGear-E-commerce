@@ -64,8 +64,7 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
                                 </h1>
                                 <p class="hero-sub">Next-level performance for gamers, creators, and professionals. Gear up with ApeX.</p>
                                 <div class="d-flex gap-3 flex-wrap">
-                                    <a href="#featured" class="btn-apex">Shop Now</a>
-                                    <a href="#" class="btn-apex-outline">View Deals</a>
+                                    <a href="#featured" class="btn-apex">See Featured</a>
                                 </div>
                             </div>
                             <div class="col-lg-6 hero-img-wrap">
@@ -87,8 +86,7 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
                                 </h1>
                                 <p class="hero-sub">Precision, speed, and feel — every keystroke counts. Dominate with ApeX Gear.</p>
                                 <div class="d-flex gap-3 flex-wrap">
-                                    <a href="#featured" class="btn-apex">Shop Accessories</a>
-                                    <a href="#" class="btn-apex-outline">See Brands</a>
+                                    <a href="store.php" class="btn-apex-outline">See All Products</a>
                                 </div>
                             </div>
                             <div class="col-lg-6 hero-img-wrap">
@@ -110,8 +108,7 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
                                 </h1>
                                 <p class="hero-sub">Immersive audio, noise cancellation, and elite comfort. Hear the difference with ApeX.</p>
                                 <div class="d-flex gap-3 flex-wrap">
-                                    <a href="#featured" class="btn-apex">Shop Audio</a>
-                                    <a href="#" class="btn-apex-outline">New Arrivals</a>
+                                    <a href="deals.php" class="btn-apex">View Deals</a>
                                 </div>
                             </div>
                             <div class="col-lg-6 hero-img-wrap">
