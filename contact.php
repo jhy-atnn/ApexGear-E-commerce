@@ -59,12 +59,6 @@ unset($_SESSION['contact_flash'], $_SESSION['contact_old']);
                         <div class="contact-line"><i class="fas fa-clock"></i>
                             <div><strong>Hours</strong><span>Mon–Sat, 9:00 AM – 9:00 PM</span></div>
                         </div>
-                        <div class="contact-socials">
-                            <a href="#"><i class="fab fa-facebook-f"></i></a>
-                            <a href="#"><i class="fab fa-instagram"></i></a>
-                            <a href="#"><i class="fab fa-discord"></i></a>
-                            <a href="#"><i class="fab fa-tiktok"></i></a>
-                        </div>
                     </div>
                 </div>
                 <div class="col-lg-7 fade-up">

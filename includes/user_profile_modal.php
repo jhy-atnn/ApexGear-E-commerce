@@ -145,10 +145,6 @@
                 <div class="pp-divider"></div>
                 <a href="javascript:void(0)" class="pp-link"><i class="fas fa-user"></i> My Profile</a>
                 <div class="pp-link-wrapper">
-                    <a href="javascript:void(0)" class="pp-link order-status-link"><i class="fas fa-truck"></i> Order Status</a>
-                </div>
-                <a href="#favoritesOffcanvas" data-bs-toggle="offcanvas" class="pp-link"><i class="fas fa-heart"></i> Favorites</a>
-                <a href="#cartOffcanvas" data-bs-toggle="offcanvas" class="pp-link"><i class="fas fa-shopping-cart"></i> My Cart</a>
                 <div class="pp-divider"></div>
                 <a href="logout.php" class="pp-link pp-logout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
             `;
