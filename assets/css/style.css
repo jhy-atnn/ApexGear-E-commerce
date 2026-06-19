@@ -12,6 +12,10 @@
     --nav-h: 64px;
 }
 
+* {
+    transition: all 0.25s ease;
+}
+
 .apex-floating-toast {
     position: fixed;
     top: 88px;

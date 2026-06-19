@@ -121,6 +121,7 @@ sort($allCategories);
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
+    <link rel="icon" href="assets\images\ApeX Logo.png" type="image/png">
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
     <link href="assets/css/store-styles.css" rel="stylesheet" />
 </head>
@@ -276,110 +277,110 @@ sort($allCategories);
                         <div class="col-sm-6 col-md-4 col-lg-3 fade-up">
                             <?php renderProductCard($product); ?>
                             <?php if (false): ?>
-                            <div class="product-card h-100 position-relative">
+                                <div class="product-card h-100 position-relative">
 
-                                <?php
-                                $badgeType = $product['badge_type'] ?? 'normal';
-                                $badgeClass = match ($badgeType) {
-                                    'sale'   => 'sale',
-                                    'new'    => 'new',
-                                    'ribbon' => 'sale',
-                                    default  => '',
-                                };
-                                ?>
-                                <?php if (!empty($product['badge'])): ?>
-                                    <div class="product-badge <?php echo $badgeClass; ?>">
-                                        <?php echo htmlspecialchars($product['badge']); ?>
-                                    </div>
-                                <?php endif; ?>
-
-                                <div class="product-img">
                                     <?php
-                                    $rawImage = $product['image'] ?? '';
-                                    if (strpos($rawImage, '<svg') !== false) {
-                                        echo $rawImage;
-                                    } else {
-                                        $productImage = Inventory::getProductImageSrc($rawImage);
-                                        echo '<img src="' . htmlspecialchars($productImage) . '" alt="' . htmlspecialchars($product['name']) . '" loading="lazy">';
-                                    }
+                                    $badgeType = $product['badge_type'] ?? 'normal';
+                                    $badgeClass = match ($badgeType) {
+                                        'sale'   => 'sale',
+                                        'new'    => 'new',
+                                        'ribbon' => 'sale',
+                                        default  => '',
+                                    };
                                     ?>
-                                </div>
-
-                                <div class="product-body">
-                                    <div class="product-tags">
-                                        <span class="filter-tag brand">
-                                            <i class="fas fa-tag me-1" style="opacity:.55;"></i>
-                                            <?php echo htmlspecialchars($product['brand'] ?? 'Unknown'); ?>
-                                        </span>
-                                        <span class="filter-tag category">
-                                            <i class="fas fa-layer-group me-1" style="opacity:.55;"></i>
-                                            <?php echo htmlspecialchars(ucfirst($product['category'] ?? 'Accessories')); ?>
-                                        </span>
-                                    </div>
-
-                                    <div class="product-name"><?php echo htmlspecialchars($product['name']); ?></div>
-
-                                    <div class="product-rating">
-                                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                                        <span>(<?php echo $product['rating'] ?? rand(50, 400); ?>)</span>
-                                    </div>
-
-                                    <?php $stock = (int)($product['stock'] ?? 0); ?>
-                                    <?php
-                                    // Compute sale price if sale is active
-                                    $salePct    = (int)($product['sale_percent'] ?? 0);
-                                    $saleExp    = $product['sale_expiry'] ?? '';
-                                    $saleExpiryTs = !empty($saleExp) ? strtotime((string)$saleExp) : 0;
-                                    $saleActive = $salePct > 0 && (!empty($saleExp) ? $saleExpiryTs > time() : true);
-                                    $salePrice  = $saleActive ? round($product['price'] * (1 - $salePct / 100), 2) : null;
-                                    ?>
-
-                                    <?php if ($saleActive): ?>
-                                        <div class="sale-badge-strip" style="position:absolute;top:14px;left:14px;z-index:3;background:#ff3b5c;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.78rem;padding:4px 10px;border-radius:4px;letter-spacing:.06em;">
-                                            <?php echo $salePct; ?>% OFF
+                                    <?php if (!empty($product['badge'])): ?>
+                                        <div class="product-badge <?php echo $badgeClass; ?>">
+                                            <?php echo htmlspecialchars($product['badge']); ?>
                                         </div>
                                     <?php endif; ?>
 
-                                    <div class="product-price">
-                                        <?php if ($saleActive && $salePrice !== null): ?>
-                                            <span style="color:#ff3b5c;">₱<?php echo number_format($salePrice, 2); ?></span>
-                                            <span class="old" style="text-decoration:line-through;color:var(--apex-muted);font-size:.85rem;margin-left:6px;">₱<?php echo number_format($product['price'], 2); ?></span>
-                                        <?php else: ?>
-                                            ₱<?php echo number_format($product['price'], 2); ?>
-                                            <?php if (!empty($product['old_price'])): ?>
-                                                <span class="old">₱<?php echo number_format($product['old_price'], 2); ?></span>
-                                            <?php endif; ?>
-                                        <?php endif; ?>
-                                        <span class="d-block" style="font-size:.72rem; font-family:'Barlow',sans-serif; font-weight:600; margin-top:4px; color:<?php echo $stock > 0 ? 'var(--apex-muted)' : '#ff3b5c'; ?>;">
-                                            <?php echo $stock > 0 ? 'In stock: ' . $stock : 'Out of Stock'; ?>
-                                        </span>
-                                        <?php if ($saleActive && $saleExpiryTs > 0): ?>
-                                            <span class="sale-countdown d-block" data-expiry="<?php echo $saleExpiryTs; ?>" style="font-size:.68rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;color:#ff3b5c;margin-top:3px;letter-spacing:.04em;">
-                                                <i class="fas fa-clock me-1"></i><span class="cdown-text">Loading...</span>
+                                    <div class="product-img">
+                                        <?php
+                                        $rawImage = $product['image'] ?? '';
+                                        if (strpos($rawImage, '<svg') !== false) {
+                                            echo $rawImage;
+                                        } else {
+                                            $productImage = Inventory::getProductImageSrc($rawImage);
+                                            echo '<img src="' . htmlspecialchars($productImage) . '" alt="' . htmlspecialchars($product['name']) . '" loading="lazy">';
+                                        }
+                                        ?>
+                                    </div>
+
+                                    <div class="product-body">
+                                        <div class="product-tags">
+                                            <span class="filter-tag brand">
+                                                <i class="fas fa-tag me-1" style="opacity:.55;"></i>
+                                                <?php echo htmlspecialchars($product['brand'] ?? 'Unknown'); ?>
                                             </span>
+                                            <span class="filter-tag category">
+                                                <i class="fas fa-layer-group me-1" style="opacity:.55;"></i>
+                                                <?php echo htmlspecialchars(ucfirst($product['category'] ?? 'Accessories')); ?>
+                                            </span>
+                                        </div>
+
+                                        <div class="product-name"><?php echo htmlspecialchars($product['name']); ?></div>
+
+                                        <div class="product-rating">
+                                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                                            <span>(<?php echo $product['rating'] ?? rand(50, 400); ?>)</span>
+                                        </div>
+
+                                        <?php $stock = (int)($product['stock'] ?? 0); ?>
+                                        <?php
+                                        // Compute sale price if sale is active
+                                        $salePct    = (int)($product['sale_percent'] ?? 0);
+                                        $saleExp    = $product['sale_expiry'] ?? '';
+                                        $saleExpiryTs = !empty($saleExp) ? strtotime((string)$saleExp) : 0;
+                                        $saleActive = $salePct > 0 && (!empty($saleExp) ? $saleExpiryTs > time() : true);
+                                        $salePrice  = $saleActive ? round($product['price'] * (1 - $salePct / 100), 2) : null;
+                                        ?>
+
+                                        <?php if ($saleActive): ?>
+                                            <div class="sale-badge-strip" style="position:absolute;top:14px;left:14px;z-index:3;background:#ff3b5c;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.78rem;padding:4px 10px;border-radius:4px;letter-spacing:.06em;">
+                                                <?php echo $salePct; ?>% OFF
+                                            </div>
                                         <?php endif; ?>
-                                    </div>
 
-                                    <div class="product-actions">
-                                        <a href="product.php?id=<?php echo $product['id']; ?>" class="btn-shop stretched-link">
-                                            View Details
-                                        </a>
-                                        <form method="POST" action="actions/favorites_action.php" class="m-0 position-relative" style="display:inline-block; z-index:2;">
-                                            <input type="hidden" name="action" value="add">
-                                            <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
-                                            <input type="hidden" name="return_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
-                                            <button type="submit" class="btn-wish border-0" title="Add to Favorites">
-                                                <?php if (isset($_SESSION['favorites'][$product['id']])): ?>
-                                                    <i class="fas fa-heart" style="color:#ff3b5c;"></i>
-                                                <?php else: ?>
-                                                    <i class="far fa-heart"></i>
+                                        <div class="product-price">
+                                            <?php if ($saleActive && $salePrice !== null): ?>
+                                                <span style="color:#ff3b5c;">₱<?php echo number_format($salePrice, 2); ?></span>
+                                                <span class="old" style="text-decoration:line-through;color:var(--apex-muted);font-size:.85rem;margin-left:6px;">₱<?php echo number_format($product['price'], 2); ?></span>
+                                            <?php else: ?>
+                                                ₱<?php echo number_format($product['price'], 2); ?>
+                                                <?php if (!empty($product['old_price'])): ?>
+                                                    <span class="old">₱<?php echo number_format($product['old_price'], 2); ?></span>
                                                 <?php endif; ?>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
+                                            <?php endif; ?>
+                                            <span class="d-block" style="font-size:.72rem; font-family:'Barlow',sans-serif; font-weight:600; margin-top:4px; color:<?php echo $stock > 0 ? 'var(--apex-muted)' : '#ff3b5c'; ?>;">
+                                                <?php echo $stock > 0 ? 'In stock: ' . $stock : 'Out of Stock'; ?>
+                                            </span>
+                                            <?php if ($saleActive && $saleExpiryTs > 0): ?>
+                                                <span class="sale-countdown d-block" data-expiry="<?php echo $saleExpiryTs; ?>" style="font-size:.68rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;color:#ff3b5c;margin-top:3px;letter-spacing:.04em;">
+                                                    <i class="fas fa-clock me-1"></i><span class="cdown-text">Loading...</span>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
 
-                            </div>
+                                        <div class="product-actions">
+                                            <a href="product.php?id=<?php echo $product['id']; ?>" class="btn-shop stretched-link">
+                                                View Details
+                                            </a>
+                                            <form method="POST" action="actions/favorites_action.php" class="m-0 position-relative" style="display:inline-block; z-index:2;">
+                                                <input type="hidden" name="action" value="add">
+                                                <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
+                                                <input type="hidden" name="return_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
+                                                <button type="submit" class="btn-wish border-0" title="Add to Favorites">
+                                                    <?php if (isset($_SESSION['favorites'][$product['id']])): ?>
+                                                        <i class="fas fa-heart" style="color:#ff3b5c;"></i>
+                                                    <?php else: ?>
+                                                        <i class="far fa-heart"></i>
+                                                    <?php endif; ?>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                </div>
                             <?php endif; ?>
                         </div>
                     <?php endforeach; ?>

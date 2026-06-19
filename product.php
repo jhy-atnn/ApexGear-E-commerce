@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                 'name'           => $product['name'],
                 'price'          => $productRegularPrice,   // regular price (kept for backwards compat)
                 'original_price' => $productRegularPrice,
-                'effective_price'=> $productPrice,
+                'effective_price' => $productPrice,
                 'sale_price'     => $product['sale_price'] ?? null,
                 'sale_percent'   => $product['sale_percent'] ?? 0,
                 'sale_expiry'    => $product['sale_expiry'] ?? '',
@@ -252,7 +252,8 @@ $related_products = array_slice($related_products, 0, 6);
  * @param int $max Maximum stars to render
  * @return string HTML string containing star icons
  */
-function renderStars($rating, $max = 5) {
+function renderStars($rating, $max = 5)
+{
     $html = '';
     for ($i = 1; $i <= $max; $i++) {
         if ($rating >= $i) {
@@ -277,6 +278,7 @@ function renderStars($rating, $max = 5) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+    <link rel="icon" href="assets\images\ApeX Logo.png" type="image/png">
     <link href="assets/css/style.css" rel="stylesheet" />
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
     <style>
@@ -595,15 +597,21 @@ function renderStars($rating, $max = 5) {
         }
 
         @media (max-width: 991px) {
-            .related-slider-item { flex: 0 0 calc(33.333% - .67rem); }
+            .related-slider-item {
+                flex: 0 0 calc(33.333% - .67rem);
+            }
         }
 
         @media (max-width: 767px) {
-            .related-slider-item { flex: 0 0 calc(50% - .5rem); }
+            .related-slider-item {
+                flex: 0 0 calc(50% - .5rem);
+            }
         }
 
         @media (max-width: 479px) {
-            .related-slider-item { flex: 0 0 calc(100%); }
+            .related-slider-item {
+                flex: 0 0 calc(100%);
+            }
         }
 
         .related-slider-btn {
@@ -619,7 +627,7 @@ function renderStars($rating, $max = 5) {
             color: var(--apex-dark, #0d1117);
             font-size: .85rem;
             cursor: pointer;
-            box-shadow: 0 2px 12px rgba(0,0,0,.08);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, .08);
             transition: background .2s, color .2s;
             display: flex;
             align-items: center;
@@ -632,8 +640,13 @@ function renderStars($rating, $max = 5) {
             border-color: var(--apex-blue, #00c2ff);
         }
 
-        .related-slider-prev { left: 0; }
-        .related-slider-next { right: 0; }
+        .related-slider-prev {
+            left: 0;
+        }
+
+        .related-slider-next {
+            right: 0;
+        }
 
         .related-section {
             background: #f7f8fa;
@@ -652,7 +665,7 @@ function renderStars($rating, $max = 5) {
 
         .related-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 32px rgba(0,0,0,.09);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, .09);
         }
 
         .related-card-img {
@@ -700,8 +713,13 @@ function renderStars($rating, $max = 5) {
         }
 
         @media (max-width: 575px) {
-            .rating-score { font-size: 3.5rem; }
-            .reviews-wrapper { padding: 1.2rem; }
+            .rating-score {
+                font-size: 3.5rem;
+            }
+
+            .reviews-wrapper {
+                padding: 1.2rem;
+            }
         }
     </style>
 </head>
@@ -881,7 +899,7 @@ function renderStars($rating, $max = 5) {
                     </form>
                 </div>
 
-        </div>
+            </div>
         </div><!-- end .container / .row -->
     </section>
 
@@ -899,8 +917,8 @@ function renderStars($rating, $max = 5) {
                         </div>
                         <div id="desc-pane" class="info-tab-pane active">
                             <p><?php echo isset($product['desc']) && !empty($product['desc'])
-                                ? htmlspecialchars($product['desc'])
-                                : 'Experience next-level performance. This gear is engineered for ultimate speed, precision, and durability — built to help you play harder, work smarter, and stay ahead of the curve. Equip yourself with the best.'; ?></p>
+                                    ? htmlspecialchars($product['desc'])
+                                    : 'Experience next-level performance. This gear is engineered for ultimate speed, precision, and durability — built to help you play harder, work smarter, and stay ahead of the curve. Equip yourself with the best.'; ?></p>
                         </div>
                     </div>
                 </div>
@@ -1031,75 +1049,75 @@ function renderStars($rating, $max = 5) {
                                 (and once you haven't already reviewed it for that order).
                             </p>
                         <?php else: ?>
-                        <form method="POST" action="product.php?id=<?php echo $product_id; ?>#submit-review" id="reviewSubmitForm">
-                            <input type="hidden" name="submit_product_review" value="1">
-                            <?php
-                            $activeReviewOrderId = $selectedReviewOrderId;
-                            if ($activeReviewOrderId <= 0 && count($reviewableOrders) === 1) {
-                                $activeReviewOrderId = intval($reviewableOrders[0]['order_id']);
-                            }
-                            ?>
-                            <input type="hidden" name="order_id" id="reviewOrderInput" value="<?php echo $activeReviewOrderId > 0 ? $activeReviewOrderId : ''; ?>">
+                            <form method="POST" action="product.php?id=<?php echo $product_id; ?>#submit-review" id="reviewSubmitForm">
+                                <input type="hidden" name="submit_product_review" value="1">
+                                <?php
+                                $activeReviewOrderId = $selectedReviewOrderId;
+                                if ($activeReviewOrderId <= 0 && count($reviewableOrders) === 1) {
+                                    $activeReviewOrderId = intval($reviewableOrders[0]['order_id']);
+                                }
+                                ?>
+                                <input type="hidden" name="order_id" id="reviewOrderInput" value="<?php echo $activeReviewOrderId > 0 ? $activeReviewOrderId : ''; ?>">
 
-                            <div class="mb-3">
-                                <label class="form-label fw-bold small text-uppercase text-muted">Which order is this review for?</label>
-                                <div class="review-order-grid">
-                                    <?php foreach ($reviewableOrders as $ro): ?>
-                                        <?php
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-uppercase text-muted">Which order is this review for?</label>
+                                    <div class="review-order-grid">
+                                        <?php foreach ($reviewableOrders as $ro): ?>
+                                            <?php
                                             $roId = intval($ro['order_id']);
                                             $isActiveOrder = $activeReviewOrderId === $roId;
                                             $ref = $ro['reference_number'] ?? $roId;
                                             $orderDate = !empty($ro['created_at']) ? date('M d, Y', strtotime($ro['created_at'])) : 'Completed order';
                                             $orderTotal = isset($ro['total_amount']) ? '₱' . number_format((float)$ro['total_amount'], 2) : '';
-                                        ?>
-                                        <button type="button"
+                                            ?>
+                                            <button type="button"
                                                 class="review-order-card <?php echo $isActiveOrder ? 'active' : ''; ?>"
                                                 data-order-id="<?php echo $roId; ?>"
                                                 onclick="selectReviewOrder(this)">
-                                            <span class="review-order-icon"><i class="fas fa-receipt"></i></span>
-                                            <span class="flex-grow-1">
-                                                <span class="review-order-ref">Ref: <?php echo htmlspecialchars($ref); ?></span>
-                                                <span class="review-order-meta">
-                                                    <span><i class="far fa-calendar"></i><?php echo htmlspecialchars($orderDate); ?></span>
-                                                    <?php if ($orderTotal !== ''): ?>
-                                                        <span><i class="fas fa-peso-sign"></i><?php echo htmlspecialchars($orderTotal); ?></span>
-                                                    <?php endif; ?>
+                                                <span class="review-order-icon"><i class="fas fa-receipt"></i></span>
+                                                <span class="flex-grow-1">
+                                                    <span class="review-order-ref">Ref: <?php echo htmlspecialchars($ref); ?></span>
+                                                    <span class="review-order-meta">
+                                                        <span><i class="far fa-calendar"></i><?php echo htmlspecialchars($orderDate); ?></span>
+                                                        <?php if ($orderTotal !== ''): ?>
+                                                            <span><i class="fas fa-peso-sign"></i><?php echo htmlspecialchars($orderTotal); ?></span>
+                                                        <?php endif; ?>
+                                                    </span>
                                                 </span>
-                                            </span>
-                                        </button>
-                                    <?php endforeach; ?>
+                                            </button>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <div class="review-form-error" id="reviewOrderError">Please select the completed order for this review.</div>
                                 </div>
-                                <div class="review-form-error" id="reviewOrderError">Please select the completed order for this review.</div>
-                            </div>
 
-                            <div class="mb-3">
-                                <label class="form-label fw-bold small text-uppercase text-muted">Rating</label>
-                                <input type="hidden" name="rating" id="reviewRatingInput" value="">
-                                <div class="d-flex align-items-center flex-wrap gap-3">
-                                    <div class="review-star-picker" role="radiogroup" aria-label="Choose rating">
-                                        <?php for ($star = 1; $star <= 5; $star++): ?>
-                                            <button type="button"
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-uppercase text-muted">Rating</label>
+                                    <input type="hidden" name="rating" id="reviewRatingInput" value="">
+                                    <div class="d-flex align-items-center flex-wrap gap-3">
+                                        <div class="review-star-picker" role="radiogroup" aria-label="Choose rating">
+                                            <?php for ($star = 1; $star <= 5; $star++): ?>
+                                                <button type="button"
                                                     class="review-star-btn"
                                                     data-rating="<?php echo $star; ?>"
                                                     aria-label="<?php echo $star; ?> star<?php echo $star > 1 ? 's' : ''; ?>"
                                                     onclick="setReviewRating(<?php echo $star; ?>)">
-                                                <i class="fas fa-star"></i>
-                                            </button>
-                                        <?php endfor; ?>
+                                                    <i class="fas fa-star"></i>
+                                                </button>
+                                            <?php endfor; ?>
+                                        </div>
+                                        <span class="review-rating-text" id="reviewRatingText">Choose rating</span>
                                     </div>
-                                    <span class="review-rating-text" id="reviewRatingText">Choose rating</span>
+                                    <div class="review-form-error" id="reviewRatingError">Please choose a star rating.</div>
                                 </div>
-                                <div class="review-form-error" id="reviewRatingError">Please choose a star rating.</div>
-                            </div>
 
-                            <div class="mb-3">
-                                <label class="form-label fw-bold small text-uppercase text-muted">Comment</label>
-                                <textarea class="form-control" name="comment" rows="4"
-                                          placeholder="Share your experience with this product"></textarea>
-                            </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-uppercase text-muted">Comment</label>
+                                    <textarea class="form-control" name="comment" rows="4"
+                                        placeholder="Share your experience with this product"></textarea>
+                                </div>
 
-                            <button type="submit" class="btn-apex px-4 py-2">Submit Review</button>
-                        </form>
+                                <button type="submit" class="btn-apex px-4 py-2">Submit Review</button>
+                            </form>
                         <?php endif; ?>
                     </div>
 
@@ -1242,7 +1260,7 @@ function renderStars($rating, $max = 5) {
         const loadMoreBtn = document.getElementById('loadMoreReviews');
         const extraReviews = document.getElementById('extraReviews');
         if (loadMoreBtn && extraReviews) {
-            loadMoreBtn.addEventListener('click', function () {
+            loadMoreBtn.addEventListener('click', function() {
                 extraReviews.style.setProperty('display', 'flex', 'important');
                 extraReviews.style.flexDirection = 'column';
                 loadMoreBtn.style.display = 'none';
@@ -1275,7 +1293,7 @@ function renderStars($rating, $max = 5) {
 
         const reviewSubmitForm = document.getElementById('reviewSubmitForm');
         if (reviewSubmitForm) {
-            reviewSubmitForm.addEventListener('submit', function (event) {
+            reviewSubmitForm.addEventListener('submit', function(event) {
                 const orderInput = document.getElementById('reviewOrderInput');
                 const ratingInput = document.getElementById('reviewRatingInput');
                 const orderError = document.getElementById('reviewOrderError');
@@ -1312,7 +1330,7 @@ function renderStars($rating, $max = 5) {
 
     <!-- ── Related Slider JS ── -->
     <script>
-        (function () {
+        (function() {
             const track = document.getElementById('relTrack');
             const prevBtn = document.getElementById('relPrev');
             const nextBtn = document.getElementById('relNext');
@@ -1361,4 +1379,5 @@ function renderStars($rating, $max = 5) {
     </script>
 
 </body>
+
 </html>

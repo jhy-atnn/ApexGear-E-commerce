@@ -16,6 +16,8 @@ unset($_SESSION['contact_flash'], $_SESSION['contact_old']);
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
+    <link rel="icon" href="assets\images\ApeX Logo.png" type="image/png">
+
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
     <link href="assets/css/support-pages.css" rel="stylesheet" />
 </head>
@@ -45,10 +47,18 @@ unset($_SESSION['contact_flash'], $_SESSION['contact_old']);
                     <div class="contact-info-card">
                         <h3 class="contact-info-title">Get in Touch</h3>
                         <p class="contact-info-sub">Our tech-savvy team is available 24/7. Reach us through any of the channels below.</p>
-                        <div class="contact-line"><i class="fas fa-location-dot"></i><div><strong>Main Office</strong><span>Ayala Avenue, Makati City, Philippines</span></div></div>
-                        <div class="contact-line"><i class="fas fa-phone"></i><div><strong>Phone</strong><span>+63 912 255 3546</span></div></div>
-                        <div class="contact-line"><i class="fas fa-envelope"></i><div><strong>Email</strong><span>apex26gear@gmail.com</span></div></div>
-                        <div class="contact-line"><i class="fas fa-clock"></i><div><strong>Hours</strong><span>Mon–Sat, 9:00 AM – 9:00 PM</span></div></div>
+                        <div class="contact-line"><i class="fas fa-location-dot"></i>
+                            <div><strong>Main Office</strong><span>Ayala Avenue, Makati City, Philippines</span></div>
+                        </div>
+                        <div class="contact-line"><i class="fas fa-phone"></i>
+                            <div><strong>Phone</strong><span>+63 912 255 3546</span></div>
+                        </div>
+                        <div class="contact-line"><i class="fas fa-envelope"></i>
+                            <div><strong>Email</strong><span>apex26gear@gmail.com</span></div>
+                        </div>
+                        <div class="contact-line"><i class="fas fa-clock"></i>
+                            <div><strong>Hours</strong><span>Mon–Sat, 9:00 AM – 9:00 PM</span></div>
+                        </div>
                         <div class="contact-socials">
                             <a href="#"><i class="fab fa-facebook-f"></i></a>
                             <a href="#"><i class="fab fa-instagram"></i></a>

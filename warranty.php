@@ -1,4 +1,5 @@
-<?php session_start(); $currentPage = 'warranty'; ?>
+<?php session_start();
+$currentPage = 'warranty'; ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -10,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
+    <link rel="icon" href="assets\images\ApeX Logo.png" type="image/png">
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
     <link href="assets/css/support-pages.css" rel="stylesheet" />
 </head>
@@ -67,7 +69,16 @@
                         <div class="why-card-title">Replacement Units</div>
                         <p>Where repair isn't possible within the warranty period, we provide a replacement or store credit.</p>
                     </div>
-                </div></div><div class="support-prose fade-up"><h3>Coverage Periods</h3><p>Warranty periods vary by product and brand — typically 12 months for new laptops and desktops, and 3–6 months for certified pre-owned units. The exact term is listed on each product page.</p><h3>What's Covered</h3><p>Manufacturing defects, hardware failures under normal use, and dead-on-arrival units. Coverage excludes physical/liquid damage, unauthorized modifications, and normal wear.</p><h3>How to Claim</h3><p>Contact support with your order number and a description of the issue. Our tech team will guide you through diagnostics and arrange repair, replacement, or refund as applicable.</p></div>
+                </div>
+            </div>
+            <div class="support-prose fade-up">
+                <h3>Coverage Periods</h3>
+                <p>Warranty periods vary by product and brand — typically 12 months for new laptops and desktops, and 3–6 months for certified pre-owned units. The exact term is listed on each product page.</p>
+                <h3>What's Covered</h3>
+                <p>Manufacturing defects, hardware failures under normal use, and dead-on-arrival units. Coverage excludes physical/liquid damage, unauthorized modifications, and normal wear.</p>
+                <h3>How to Claim</h3>
+                <p>Contact support with your order number and a description of the issue. Our tech team will guide you through diagnostics and arrange repair, replacement, or refund as applicable.</p>
+            </div>
         </div>
     </section>
 

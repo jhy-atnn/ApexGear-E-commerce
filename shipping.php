@@ -1,4 +1,5 @@
-<?php session_start(); $currentPage = 'shipping'; ?>
+<?php session_start();
+$currentPage = 'shipping'; ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -10,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
+    <link rel="icon" href="assets\images\ApeX Logo.png" type="image/png">
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
     <link href="assets/css/support-pages.css" rel="stylesheet" />
 </head>
@@ -67,7 +69,47 @@
                         <div class="why-card-title">Secure Packaging</div>
                         <p>Every item is packed with protective materials to ensure it arrives in perfect condition.</p>
                     </div>
-                </div></div><div class="support-rate-table fade-up"><h3>Shipping Rates &amp; Timelines</h3><table class="table"><thead><tr><th>Region</th><th>Estimated Time</th><th>Fee</th></tr></thead><tbody><tr><td>Metro Manila</td><td>1–2 business days</td><td>₱120</td></tr><tr><td>Luzon</td><td>2–4 business days</td><td>₱160</td></tr><tr><td>Visayas</td><td>3–5 business days</td><td>₱190</td></tr><tr><td>Mindanao</td><td>3–6 business days</td><td>₱210</td></tr><tr><td>Orders over ₱5,000</td><td>—</td><td><strong style="color:var(--apex-blue)">FREE</strong></td></tr></tbody></table></div>
+                </div>
+            </div>
+            <div class="support-rate-table fade-up">
+                <h3>Shipping Rates &amp; Timelines</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Region</th>
+                            <th>Estimated Time</th>
+                            <th>Fee</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Metro Manila</td>
+                            <td>1–2 business days</td>
+                            <td>₱120</td>
+                        </tr>
+                        <tr>
+                            <td>Luzon</td>
+                            <td>2–4 business days</td>
+                            <td>₱160</td>
+                        </tr>
+                        <tr>
+                            <td>Visayas</td>
+                            <td>3–5 business days</td>
+                            <td>₱190</td>
+                        </tr>
+                        <tr>
+                            <td>Mindanao</td>
+                            <td>3–6 business days</td>
+                            <td>₱210</td>
+                        </tr>
+                        <tr>
+                            <td>Orders over ₱5,000</td>
+                            <td>—</td>
+                            <td><strong style="color:var(--apex-blue)">FREE</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </section>
 

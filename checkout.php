@@ -359,6 +359,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet">
+    <link rel="icon" href="assets\images\ApeX Logo.png" type="image/png">
+
     <style>
         .form-control.is-invalid {
             border-color: #dc3545 !important;
@@ -1117,7 +1119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                     <div><strong style="color:#0b7a44;">Order Status:</strong> <span class="text-muted">Processing &bull; Paid</span></div>
                                 </div>
                             </div>
-<br><br>
+                            <br><br>
                             <div class="d-flex gap-3 justify-content-center flex-wrap mb-4">
                                 <a href="actions/print_receipt.php?order_id=<?php echo $orderId; ?>" target="_blank"
                                     style="display:inline-flex; align-items:center; gap:8px; background:var(--apex-blue); color:#fff; border:none; padding:11px 26px; border-radius:50px; font-weight:700; font-size:.88rem; text-decoration:none; letter-spacing:0.03em; box-shadow:0 4px 14px rgba(0,168,232,0.30); transition:opacity .2s;">
