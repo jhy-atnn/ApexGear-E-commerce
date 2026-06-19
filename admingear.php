@@ -62,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+    <link rel="icon" href="assets\images\ApeX Logo.png" type="image/png">
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
     <style>
         /* ── Admin-specific overrides ── */
@@ -339,61 +340,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
 
         // ── Login ─────────────────────────────────────────────────────────────
         async function doAdminLogin() {
-                const u = document.getElementById('adminUsername').value.trim();
-                const p = document.getElementById('adminPassword').value;
+            const u = document.getElementById('adminUsername').value.trim();
+            const p = document.getElementById('adminPassword').value;
 
-                if (!u || !p) {
-                    showAlert('Both fields are required.');
-                    return;
-                }
-
-                hideAlert();
-                setLoading(true);
-
-                const fd = new FormData();
-                fd.append('ajax', '1');
-                fd.append('username', u);
-                fd.append('password', p);
-
-                try {
-                    const res = await fetch('admingear.php', {
-                        method: 'POST',
-                        body: fd
-                    });
-                    const data = await res.json();
-
-                    if (data.success) {
-                        showAlert(data.message, 'success');
-                        setTimeout(() => {
-                            // Redirect INTO the admin folder
-                            window.location.href = 'admin/apex26admin.php';
-                        }, 800);
-                    } else {
-                        showAlert(data.message);
-                    }
-                } catch (err) {
-                    showAlert('Connection error. Please try again.');
-                    setLoading(false);
-                }
+            if (!u || !p) {
+                showAlert('Both fields are required.');
+                return;
             }
 
-                // ── Toggle password visibility ────────────────────────────────────────
-                function togglePw(inputId, btn) {
-                    const inp = document.getElementById(inputId);
-                    const icon = btn.querySelector('i');
-                    if (inp.type === 'password') {
-                        inp.type = 'text';
-                        icon.className = 'far fa-eye-slash';
-                    } else {
-                        inp.type = 'password';
-                        icon.className = 'far fa-eye';
-                    }
-                }
+            hideAlert();
+            setLoading(true);
 
-                // ── Enter key ─────────────────────────────────────────────────────────
-                document.addEventListener('keydown', e => {
-                    if (e.key === 'Enter') doAdminLogin();
+            const fd = new FormData();
+            fd.append('ajax', '1');
+            fd.append('username', u);
+            fd.append('password', p);
+
+            try {
+                const res = await fetch('admingear.php', {
+                    method: 'POST',
+                    body: fd
                 });
+                const data = await res.json();
+
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    setTimeout(() => {
+                        // Redirect INTO the admin folder
+                        window.location.href = 'admin/apex26admin.php';
+                    }, 800);
+                } else {
+                    showAlert(data.message);
+                }
+            } catch (err) {
+                showAlert('Connection error. Please try again.');
+                setLoading(false);
+            }
+        }
+
+        // ── Toggle password visibility ────────────────────────────────────────
+        function togglePw(inputId, btn) {
+            const inp = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (inp.type === 'password') {
+                inp.type = 'text';
+                icon.className = 'far fa-eye-slash';
+            } else {
+                inp.type = 'password';
+                icon.className = 'far fa-eye';
+            }
+        }
+
+        // ── Enter key ─────────────────────────────────────────────────────────
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter') doAdminLogin();
+        });
     </script>
 </body>
 

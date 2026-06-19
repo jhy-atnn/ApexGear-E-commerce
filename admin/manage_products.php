@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $category      = trim($_POST['category']      ?? '');
         $price         = floatval($_POST['price']     ?? 0);
         $stock         = intval($_POST['stock']       ?? 0);
-        $sale_percent  = intval($_POST['sale_percent']?? 0);
+        $sale_percent  = intval($_POST['sale_percent'] ?? 0);
         $sale_expiry   = trim($_POST['sale_expiry']   ?? '');
         $shipping_time = trim($_POST['shipping_time'] ?? '');
         $desc          = trim($_POST['desc']          ?? '');
@@ -34,11 +34,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         if ($image_source === 'upload' && isset($_FILES['image_upload']) && $_FILES['image_upload']['error'] === 0) {
             $target_dir = __DIR__ . "/../assets/images/products/";
             if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
-            
+
             $clean  = preg_replace("/[^a-zA-Z0-9.]/", "_", basename($_FILES["image_upload"]["name"]));
             $unique = time() . "_" . $clean;
             $target = $target_dir . $unique;
-            
+
             if (move_uploaded_file($_FILES["image_upload"]["tmp_name"], $target)) {
                 $image = "assets/images/products/" . $unique;
             }
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
 
         $inv = new Inventory();
-        
+
         // Pass data to the OOP database methods
         if ($action === 'add') {
             $newId = $inv->addProduct($name, $brand, $category, $price, '', $stock, '', '', '', $image, $desc, $shipping_time, $sale_percent, $sale_expiry);
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $status_class   = 'success';
         } else {
             $product_id = intval($_POST['product_id'] ?? 0);
-            
+
             // Retain old image if no new one was uploaded
             if (empty($image)) {
                 $tmp = $inv->getAllProducts();
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $image = $tmp[$product_id]['image'];
                 }
             }
-            
+
             $inv->editProduct($product_id, $name, $brand, $category, $price, '', $stock, '', '', '', $image, $desc, $shipping_time, $sale_percent, $sale_expiry);
             $inv->logAdminActivity('product_edit', "Edited product: {$name} (ID {$product_id}).", $admin_id);
             $status_message = 'Product updated successfully.';
@@ -93,7 +93,7 @@ $onSale = array_filter(
 );
 usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percent']));
 ?>
-    
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -106,6 +106,8 @@ usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percen
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link href="../assets/css/admin-style.css" rel="stylesheet">
+    <link rel="icon" href="assets\images\ApeX Logo.png" type="image/png">
+
     <style>
         :root {
             --sidebar-w: 260px;
@@ -769,31 +771,32 @@ usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percen
 </head>
 
 <body>
-    <?php $currentAdminPage = 'manage_products.php'; include __DIR__ . '/includes/admin_sidebar.php'; ?>
+    <?php $currentAdminPage = 'manage_products.php';
+    include __DIR__ . '/includes/admin_sidebar.php'; ?>
     <?php if (false): ?><aside class="sidebar">
-        <a href="../index.php" class="sidebar-brand">
-            <img src="../assets/images/ApeX Logo.png" alt="ApeX Gear">
-            <div><span class="t1">ApeX </span><span class="t2">Gear</span></div>
-            <span class="sidebar-badge">Admin</span>
-        </a>
-        <nav class="sidebar-nav">
-            <div class="sidebar-section-label">Main</div>
-            <a href="apex26admin.php"><i class="fas fa-th-large"></i> Dashboard</a>
-            <a href="manage_orders.php"><i class="fas fa-shopping-cart"></i> Orders</a>
-            <a href="manage_products.php" class="active"><i class="fas fa-boxes"></i> Manage Products</a>
-            <a href="manage_archives.php"><i class="fas fa-archive"></i> Archives</a>
-            <a href="manage_users.php"><i class="fas fa-users"></i> Users</a>
-            <a href="report.php"><i class="fas fa-chart-pie"></i> Reports &amp; Analytics</a>
-            <a href="manage_deals.php"><i class="fas fa-percentage"></i> Deals &amp; Promos</a>
-            <div class="sidebar-section-label">Store</div>
-            <a href="../index.php" target="_blank"><i class="fas fa-store"></i> View Live Store</a>
-            <a href="../index.php?page=products" target="_blank"><i class="fas fa-tags"></i> Product Catalog</a>
-        </nav>
-        <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 14px;">
-            <a href="../index.php"><i class="fas fa-arrow-left"></i> Back to Site</a>
-            <a href="admin_logout.php" style="color: #ff6b6b;"><i class="fas fa-sign-out-alt"></i> Logout</a>
-        </div>
-    </aside><?php endif; ?>
+            <a href="../index.php" class="sidebar-brand">
+                <img src="../assets/images/ApeX Logo.png" alt="ApeX Gear">
+                <div><span class="t1">ApeX </span><span class="t2">Gear</span></div>
+                <span class="sidebar-badge">Admin</span>
+            </a>
+            <nav class="sidebar-nav">
+                <div class="sidebar-section-label">Main</div>
+                <a href="apex26admin.php"><i class="fas fa-th-large"></i> Dashboard</a>
+                <a href="manage_orders.php"><i class="fas fa-shopping-cart"></i> Orders</a>
+                <a href="manage_products.php" class="active"><i class="fas fa-boxes"></i> Manage Products</a>
+                <a href="manage_archives.php"><i class="fas fa-archive"></i> Archives</a>
+                <a href="manage_users.php"><i class="fas fa-users"></i> Users</a>
+                <a href="report.php"><i class="fas fa-chart-pie"></i> Reports &amp; Analytics</a>
+                <a href="manage_deals.php"><i class="fas fa-percentage"></i> Deals &amp; Promos</a>
+                <div class="sidebar-section-label">Store</div>
+                <a href="../index.php" target="_blank"><i class="fas fa-store"></i> View Live Store</a>
+                <a href="../index.php?page=products" target="_blank"><i class="fas fa-tags"></i> Product Catalog</a>
+            </nav>
+            <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 14px;">
+                <a href="../index.php"><i class="fas fa-arrow-left"></i> Back to Site</a>
+                <a href="admin_logout.php" style="color: #ff6b6b;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </aside><?php endif; ?>
 
     <div class="main-wrap">
         <header class="topbar">
@@ -970,7 +973,9 @@ usort($onSale, fn($a, $b) => intval($b['sale_percent']) - intval($a['sale_percen
                                                     <?php
                                                     $diff = strtotime($p['sale_expiry']) - time();
                                                     if ($diff > 0) {
-                                                        $d = floor($diff / 86400); $h = floor(($diff % 86400) / 3600); $m = floor(($diff % 3600) / 60);
+                                                        $d = floor($diff / 86400);
+                                                        $h = floor(($diff % 86400) / 3600);
+                                                        $m = floor(($diff % 3600) / 60);
                                                         echo '<span style="color:var(--success);font-weight:700;">';
                                                         if ($d > 0) echo $d . 'd ';
                                                         echo $h . 'h ' . $m . 'm remaining</span>';

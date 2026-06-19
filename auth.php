@@ -387,6 +387,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+    <link rel="icon" href="assets\images\ApeX Logo.png" type="image/png">
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
 </head>
 
@@ -818,7 +819,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             const link = document.getElementById('resendOtpLink');
             link.classList.add('disabled');
             hideAlert('verifyAlert');
-            const r = await apexPost({ action: 'resend_otp' });
+            const r = await apexPost({
+                action: 'resend_otp'
+            });
             link.classList.remove('disabled');
 
             if (r.success) {
@@ -831,6 +834,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         }
 
         let otpTimerInterval;
+
         function startOtpTimer() {
             clearInterval(otpTimerInterval);
             let remaining = 600;

@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $order_id     = intval($_POST['order_id']     ?? 0);
         $order_status = trim($_POST['order_status']   ?? '');
         $remarks      = trim($_POST['remarks']        ?? '');
-        
+
         // Allowed statuses matching your tracking modal progress steps
         $allowed      = ['Pending', 'On Process', 'Shipped', 'Delivered', 'Canceled', 'Completed'];
 
@@ -224,6 +224,7 @@ $tabs = [
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="../assets/css/style.css" rel="stylesheet">
+    <link rel="icon" href="assets\images\ApeX Logo.png" type="image/png">
     <link href="../assets/css/admin-style.css" rel="stylesheet">
     <style>
         :root {
@@ -931,34 +932,34 @@ $tabs = [
     include __DIR__ . '/includes/admin_sidebar.php';
     ?>
     <?php if (false): ?><aside class="sidebar">
-        <a href="../index.php" class="sidebar-brand">
-            <img src="../assets/images/ApeX Logo.png" alt="ApeX Gear">
-            <div><span class="t1">ApeX </span><span class="t2">Gear</span></div>
-            <span class="sidebar-badge">Admin</span>
-        </a>
-        <nav class="sidebar-nav">
-            <div class="sidebar-section-label">Main</div>
-            <a href="apex26admin.php"><i class="fas fa-th-large"></i> Dashboard</a>
-            <a href="manage_orders.php" class="active"><i class="fas fa-shopping-cart"></i> Orders
-                <?php
-                $pendingCount = count(array_filter($orders ?? [], fn($o) => strtolower($o['order_status'] ?? '') === 'on process'));
-                if ($pendingCount > 0) echo '<span class="nav-badge">' . $pendingCount . '</span>';
-                ?>
+            <a href="../index.php" class="sidebar-brand">
+                <img src="../assets/images/ApeX Logo.png" alt="ApeX Gear">
+                <div><span class="t1">ApeX </span><span class="t2">Gear</span></div>
+                <span class="sidebar-badge">Admin</span>
             </a>
-            <a href="manage_products.php"><i class="fas fa-boxes"></i> Manage Products</a>
-            <a href="manage_archives.php"><i class="fas fa-archive"></i> Archives</a>
-            <a href="manage_users.php"><i class="fas fa-users"></i> Users</a>
-            <a href="report.php"><i class="fas fa-chart-pie"></i> Reports &amp; Analytics</a>
-            <a href="manage_deals.php"><i class="fas fa-percentage"></i> Deals &amp; Promos</a>
-            <div class="sidebar-section-label">Store</div>
-            <a href="../index.php" target="_blank"><i class="fas fa-store"></i> View Live Store</a>
-            <a href="../index.php?page=products" target="_blank"><i class="fas fa-tags"></i> Product Catalog</a>
-        </nav>
-        <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 14px;">
-            <a href="../index.php"><i class="fas fa-arrow-left"></i> Back to Site</a>
-            <a href="admin_logout.php" style="color: #ff6b6b;"><i class="fas fa-sign-out-alt"></i> Logout</a>
-        </div>
-    </aside><?php endif; ?>
+            <nav class="sidebar-nav">
+                <div class="sidebar-section-label">Main</div>
+                <a href="apex26admin.php"><i class="fas fa-th-large"></i> Dashboard</a>
+                <a href="manage_orders.php" class="active"><i class="fas fa-shopping-cart"></i> Orders
+                    <?php
+                    $pendingCount = count(array_filter($orders ?? [], fn($o) => strtolower($o['order_status'] ?? '') === 'on process'));
+                    if ($pendingCount > 0) echo '<span class="nav-badge">' . $pendingCount . '</span>';
+                    ?>
+                </a>
+                <a href="manage_products.php"><i class="fas fa-boxes"></i> Manage Products</a>
+                <a href="manage_archives.php"><i class="fas fa-archive"></i> Archives</a>
+                <a href="manage_users.php"><i class="fas fa-users"></i> Users</a>
+                <a href="report.php"><i class="fas fa-chart-pie"></i> Reports &amp; Analytics</a>
+                <a href="manage_deals.php"><i class="fas fa-percentage"></i> Deals &amp; Promos</a>
+                <div class="sidebar-section-label">Store</div>
+                <a href="../index.php" target="_blank"><i class="fas fa-store"></i> View Live Store</a>
+                <a href="../index.php?page=products" target="_blank"><i class="fas fa-tags"></i> Product Catalog</a>
+            </nav>
+            <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 14px;">
+                <a href="../index.php"><i class="fas fa-arrow-left"></i> Back to Site</a>
+                <a href="admin_logout.php" style="color: #ff6b6b;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </aside><?php endif; ?>
 
     <div class="main-wrap">
         <header class="topbar">

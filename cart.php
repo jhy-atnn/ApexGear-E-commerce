@@ -133,6 +133,7 @@ $grand_total = ($subtotal - $couponDiscountAmount) + $tax;
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+    <link rel="icon" href="assets\images\ApeX Logo.png" type="image/png">
     <link href="assets/css/style.css" rel="stylesheet">
     <style>
         /* ── CART HEADER BAR ── */
@@ -994,10 +995,10 @@ $grand_total = ($subtotal - $couponDiscountAmount) + $tax;
                             <span class="val">₱<?php echo number_format($subtotal, 2); ?></span>
                         </div>
                         <?php if ($appliedCoupon): ?>
-                        <div class="summary-row" style="color:var(--apex-accent, #00c2ff);">
-                            <span class="lbl">Promo (<?php echo htmlspecialchars($appliedCoupon['code']); ?> &minus;<?php echo (int)$appliedCoupon['discount']; ?>%)</span>
-                            <span class="val">&minus;₱<?php echo number_format($couponDiscountAmount, 2); ?></span>
-                        </div>
+                            <div class="summary-row" style="color:var(--apex-accent, #00c2ff);">
+                                <span class="lbl">Promo (<?php echo htmlspecialchars($appliedCoupon['code']); ?> &minus;<?php echo (int)$appliedCoupon['discount']; ?>%)</span>
+                                <span class="val">&minus;₱<?php echo number_format($couponDiscountAmount, 2); ?></span>
+                            </div>
                         <?php endif; ?>
                         <div class="summary-row">
                             <span class="lbl">Estimated Tax (8%)</span>

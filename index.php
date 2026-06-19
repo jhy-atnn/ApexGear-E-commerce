@@ -33,6 +33,7 @@ $featuredProducts = array_slice($featuredProducts, 0, 10);
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
+    <link rel="icon" href="assets\images\ApeX Logo.png" type="image/png">
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
     <link href="assets/css/store-styles.css" rel="stylesheet" />
 </head>

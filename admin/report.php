@@ -368,6 +368,7 @@ foreach ($locationRows as $row) {
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="../assets/css/style.css" rel="stylesheet">
+    <link rel="icon" href="assets\images\ApeX Logo.png" type="image/png">
     <link href="../assets/css/admin-style.css" rel="stylesheet">
     <style>
         .report-hero {
@@ -1090,36 +1091,37 @@ foreach ($locationRows as $row) {
 </head>
 
 <body>
-    <?php $currentAdminPage = 'report.php'; include __DIR__ . '/includes/admin_sidebar.php'; ?>
+    <?php $currentAdminPage = 'report.php';
+    include __DIR__ . '/includes/admin_sidebar.php'; ?>
     <?php if (false): ?><div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-    <aside class="sidebar" id="sidebar">
-        <a href="../index.php" class="sidebar-brand">
-            <img src="../assets/images/ApeX Logo.png" alt="ApeX Gear">
-            <div class="sidebar-brand-text"><span class="t1">ApeX </span><span class="t2">Gear</span></div>
-            <span class="sidebar-badge">Admin</span>
-        </a>
-        <nav class="sidebar-nav">
-            <div class="sidebar-section-label">Main</div>
-            <a href="apex26admin.php"><i class="fas fa-th-large"></i> Dashboard</a>
-            <a href="manage_orders.php">
-                <i class="fas fa-shopping-cart"></i> Orders
-                <?php if ($pendingOrders > 0): ?><span class="nav-badge"><?php echo $pendingOrders; ?></span><?php endif; ?>
+        <aside class="sidebar" id="sidebar">
+            <a href="../index.php" class="sidebar-brand">
+                <img src="../assets/images/ApeX Logo.png" alt="ApeX Gear">
+                <div class="sidebar-brand-text"><span class="t1">ApeX </span><span class="t2">Gear</span></div>
+                <span class="sidebar-badge">Admin</span>
             </a>
-            <a href="manage_products.php"><i class="fas fa-boxes"></i> Manage Products</a>
-            <a href="manage_archives.php"><i class="fas fa-archive"></i> Archives</a>
-            <a href="manage_users.php"><i class="fas fa-users"></i> Users</a>
-            <a href="report.php" class="active"><i class="fas fa-chart-pie"></i> Reports &amp; Analytics</a>
-            <a href="manage_deals.php"><i class="fas fa-percentage"></i> Deals &amp; Promos</a>
-            <div class="sidebar-section-label">Store</div>
-            <a href="../index.php" target="_blank"><i class="fas fa-store"></i> View Live Store</a>
-            <a href="../index.php?page=products" target="_blank"><i class="fas fa-tags"></i> Product Catalog</a>
-        </nav>
-        <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 14px;">
-            <a href="../index.php"><i class="fas fa-arrow-left"></i> Back to Site</a>
-            <a href="admin_logout.php" style="color: #ff6b6b;"><i class="fas fa-sign-out-alt"></i> Logout</a>
-        </div>
-    </aside><?php endif; ?>
+            <nav class="sidebar-nav">
+                <div class="sidebar-section-label">Main</div>
+                <a href="apex26admin.php"><i class="fas fa-th-large"></i> Dashboard</a>
+                <a href="manage_orders.php">
+                    <i class="fas fa-shopping-cart"></i> Orders
+                    <?php if ($pendingOrders > 0): ?><span class="nav-badge"><?php echo $pendingOrders; ?></span><?php endif; ?>
+                </a>
+                <a href="manage_products.php"><i class="fas fa-boxes"></i> Manage Products</a>
+                <a href="manage_archives.php"><i class="fas fa-archive"></i> Archives</a>
+                <a href="manage_users.php"><i class="fas fa-users"></i> Users</a>
+                <a href="report.php" class="active"><i class="fas fa-chart-pie"></i> Reports &amp; Analytics</a>
+                <a href="manage_deals.php"><i class="fas fa-percentage"></i> Deals &amp; Promos</a>
+                <div class="sidebar-section-label">Store</div>
+                <a href="../index.php" target="_blank"><i class="fas fa-store"></i> View Live Store</a>
+                <a href="../index.php?page=products" target="_blank"><i class="fas fa-tags"></i> Product Catalog</a>
+            </nav>
+            <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 14px;">
+                <a href="../index.php"><i class="fas fa-arrow-left"></i> Back to Site</a>
+                <a href="admin_logout.php" style="color: #ff6b6b;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </aside><?php endif; ?>
 
     <div class="main-wrap">
         <header class="topbar">
@@ -1260,9 +1262,9 @@ foreach ($locationRows as $row) {
                                     <div class="channel-list">
                                         <?php foreach ($channelRows as $index => $row): ?>
                                             <?php
-                                                $channelRevenue = (float)($row['revenue'] ?? 0);
-                                                $channelPct = $grossRevenue > 0 ? ($channelRevenue / $grossRevenue) * 100 : 0;
-                                                $dotColor = $channelColors[$index % count($channelColors)];
+                                            $channelRevenue = (float)($row['revenue'] ?? 0);
+                                            $channelPct = $grossRevenue > 0 ? ($channelRevenue / $grossRevenue) * 100 : 0;
+                                            $dotColor = $channelColors[$index % count($channelColors)];
                                             ?>
                                             <div class="channel-row" style="--dot: <?php echo $dotColor; ?>;">
                                                 <span class="channel-dot"></span>
@@ -1296,8 +1298,8 @@ foreach ($locationRows as $row) {
                                 <div class="mrr-bars">
                                     <?php foreach ($monthlyRevenueRows as $row): ?>
                                         <?php
-                                            $barRevenue = (float)($row['revenue'] ?? 0);
-                                            $barHeight = $maxMonthlyRevenue > 0 ? max(8, ($barRevenue / $maxMonthlyRevenue) * 190) : 8;
+                                        $barRevenue = (float)($row['revenue'] ?? 0);
+                                        $barHeight = $maxMonthlyRevenue > 0 ? max(8, ($barRevenue / $maxMonthlyRevenue) * 190) : 8;
                                         ?>
                                         <div class="mrr-bar">
                                             <span class="mrr-value">&#8369;<?php echo number_format($barRevenue, 0); ?></span>
@@ -1401,7 +1403,9 @@ foreach ($locationRows as $row) {
                                     <?php $width = $totalOrders > 0 ? ((int) $row['total'] / $totalOrders) * 100 : 0; ?>
                                     <div class="bar-row">
                                         <strong><?php echo htmlspecialchars($row['order_status']); ?></strong>
-                                        <div class="bar-track"><div class="bar-fill" style="width: <?php echo max(4, $width); ?>%;"></div></div>
+                                        <div class="bar-track">
+                                            <div class="bar-fill" style="width: <?php echo max(4, $width); ?>%;"></div>
+                                        </div>
                                         <span><?php echo (int) $row['total']; ?> orders</span>
                                     </div>
                                 <?php endforeach; ?>
@@ -1443,13 +1447,17 @@ foreach ($locationRows as $row) {
             <div class="row g-4 mb-4">
                 <div class="col-12 col-xl-6">
                     <section class="report-panel h-100">
-                        <div class="report-panel-header"><h2>Category Analytics</h2></div>
+                        <div class="report-panel-header">
+                            <h2>Category Analytics</h2>
+                        </div>
                         <div class="report-panel-body">
                             <?php foreach ($categoryRows as $row): ?>
                                 <?php $width = ((int) $row['products'] / $maxCategoryProducts) * 100; ?>
                                 <div class="bar-row">
                                     <strong><?php echo htmlspecialchars($row['category_name']); ?></strong>
-                                    <div class="bar-track"><div class="bar-fill" style="width: <?php echo max(6, $width); ?>%;"></div></div>
+                                    <div class="bar-track">
+                                        <div class="bar-fill" style="width: <?php echo max(6, $width); ?>%;"></div>
+                                    </div>
                                     <span><?php echo (int) $row['products']; ?> items</span>
                                 </div>
                             <?php endforeach; ?>
@@ -1476,12 +1484,14 @@ foreach ($locationRows as $row) {
                                 </thead>
                                 <tbody>
                                     <?php if (empty($topProductRows)): ?>
-                                        <tr><td colspan="5" class="text-muted">No product sales yet.</td></tr>
+                                        <tr>
+                                            <td colspan="5" class="text-muted">No product sales yet.</td>
+                                        </tr>
                                     <?php endif; ?>
                                     <?php foreach ($topProductRows as $row): ?>
                                         <?php
-                                            $unitPercent = $totalUnitsSold > 0 ? ((int) $row['units'] / $totalUnitsSold) * 100 : 0;
-                                            $buyerPercent = $totalProductBuyers > 0 ? ((int) $row['buyers'] / $totalProductBuyers) * 100 : 0;
+                                        $unitPercent = $totalUnitsSold > 0 ? ((int) $row['units'] / $totalUnitsSold) * 100 : 0;
+                                        $buyerPercent = $totalProductBuyers > 0 ? ((int) $row['buyers'] / $totalProductBuyers) * 100 : 0;
                                         ?>
                                         <tr>
                                             <td>
@@ -1514,7 +1524,9 @@ foreach ($locationRows as $row) {
             <div class="row g-4">
                 <div class="col-12 col-xl-7">
                     <section class="report-panel recent-orders-panel">
-                        <div class="report-panel-header"><h2>Recent Orders</h2></div>
+                        <div class="report-panel-header">
+                            <h2>Recent Orders</h2>
+                        </div>
                         <div class="report-panel-body">
                             <table class="analytics-table">
                                 <thead>
@@ -1545,7 +1557,9 @@ foreach ($locationRows as $row) {
 
                 <div class="col-12 col-xl-5">
                     <section class="report-panel mb-4">
-                        <div class="report-panel-header"><h2>Payment Status</h2></div>
+                        <div class="report-panel-header">
+                            <h2>Payment Status</h2>
+                        </div>
                         <div class="report-panel-body">
                             <?php if (empty($paymentRows)): ?>
                                 <div class="text-muted small">No payment records yet.</div>
@@ -1561,7 +1575,9 @@ foreach ($locationRows as $row) {
                     </section>
 
                     <section class="report-panel">
-                        <div class="report-panel-header"><h2>Admin Activity</h2></div>
+                        <div class="report-panel-header">
+                            <h2>Admin Activity</h2>
+                        </div>
                         <div class="report-panel-body">
                             <?php if (empty($activityRows)): ?>
                                 <div class="text-muted small">No activity yet.</div>
@@ -1600,8 +1616,15 @@ foreach ($locationRows as $row) {
         }
 
         const phMap = document.getElementById('phOrderMap');
-        const defaultPhViewBox = { x: 90, y: 70, w: 560, h: 760 };
-        let phViewBox = { ...defaultPhViewBox };
+        const defaultPhViewBox = {
+            x: 90,
+            y: 70,
+            w: 560,
+            h: 760
+        };
+        let phViewBox = {
+            ...defaultPhViewBox
+        };
         let isDraggingPhMap = false;
         let phDragStart = null;
 
@@ -1626,7 +1649,9 @@ foreach ($locationRows as $row) {
         }
 
         function resetPhMap() {
-            phViewBox = { ...defaultPhViewBox };
+            phViewBox = {
+                ...defaultPhViewBox
+            };
             applyPhMapViewBox();
         }
 
@@ -1642,7 +1667,9 @@ foreach ($locationRows as $row) {
             phMap.addEventListener('wheel', event => {
                 event.preventDefault();
                 zoomPhMap(event.deltaY < 0 ? 0.88 : 1.12);
-            }, { passive: false });
+            }, {
+                passive: false
+            });
 
             phMap.addEventListener('pointerdown', event => {
                 isDraggingPhMap = true;

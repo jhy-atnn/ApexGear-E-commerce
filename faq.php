@@ -1,4 +1,5 @@
-<?php session_start(); $currentPage = 'faq'; ?>
+<?php session_start();
+$currentPage = 'faq'; ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -10,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
+    <link rel="icon" href="assets\images\ApeX Logo.png" type="image/png">
     <link href="assets/css/auth-styles-append.css" rel="stylesheet" />
     <link href="assets/css/support-pages.css" rel="stylesheet" />
 </head>
@@ -39,70 +41,86 @@
             </div>
             <div class="sec-divider mx-auto fade-up"></div>
             <div class="faq-wrap" style="max-width:820px; margin:0 auto;">
-                    <div class="faq-item fade-up">
-                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
-                            <span class="faq-cat">Ordering</span>
-                            <span class="faq-q-text">How do I place an order?</span>
-                            <i class="fas fa-chevron-down faq-chevron"></i>
-                        </button>
-                        <div class="faq-a"><p>Browse our catalog, click <strong>View Details</strong> on any in-stock product, then add it to your cart and proceed to checkout. You can check out as a guest or log in for faster future orders.</p></div>
+                <div class="faq-item fade-up">
+                    <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                        <span class="faq-cat">Ordering</span>
+                        <span class="faq-q-text">How do I place an order?</span>
+                        <i class="fas fa-chevron-down faq-chevron"></i>
+                    </button>
+                    <div class="faq-a">
+                        <p>Browse our catalog, click <strong>View Details</strong> on any in-stock product, then add it to your cart and proceed to checkout. You can check out as a guest or log in for faster future orders.</p>
                     </div>
-                    <div class="faq-item fade-up">
-                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
-                            <span class="faq-cat">Ordering</span>
-                            <span class="faq-q-text">Can I modify or cancel my order after placing it?</span>
-                            <i class="fas fa-chevron-down faq-chevron"></i>
-                        </button>
-                        <div class="faq-a"><p>Yes — as long as the order has not yet been dispatched. Contact our support team immediately and we will update or cancel it for you.</p></div>
+                </div>
+                <div class="faq-item fade-up">
+                    <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                        <span class="faq-cat">Ordering</span>
+                        <span class="faq-q-text">Can I modify or cancel my order after placing it?</span>
+                        <i class="fas fa-chevron-down faq-chevron"></i>
+                    </button>
+                    <div class="faq-a">
+                        <p>Yes — as long as the order has not yet been dispatched. Contact our support team immediately and we will update or cancel it for you.</p>
                     </div>
-                    <div class="faq-item fade-up">
-                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
-                            <span class="faq-cat">Payments</span>
-                            <span class="faq-q-text">What payment methods do you accept?</span>
-                            <i class="fas fa-chevron-down faq-chevron"></i>
-                        </button>
-                        <div class="faq-a"><p>We accept GCash, PayMaya, major credit/debit cards, and Cash on Delivery (COD). All online payments are secured with 256-bit SSL encryption.</p></div>
+                </div>
+                <div class="faq-item fade-up">
+                    <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                        <span class="faq-cat">Payments</span>
+                        <span class="faq-q-text">What payment methods do you accept?</span>
+                        <i class="fas fa-chevron-down faq-chevron"></i>
+                    </button>
+                    <div class="faq-a">
+                        <p>We accept GCash, PayMaya, major credit/debit cards, and Cash on Delivery (COD). All online payments are secured with 256-bit SSL encryption.</p>
                     </div>
-                    <div class="faq-item fade-up">
-                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
-                            <span class="faq-cat">Payments</span>
-                            <span class="faq-q-text">Is Cash on Delivery available nationwide?</span>
-                            <i class="fas fa-chevron-down faq-chevron"></i>
-                        </button>
-                        <div class="faq-a"><p>COD is available in most serviceable areas across the Philippines. Availability is confirmed at checkout based on your delivery address.</p></div>
+                </div>
+                <div class="faq-item fade-up">
+                    <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                        <span class="faq-cat">Payments</span>
+                        <span class="faq-q-text">Is Cash on Delivery available nationwide?</span>
+                        <i class="fas fa-chevron-down faq-chevron"></i>
+                    </button>
+                    <div class="faq-a">
+                        <p>COD is available in most serviceable areas across the Philippines. Availability is confirmed at checkout based on your delivery address.</p>
                     </div>
-                    <div class="faq-item fade-up">
-                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
-                            <span class="faq-cat">Shipping</span>
-                            <span class="faq-q-text">How long does delivery take?</span>
-                            <i class="fas fa-chevron-down faq-chevron"></i>
-                        </button>
-                        <div class="faq-a"><p>Most in-stock orders arrive within 1–3 business days via our trusted courier partners. Same-day dispatch applies to in-stock items ordered before cut-off.</p></div>
+                </div>
+                <div class="faq-item fade-up">
+                    <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                        <span class="faq-cat">Shipping</span>
+                        <span class="faq-q-text">How long does delivery take?</span>
+                        <i class="fas fa-chevron-down faq-chevron"></i>
+                    </button>
+                    <div class="faq-a">
+                        <p>Most in-stock orders arrive within 1–3 business days via our trusted courier partners. Same-day dispatch applies to in-stock items ordered before cut-off.</p>
                     </div>
-                    <div class="faq-item fade-up">
-                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
-                            <span class="faq-cat">Products</span>
-                            <span class="faq-q-text">Are your products authentic?</span>
-                            <i class="fas fa-chevron-down faq-chevron"></i>
-                        </button>
-                        <div class="faq-a"><p>100%. Every item is genuine, sourced directly from authorized distributors and brand partners, and passes our internal quality check before listing.</p></div>
+                </div>
+                <div class="faq-item fade-up">
+                    <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                        <span class="faq-cat">Products</span>
+                        <span class="faq-q-text">Are your products authentic?</span>
+                        <i class="fas fa-chevron-down faq-chevron"></i>
+                    </button>
+                    <div class="faq-a">
+                        <p>100%. Every item is genuine, sourced directly from authorized distributors and brand partners, and passes our internal quality check before listing.</p>
                     </div>
-                    <div class="faq-item fade-up">
-                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
-                            <span class="faq-cat">Products</span>
-                            <span class="faq-q-text">Do you sell pre-owned units?</span>
-                            <i class="fas fa-chevron-down faq-chevron"></i>
-                        </button>
-                        <div class="faq-a"><p>Yes. We offer certified pre-owned and refurbished units, clearly labeled as such, each inspected and vetted by our in-house tech team.</p></div>
+                </div>
+                <div class="faq-item fade-up">
+                    <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                        <span class="faq-cat">Products</span>
+                        <span class="faq-q-text">Do you sell pre-owned units?</span>
+                        <i class="fas fa-chevron-down faq-chevron"></i>
+                    </button>
+                    <div class="faq-a">
+                        <p>Yes. We offer certified pre-owned and refurbished units, clearly labeled as such, each inspected and vetted by our in-house tech team.</p>
                     </div>
-                    <div class="faq-item fade-up">
-                        <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
-                            <span class="faq-cat">Support</span>
-                            <span class="faq-q-text">How can I reach customer support?</span>
-                            <i class="fas fa-chevron-down faq-chevron"></i>
-                        </button>
-                        <div class="faq-a"><p>Our tech-savvy team is available 24/7 via live chat, email, or phone. We are happy to help you pick the right gear or resolve any issue.</p></div>
+                </div>
+                <div class="faq-item fade-up">
+                    <button class="faq-q" type="button" onclick="toggleFaq(this)" aria-expanded="false">
+                        <span class="faq-cat">Support</span>
+                        <span class="faq-q-text">How can I reach customer support?</span>
+                        <i class="fas fa-chevron-down faq-chevron"></i>
+                    </button>
+                    <div class="faq-a">
+                        <p>Our tech-savvy team is available 24/7 via live chat, email, or phone. We are happy to help you pick the right gear or resolve any issue.</p>
                     </div>
+                </div>
             </div>
             <div class="support-cta-box fade-up">
                 <div class="support-cta-text">
