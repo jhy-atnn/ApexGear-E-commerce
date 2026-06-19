@@ -193,15 +193,28 @@ html {
     min-height: var(--nav-h);
     position: sticky;
     top: 0;
+    width: 100%;
+    margin-left: auto !important;
+    margin-right: auto !important;
     z-index: 1030;
     box-shadow: 0 4px 20px rgba(11, 47, 168, .5);
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition:
+        width .42s cubic-bezier(.22, 1, .36, 1),
+        top .42s cubic-bezier(.22, 1, .36, 1),
+        border-radius .42s cubic-bezier(.22, 1, .36, 1),
+        padding .42s cubic-bezier(.22, 1, .36, 1),
+        background .28s ease,
+        box-shadow .28s ease,
+        backdrop-filter .28s ease;
     top: 0 !important;
 }
 
 /* SCROLLED NAVBAR CAPSULE EFFECT */
 .main-nav.nav-scrolled {
+    position: fixed;
     width: calc(80%) !important;
+    left: 0;
+    right: 0;
     margin-left: auto !important;
     margin-right: auto !important;
     border-radius: 50px !important;
@@ -2252,6 +2265,8 @@ footer ul li a:hover {
     .main-nav.nav-scrolled {
         width: calc(100% - 30px) !important;
         /* Leaves 15px of space on the left and right */
+        left: 0;
+        right: 0;
         margin-left: auto !important;
         /* Centers the pill horizontally */
         margin-right: auto !important;
