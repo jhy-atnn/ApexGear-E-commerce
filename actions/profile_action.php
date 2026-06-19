@@ -40,6 +40,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['success' => false, 'message' => 'Please only use letters for Last Name.']);
         exit;
     }
+    if ($phone !== '' && !preg_match('/^09\d{9}$/', $phone)) {
+        echo json_encode(['success' => false, 'message' => 'Contact number must start with 09 and be exactly 11 digits.']);
+        exit;
+    }
 
     // 2. Handle Profile Picture Upload
     $image_path = $_SESSION['user']['profile_picture'] ?? null; // Default to existing

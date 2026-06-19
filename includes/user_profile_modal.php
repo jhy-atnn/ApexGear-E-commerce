@@ -59,9 +59,11 @@
                             class="form-control"
                             inputmode="numeric"
                             maxlength="11"
-                            placeholder="11-digit number"
+                            pattern="09[0-9]{9}"
+                            title="Use an 11-digit number that starts with 09"
+                            placeholder="09171234567"
                             value="<?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['phone'] ?? '') : ''; ?>"
-                            oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);">
+                            oninput="filterPhoneNumber(this)">
                     </div>
                 </div>
                 <div class="row gx-3 gy-3">
@@ -276,8 +278,32 @@
             }
         }
 
+        function filterPhoneNumber(el) {
+            const original = el.value;
+            const filtered = original.replace(/[^0-9]/g, '').slice(0, 11);
+            if (original !== filtered) {
+                el.value = filtered;
+                showProfileAlert('Contact number must use digits only.');
+                return;
+            }
+            if (filtered && !filtered.startsWith('09')) {
+                showProfileAlert('Contact number must start with 09.');
+                return;
+            }
+            hideProfileAlert();
+        }
+
         async function saveProfile() {
             const form = document.getElementById('userProfileForm');
+            const phoneField = document.getElementById('userContact');
+            const phonePattern = /^09\d{9}$/;
+
+            if (phoneField && phoneField.value.trim() && !phonePattern.test(phoneField.value.trim())) {
+                showProfileAlert('Contact number must start with 09 and be exactly 11 digits.');
+                phoneField.focus();
+                return;
+            }
+
             const formData = new FormData(form);
             const alertBox = document.getElementById('profileAlert');
 

@@ -45,6 +45,11 @@ function getEffectiveCheckoutPrice($item)
     return Inventory::getCartItemEffectivePrice($item);
 }
 
+function isValidPhilippineMobileNumber($number)
+{
+    return preg_match('/^09\d{9}$/', $number) === 1;
+}
+
 $order_successful = false;
 $receipt_number = '';
 $receipt_data = array();
@@ -72,8 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         header('Location: checkout.php');
         exit;
     }
-    if ($phone !== '' && !preg_match('/^[0-9]+$/', $phone)) {
-        $_SESSION['checkout_error'] = 'Use numbers only for Phone Number.';
+    if ($phone === '' || !isValidPhilippineMobileNumber($phone)) {
+        $_SESSION['checkout_error'] = 'Phone Number must start with 09 and be exactly 11 digits.';
         header('Location: checkout.php');
         exit;
     }
@@ -92,15 +97,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             header('Location: checkout.php');
             exit;
         }
-        if ($gcashMobile !== '' && !preg_match('/^[0-9]+$/', $gcashMobile)) {
-            $_SESSION['checkout_error'] = 'Number Only for GCash Mobile Number.';
+        if (!isValidPhilippineMobileNumber($gcashMobile)) {
+            $_SESSION['checkout_error'] = 'GCash Mobile Number must start with 09 and be exactly 11 digits.';
             header('Location: checkout.php');
             exit;
         }
     } elseif ($paymentMethodRaw === 'paypal') {
         $paypalNumber = trim($_POST['paypal_Number'] ?? '');
-        if ($paypalNumber !== '' && !preg_match('/^[0-9]+$/', $paypalNumber)) {
-            $_SESSION['checkout_error'] = 'Number Only for PayPal Number.';
+        if (!isValidPhilippineMobileNumber($paypalNumber)) {
+            $_SESSION['checkout_error'] = 'PayPal Number must start with 09 and be exactly 11 digits.';
             header('Location: checkout.php');
             exit;
         }
@@ -112,8 +117,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             header('Location: checkout.php');
             exit;
         }
-        if ($mayaMobile !== '' && !preg_match('/^[0-9]+$/', $mayaMobile)) {
-            $_SESSION['checkout_error'] = 'Number Only for Maya Mobile Number.';
+        if (!isValidPhilippineMobileNumber($mayaMobile)) {
+            $_SESSION['checkout_error'] = 'Maya Mobile Number must start with 09 and be exactly 11 digits.';
             header('Location: checkout.php');
             exit;
         }
@@ -707,6 +712,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             opacity: 0.75;
         }
 
+        .checkout-receipt-view {
+            padding: 0 18px 4px;
+            text-align: left;
+        }
+
+        .checkout-receipt-section {
+            padding-left: 6px;
+            padding-right: 6px;
+        }
+
+        .checkout-receipt-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            padding: 0 8px;
+        }
+
+        .checkout-receipt-table {
+            min-width: 620px;
+        }
+
+        .checkout-receipt-totals,
+        .checkout-receipt-status {
+            margin-left: 8px;
+            margin-right: 8px;
+        }
+
+        @media (max-width: 576px) {
+            .checkout-receipt-view {
+                padding: 0 8px 4px;
+            }
+
+            .checkout-receipt-section {
+                padding-left: 0;
+                padding-right: 0;
+            }
+
+            .checkout-receipt-table-wrap,
+            .checkout-receipt-totals,
+            .checkout-receipt-status {
+                margin-left: 0;
+                margin-right: 0;
+                padding-left: 0;
+                padding-right: 0;
+            }
+        }
+
         @media print {
             body {
                 background: white;
@@ -940,14 +991,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                 </div>
                             </div>
 
-                            <div id="oldReceiptLayout">
+                            <div id="oldReceiptLayout" class="checkout-receipt-view">
                                 <div class="text-center mb-4 pb-3 border-bottom">
                                     <p class="text-muted small mb-1" style="letter-spacing:2px; text-transform:uppercase; font-size:0.75rem;">Order Reference</p>
                                     <h4 class="fw-bold text-apex-blue font-monospace mb-1" style="font-size:1rem;"><?php echo $receipt_number; ?></h4>
                                     <p class="text-muted" style="font-size:0.82rem;"><?php echo $receipt_data['orderDate']; ?></p>
                                 </div>
 
-                                <div class="mb-4 pb-3 border-bottom">
+                                <div class="mb-4 pb-3 border-bottom checkout-receipt-section">
                                     <h6 class="fw-bold text-uppercase mb-3" style="font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; color: var(--apex-blue);">
                                         <i class="fas fa-map-marker-alt me-2"></i>Shipping Details
                                     </h6>
@@ -960,7 +1011,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                     </div>
                                 </div>
 
-                                <div class="mb-4 pb-3 border-bottom">
+                                <div class="mb-4 pb-3 border-bottom checkout-receipt-section">
                                     <h6 class="fw-bold text-uppercase mb-3" style="font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; color: var(--apex-blue);">
                                         <i class="fas fa-credit-card me-2"></i>Payment Method
                                     </h6>
@@ -991,12 +1042,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                     </div>
                                 </div>
 
-                                <div class="mb-4 pb-3 border-bottom">
+                                <div class="mb-4 pb-3 border-bottom checkout-receipt-section">
                                     <h6 class="fw-bold text-uppercase mb-3" style="font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; color: var(--apex-blue);">
                                         <i class="fas fa-shopping-bag me-2"></i>Order Items (<?php echo $receipt_data['itemCount']; ?> <?php echo $receipt_data['itemCount'] == 1 ? 'Item' : 'Items'; ?>)
                                     </h6>
-                                    <div class="ms-4">
-                                        <table class="w-100" style="font-size: 0.9rem;">
+                                    <div class="checkout-receipt-table-wrap">
+                                        <table class="w-100 checkout-receipt-table" style="font-size: 0.9rem;">
                                             <thead>
                                                 <tr style="border-bottom: 1px solid #e0e0e0;">
                                                     <th class="text-start pb-2 text-muted fw-bold">Item</th>
@@ -1032,7 +1083,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                     </div>
                                 </div>
 
-                                <div class="mb-3">
+                                <div class="mb-3 checkout-receipt-totals">
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted">Subtotal</span>
                                         <span class="text-dark">₱<?php echo number_format($receipt_data['subtotal'], 2); ?></span>
@@ -1061,7 +1112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                     </div>
                                 </div>
 
-                                <div style="background:#edfff6; border:1px solid #b6f0d4; border-radius:8px; padding:12px 16px; display:flex; align-items:center; gap:10px; font-size:0.88rem; margin-top:1.2rem;">
+                                <div class="checkout-receipt-status" style="background:#edfff6; border:1px solid #b6f0d4; border-radius:8px; padding:12px 16px; display:flex; align-items:center; gap:10px; font-size:0.88rem; margin-top:1.2rem;">
                                     <span style="width:9px;height:9px;border-radius:50%;background:#00d27a;flex-shrink:0;box-shadow:0 0 0 3px rgba(0,210,122,0.2);display:inline-block;"></span>
                                     <div><strong style="color:#0b7a44;">Order Status:</strong> <span class="text-muted">Processing &bull; Paid</span></div>
                                 </div>
@@ -1125,7 +1176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Phone Number</label>
-                                    <input id="checkoutPhone" type="tel" class="form-control bg-light" name="phone" required placeholder="09171234567" value="<?php echo isset($_SESSION['user']['phone']) ? htmlspecialchars($_SESSION['user']['phone']) : ''; ?>" oninput="filterNumbersOnly(this)">
+                                    <input id="checkoutPhone" type="tel" class="form-control bg-light" name="phone" required inputmode="numeric" maxlength="11" pattern="09[0-9]{9}" title="Use an 11-digit number that starts with 09" placeholder="09171234567" value="<?php echo isset($_SESSION['user']['phone']) ? htmlspecialchars($_SESSION['user']['phone']) : ''; ?>" oninput="filterPhoneNumber(this)">
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Street Address</label>
@@ -1205,7 +1256,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Mobile Number</label>
-                                    <input type="tel" class="form-control bg-light payment-required" name="gcash_mobile" placeholder="09171234567" oninput="filterNumbersOnly(this)">
+                                    <input type="tel" class="form-control bg-light payment-required mobile-number-field" name="gcash_mobile" inputmode="numeric" maxlength="11" pattern="09[0-9]{9}" title="Use an 11-digit number that starts with 09" placeholder="09171234567" oninput="filterPhoneNumber(this)">
                                 </div>
                                 <div class="col-12">
                                     <div class="alert alert-info" role="alert">
@@ -1230,7 +1281,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">PayPal Number</label>
-                                    <input type="tel" class="form-control bg-light payment-required" name="paypal_Number" placeholder="09171234567" oninput="filterNumbersOnly(this)">
+                                    <input type="tel" class="form-control bg-light payment-required mobile-number-field" name="paypal_Number" inputmode="numeric" maxlength="11" pattern="09[0-9]{9}" title="Use an 11-digit number that starts with 09" placeholder="09171234567" oninput="filterPhoneNumber(this)">
                                 </div>
                                 <div class="col-12">
                                     <div class="alert alert-info" role="alert">
@@ -1255,7 +1306,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted text-uppercase">Mobile Number</label>
-                                    <input type="tel" class="form-control bg-light payment-required" name="maya_mobile" placeholder="09171234567" oninput="filterNumbersOnly(this)">
+                                    <input type="tel" class="form-control bg-light payment-required mobile-number-field" name="maya_mobile" inputmode="numeric" maxlength="11" pattern="09[0-9]{9}" title="Use an 11-digit number that starts with 09" placeholder="09171234567" oninput="filterPhoneNumber(this)">
                                 </div>
                                 <div class="col-12">
                                     <div class="alert alert-info" role="alert">
@@ -1380,6 +1431,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             }
         }
 
+        function filterPhoneNumber(el) {
+            const original = el.value;
+            const filtered = original.replace(/[^0-9]/g, '').slice(0, 11);
+            if (original !== filtered) {
+                el.value = filtered;
+                showCheckoutAlert('Phone number must use digits only.');
+                return;
+            }
+            if (filtered && !filtered.startsWith('09')) {
+                showCheckoutAlert('Phone number must start with 09.');
+                return;
+            }
+            hideCheckoutAlert();
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const paymentMethods = document.querySelectorAll('.payment-method');
             const selectedMethodInput = document.getElementById('selected_payment_method');
@@ -1444,6 +1510,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                     const zipcodeField = document.getElementById('checkoutZipcode');
                     const lettersOnly = /^[A-Za-z\s]+$/;
                     const numbersOnly = /^[0-9]+$/;
+                    const phonePattern = /^09\d{9}$/;
 
                     if (firstNameField && !lettersOnly.test(firstNameField.value.trim())) {
                         showCheckoutAlert('Please only use letters');
@@ -1455,8 +1522,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                         lastNameField.focus();
                         return false;
                     }
-                    if (phoneField && !numbersOnly.test(phoneField.value.trim())) {
-                        showCheckoutAlert('Use numbers only');
+                    if (phoneField && !phonePattern.test(phoneField.value.trim())) {
+                        showCheckoutAlert('Phone number must start with 09 and be exactly 11 digits.');
                         phoneField.focus();
                         return false;
                     }
@@ -1484,6 +1551,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
                     if (!allFilled) {
                         alert(`Please fill in all required fields for ${selectedMethod.toUpperCase()}. Missing: ${emptyFieldName}`);
+                        return false;
+                    }
+
+                    const mobileField = document.querySelector(`#${selectedMethod}-fields .mobile-number-field`);
+                    if (mobileField && !phonePattern.test(mobileField.value.trim())) {
+                        showCheckoutAlert('Mobile number must start with 09 and be exactly 11 digits.');
+                        mobileField.focus();
                         return false;
                     }
 
